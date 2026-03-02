@@ -1,8 +1,59 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+interface Product {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  brand: string;
+}
+
 export default function ProductSpotlight() {
+  const [spotlightProduct, setSpotlightProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    // Load spotlight product from localStorage (in real app, this would be an API call)
+    if (typeof window !== 'undefined') {
+      const savedSectionProducts = localStorage.getItem('sectionProducts');
+      const sectionProducts = savedSectionProducts ? JSON.parse(savedSectionProducts) : [];
+      
+      // Mock products data (should match admin products)
+      const allProducts: Product[] = [
+        {
+          id: 'spotlight-1',
+          name: 'Titan-X Pro Mouse',
+          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
+          price: 8999,
+          brand: 'JioCoder',
+        },
+      ];
+
+      // Get spotlight product
+      const spotlightConfig = sectionProducts.find((sp: any) => sp.sectionType === 'spotlight');
+      if (spotlightConfig) {
+        const product = allProducts.find((p) => p.id === spotlightConfig.productId);
+        if (product) {
+          setSpotlightProduct(product);
+        } else {
+          setSpotlightProduct(allProducts[0]); // Fallback to default
+        }
+      } else {
+        setSpotlightProduct(allProducts[0]); // Default product
+      }
+    }
+  }, []);
+
+  if (!spotlightProduct) {
+    return null;
+  }
+
   return (
     <section className="bg-primary/50 border border-white/10 rounded-3xl p-8 lg:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div className="space-y-6">
-        <h3 className="text-4xl font-bold text-accent-green">Titan-X Pro Mouse</h3>
+        <h3 className="text-4xl font-bold text-accent-green">{spotlightProduct.name}</h3>
         <p className="text-slate-400 text-lg">
           Engineered for endurance during long coding sprints. Explore the technical innovation that powers our flagship peripheral.
         </p>
@@ -16,15 +67,18 @@ export default function ProductSpotlight() {
             <span>150-hour Battery Life</span>
           </li>
         </ul>
-        <button className="bg-accent-green text-primary px-8 py-3 rounded-lg font-bold hover:brightness-110 transition-all">
+        <Link
+          href={`/product/${spotlightProduct.id}`}
+          className="inline-block bg-accent-green text-primary px-8 py-3 rounded-lg font-bold hover:brightness-110 transition-all"
+        >
           Pre-order Now
-        </button>
+        </Link>
       </div>
       <div className="relative group">
         <img
-          alt="Hero Mouse Product"
+          alt={spotlightProduct.name}
           className="w-full h-auto rounded-2xl shadow-2xl transition-all duration-500"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB"
+          src={spotlightProduct.image}
         />
         {/* Hotspot 1 - DPI Switch */}
         <div className="absolute top-1/4 right-1/4 group-hover:scale-110 transition-transform">

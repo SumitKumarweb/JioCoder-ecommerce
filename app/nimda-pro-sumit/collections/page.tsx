@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Product } from '@/components/ProductGrid';
 
+interface CollectionMetadata {
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+}
+
 interface Collection {
   id: string;
   name: string;
@@ -11,6 +21,7 @@ interface Collection {
   productIds: string[];
   createdAt: string;
   featuredImage?: string;
+  metadata?: CollectionMetadata;
 }
 
 export default function CollectionsPage() {
@@ -25,6 +36,15 @@ export default function CollectionsPage() {
     name: '',
     description: '',
     slug: '',
+    metadata: {
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      ogTitle: '',
+      ogDescription: '',
+      ogImage: '',
+      canonicalUrl: '',
+    } as CollectionMetadata,
   });
 
   useEffect(() => {
@@ -86,9 +106,28 @@ export default function CollectionsPage() {
       slug: slug,
       productIds: [],
       createdAt: new Date().toISOString(),
+      metadata: collectionForm.metadata,
     };
     setCollections([...collections, newCollection]);
-    setCollectionForm({ name: '', description: '', slug: '' });
+    
+    // Save to localStorage
+    const savedCollections = JSON.parse(localStorage.getItem('adminCollections') || '[]');
+    localStorage.setItem('adminCollections', JSON.stringify([...savedCollections, newCollection]));
+    
+    setCollectionForm({ 
+      name: '', 
+      description: '', 
+      slug: '',
+      metadata: {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
+        canonicalUrl: '',
+      },
+    });
     setIsModalOpen(false);
   };
 
@@ -537,6 +576,67 @@ export default function CollectionsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe this collection..."
                 />
+              </div>
+
+              {/* SEO Metadata Section */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">seo</span>
+                  SEO Metadata (Optional)
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Meta Title
+                    </label>
+                    <input
+                      type="text"
+                      value={collectionForm.metadata.metaTitle}
+                      onChange={(e) =>
+                        setCollectionForm({
+                          ...collectionForm,
+                          metadata: { ...collectionForm.metadata, metaTitle: e.target.value },
+                        })
+                      }
+                      placeholder="Collection title for search engines"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Meta Description
+                    </label>
+                    <textarea
+                      value={collectionForm.metadata.metaDescription}
+                      onChange={(e) =>
+                        setCollectionForm({
+                          ...collectionForm,
+                          metadata: { ...collectionForm.metadata, metaDescription: e.target.value },
+                        })
+                      }
+                      placeholder="Brief description for search engines"
+                      rows={2}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Meta Keywords
+                    </label>
+                    <input
+                      type="text"
+                      value={collectionForm.metadata.metaKeywords}
+                      onChange={(e) =>
+                        setCollectionForm({
+                          ...collectionForm,
+                          metadata: { ...collectionForm.metadata, metaKeywords: e.target.value },
+                        })
+                      }
+                      placeholder="keyword1, keyword2"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">

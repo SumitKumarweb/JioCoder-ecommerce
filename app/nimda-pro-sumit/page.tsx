@@ -1,6 +1,14 @@
 import { redirect } from 'next/navigation';
 
-export default function AdminPage() {
-  redirect('/nimda-pro-sumit/dashboard');
-}
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+  },
+};
 
+export default function AdminPage() {
+  redirect('/nimda-pro-sumit/login');
+}

@@ -11,17 +11,30 @@ import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import CompareNotification from "@/components/CompareNotification";
 import SaleModal from "@/components/SaleModal";
+import { MetadataManager } from "@/lib/metadata-manager";
 
-export const metadata: Metadata = {
-  title: "Home",
-  description: "Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder. Shop trending products, best sellers, and authentic gear with fast India-wide shipping.",
-  keywords: ["mechanical keyboards", "gaming mice", "keycaps", "custom cables", "gaming peripherals", "India keyboard store"],
-  openGraph: {
-    title: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
-    description: "Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping and authentic products.",
-    url: "/",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const metadataManager = new MetadataManager();
+  const pageMetadata = metadataManager.getPageMetadata('home');
+
+  return {
+    title: pageMetadata.metaTitle || "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
+    description: pageMetadata.metaDescription || 
+      "Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder. Shop trending products, best sellers, and authentic gear with fast India-wide shipping.",
+    keywords: pageMetadata.metaKeywords?.split(',').map((k: string) => k.trim()) || 
+      ["mechanical keyboards", "gaming mice", "keycaps", "custom cables", "gaming peripherals", "India keyboard store"],
+    openGraph: {
+      title: pageMetadata.ogTitle || pageMetadata.metaTitle || "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
+      description: pageMetadata.ogDescription || pageMetadata.metaDescription || 
+        "Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping and authentic products.",
+      url: "/",
+      images: pageMetadata.ogImage ? [{ url: pageMetadata.ogImage }] : undefined,
+    },
+    alternates: {
+      canonical: pageMetadata.canonicalUrl || "/",
+    },
+  };
+}
 
 export default function Home() {
   const structuredData = {

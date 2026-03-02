@@ -4,18 +4,28 @@ import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'About Us - JioCoder',
-  description:
-    'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub, serving 500k+ customers with genuine gear and 24/7 support.',
-  keywords: ['about jiocoder', 'tech company india', 'electronics retailer', 'about us'],
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  // In a real app, this would fetch from API/database
+  // For now, we'll use defaults that can be overridden via admin panel
+  // The admin panel stores metadata in localStorage, which is client-side only
+  // In production, this should fetch from a server-side API
+  
+  return {
     title: 'About Us - JioCoder',
-    description:
-      'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub.',
-    type: 'website',
-  },
-};
+    description: 
+      'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub, serving 500k+ customers with genuine gear and 24/7 support.',
+    keywords: ['about jiocoder', 'tech company india', 'electronics retailer', 'about us'],
+    openGraph: {
+      title: 'About Us - JioCoder',
+      description: 
+        'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub.',
+      type: 'website',
+    },
+    alternates: {
+      canonical: '/about',
+    },
+  };
+}
 
 export default function AboutPage() {
   return (
@@ -271,4 +281,3 @@ export default function AboutPage() {
     </>
   );
 }
-

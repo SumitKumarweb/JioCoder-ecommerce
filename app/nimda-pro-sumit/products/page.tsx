@@ -13,6 +13,16 @@ interface QnA {
   answer: string;
 }
 
+interface ProductMetadata {
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+}
+
 interface ProductWithSku extends Product {
   sku?: string;
   description?: string;
@@ -24,6 +34,7 @@ interface ProductWithSku extends Product {
   qna?: QnA[];
   relatedProducts?: string[];
   tags?: string[];
+  metadata?: ProductMetadata;
 }
 
 export default function ProductsPage() {
@@ -50,6 +61,15 @@ export default function ProductsPage() {
     qna: [] as QnA[],
     relatedProducts: [] as string[],
     tags: [] as string[],
+    metadata: {
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
+      ogTitle: '',
+      ogDescription: '',
+      ogImage: '',
+      canonicalUrl: '',
+    } as ProductMetadata,
   });
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -58,7 +78,7 @@ export default function ProductsPage() {
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
   const [newTag, setNewTag] = useState('');
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<ProductWithSku[]>([]);
 
   useEffect(() => {
     // Mock products - replace with API call
@@ -138,6 +158,15 @@ export default function ProductsPage() {
       qna: [],
       relatedProducts: [],
       tags: [],
+      metadata: {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
+        canonicalUrl: '',
+      },
     });
     setIsModalOpen(true);
   };
@@ -163,6 +192,15 @@ export default function ProductsPage() {
       qna: product.qna || [],
       relatedProducts: product.relatedProducts || [],
       tags: product.tags || [],
+      metadata: product.metadata || {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
+        canonicalUrl: '',
+      },
     });
     setIsModalOpen(true);
   };
@@ -213,10 +251,22 @@ export default function ProductsPage() {
         qna: formData.qna,
         relatedProducts: formData.relatedProducts,
         tags: formData.tags,
+        metadata: formData.metadata,
       };
       setProducts([...products, newProduct]);
       setAvailableProducts([...products, newProduct]);
+      
+      // Save to localStorage
+      const savedProducts: ProductWithSku[] = JSON.parse(localStorage.getItem('adminProducts') || '[]');
+      localStorage.setItem('adminProducts', JSON.stringify([...savedProducts, newProduct]));
     }
+    
+    // Save all products to localStorage after any update
+    const allProducts = editingProduct 
+      ? products.map((p) => (p.id === editingProduct.id ? { ...p, ...formData, price: parseFloat(formData.price), originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined, rating: parseFloat(formData.rating), reviewCount: parseInt(formData.reviewCount), stock: formData.stock ? parseInt(formData.stock) : undefined, images: formData.images, videos: formData.videos, technicalSpecs: formData.technicalSpecs, qna: formData.qna, relatedProducts: formData.relatedProducts, tags: formData.tags, metadata: formData.metadata } : p))
+      : [...products, { id: `product-${Date.now()}`, name: formData.name, image: formData.image || formData.images[0] || '', price: parseFloat(formData.price), originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined, brand: formData.brand, rating: parseFloat(formData.rating), reviewCount: parseInt(formData.reviewCount), inStock: formData.inStock, sku: formData.sku, description: formData.description, category: formData.category, stock: formData.stock ? parseInt(formData.stock) : undefined, images: formData.images, videos: formData.videos, technicalSpecs: formData.technicalSpecs, qna: formData.qna, relatedProducts: formData.relatedProducts, tags: formData.tags, metadata: formData.metadata }];
+    localStorage.setItem('adminProducts', JSON.stringify(allProducts));
+    
     setIsModalOpen(false);
   };
 
@@ -802,6 +852,154 @@ export default function ProductsPage() {
                       </button>
                     </span>
                   ))}
+                </div>
+              </div>
+
+              {/* SEO Metadata */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined">seo</span>
+                  SEO Metadata
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meta Title
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.metadata.metaTitle}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, metaTitle: e.target.value },
+                        })
+                      }
+                      placeholder="Product title for search engines"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Recommended: 50-60 characters
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meta Description
+                    </label>
+                    <textarea
+                      value={formData.metadata.metaDescription}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, metaDescription: e.target.value },
+                        })
+                      }
+                      placeholder="Brief description for search engines"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Recommended: 150-160 characters
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meta Keywords (comma-separated)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.metadata.metaKeywords}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, metaKeywords: e.target.value },
+                        })
+                      }
+                      placeholder="keyword1, keyword2, keyword3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Canonical URL
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.metadata.canonicalUrl}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, canonicalUrl: e.target.value },
+                        })
+                      }
+                      placeholder="/product/product-slug"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Open Graph Metadata */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined">share</span>
+                  Open Graph (Social Media)
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      OG Title
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.metadata.ogTitle}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, ogTitle: e.target.value },
+                        })
+                      }
+                      placeholder="Title for social media shares"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      OG Description
+                    </label>
+                    <textarea
+                      value={formData.metadata.ogDescription}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, ogDescription: e.target.value },
+                        })
+                      }
+                      placeholder="Description for social media shares"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      OG Image URL
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.metadata.ogImage}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          metadata: { ...formData.metadata, ogImage: e.target.value },
+                        })
+                      }
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Recommended: 1200x630px image for best social media display
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
