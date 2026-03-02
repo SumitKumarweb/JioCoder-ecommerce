@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
@@ -117,11 +117,60 @@ const categories = ['All Stories', 'Electronics', 'Coding', 'Gaming', 'Setup Tou
 export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState('All Stories');
   const [email, setEmail] = useState('');
+  const [adminBlogs, setAdminBlogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load blogs from admin panel
+    const saved = localStorage.getItem('adminBlogs');
+    if (saved) {
+      try {
+        const blogs = JSON.parse(saved);
+        setAdminBlogs(blogs);
+      } catch (e) {
+        console.error('Error loading blogs:', e);
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  // Combine admin blogs with default posts
+  const allPosts = [
+    ...adminBlogs.map((blog) => ({
+      id: blog.id,
+      title: blog.title,
+      description: blog.description,
+      image: blog.featuredImage,
+      category: blog.category,
+      readTime: blog.readTime,
+      date: blog.date,
+    })),
+    ...blogPosts.filter((post) => !adminBlogs.find((b) => b.id === post.id)),
+  ];
 
   const filteredPosts =
     selectedCategory === 'All Stories'
-      ? blogPosts
-      : blogPosts.filter((post) => post.category === selectedCategory);
+      ? allPosts
+      : allPosts.filter((post) => post.category === selectedCategory);
+
+  // Get featured posts from admin blogs
+  const featuredPostsFromAdmin = adminBlogs.filter((blog) => blog.isFeatured).slice(0, 3);
+  const displayFeaturedPosts = featuredPostsFromAdmin.length > 0 
+    ? featuredPostsFromAdmin.map((blog) => ({
+        id: blog.id,
+        title: blog.title,
+        description: blog.description,
+        image: blog.featuredImage,
+        readTime: blog.readTime,
+        category: blog.category,
+      }))
+    : featuredPosts;
+
+  // Helper to get slug for a post
+  const getPostSlug = (postId: string) => {
+    const adminBlog = adminBlogs.find((b) => b.id === postId);
+    return adminBlog?.slug || postId.toLowerCase().replace(/\s+/g, '-');
+  };
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,10 +207,10 @@ export default function BlogPage() {
             loop={true}
             className="featured-swiper"
           >
-            {featuredPosts.map((post) => (
+            {displayFeaturedPosts.map((post) => (
               <SwiperSlide key={post.id}>
                 <Link
-                  href={`/blog/${post.id}`}
+                  href={`/blog/${getPostSlug(post.id)}`}
                   className="relative h-[500px] w-full overflow-hidden rounded-xl group cursor-pointer block"
                 >
                   <img
@@ -228,7 +277,7 @@ export default function BlogPage() {
               key={post.id}
               className="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100"
             >
-              <Link href={`/blog/${post.id.toLowerCase().replace(/\s+/g, '-')}`} className="relative aspect-video overflow-hidden">
+              <Link href={`/blog/${getPostSlug(post.id)}`} className="relative aspect-video overflow-hidden">
                 <img
                   alt={post.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -239,7 +288,7 @@ export default function BlogPage() {
                 </span>
               </Link>
               <div className="p-6 flex flex-col flex-1">
-                <Link href={`/blog/${post.id.toLowerCase().replace(/\s+/g, '-')}`}>
+                <Link href={`/blog/${getPostSlug(post.id)}`}>
                   <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-primary transition-colors">
                     {post.title}
                   </h3>

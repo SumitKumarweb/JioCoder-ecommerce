@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 
-// This would typically come from a CMS or database
-const blogPost = {
+// Default blog post fallback
+const defaultBlogPost = {
   slug: 'mechanical-keyboards',
   title: 'The Ultimate Mechanical Keyboard Guide for Developers',
   category: 'Guide',
@@ -25,6 +26,9 @@ const blogPost = {
   tags: ['MechanicalKeyboard', 'SetupTour', 'DeveloperTools'],
   likes: '1.2k',
   comments: 42,
+  images: [],
+  videos: [],
+  content: '',
 };
 
 const relatedProducts = [
@@ -79,9 +83,62 @@ const readNextPosts = [
 ];
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
+  const [blogPost, setBlogPost] = useState(defaultBlogPost);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load blog from admin panel
+    const saved = localStorage.getItem('adminBlogs');
+    if (saved) {
+      try {
+        const blogs = JSON.parse(saved);
+        const foundBlog = blogs.find((b: any) => b.slug === params.slug);
+        if (foundBlog) {
+          setBlogPost({
+            slug: foundBlog.slug,
+            title: foundBlog.title,
+            category: foundBlog.category,
+            subCategory: foundBlog.subCategory || '',
+            author: foundBlog.author,
+            date: foundBlog.date,
+            readTime: foundBlog.readTime,
+            views: foundBlog.views || '0',
+            featuredImage: foundBlog.featuredImage,
+            tags: foundBlog.tags || [],
+            likes: foundBlog.likes || '0',
+            comments: foundBlog.comments || 0,
+            images: foundBlog.images || [],
+            videos: foundBlog.videos || [],
+            content: foundBlog.content || '',
+          });
+        }
+      } catch (e) {
+        console.error('Error loading blog:', e);
+      }
+    }
+    setLoading(false);
+  }, [params.slug]);
+
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
   };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading blog post...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -137,13 +194,45 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               <img className="w-full h-full object-cover" alt={blogPost.title} src={blogPost.featuredImage} />
             </div>
 
+            {/* Additional Images */}
+            {blogPost.images && blogPost.images.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                {blogPost.images.map((img, index) => (
+                  <img key={index} src={img} alt={`${blogPost.title} - Image ${index + 1}`} className="w-full h-64 object-cover rounded-xl" />
+                ))}
+              </div>
+            )}
+
+            {/* Videos */}
+            {blogPost.videos && blogPost.videos.length > 0 && (
+              <div className="space-y-4 mb-10">
+                {blogPost.videos.map((video, index) => (
+                  <div key={index} className="aspect-video rounded-xl overflow-hidden bg-slate-200">
+                    <iframe
+                      src={video}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Content */}
             <div className="prose max-w-none">
-              <p className="text-xl leading-relaxed text-slate-600 italic mb-8">
-                Choosing the right keyboard isn't just about ergonomics—it's about the tactile feedback that makes
-                every line of code feel intentional. In this guide, we dive deep into the world of switches, keycaps,
-                and layouts.
-              </p>
+              {blogPost.summary && (
+                <p className="text-xl leading-relaxed text-slate-600 italic mb-8">{blogPost.summary}</p>
+              )}
+              {blogPost.content ? (
+                <div dangerouslySetInnerHTML={{ __html: blogPost.content }} />
+              ) : (
+                <>
+                  <p className="text-xl leading-relaxed text-slate-600 italic mb-8">
+                    Choosing the right keyboard isn't just about ergonomics—it's about the tactile feedback that makes
+                    every line of code feel intentional. In this guide, we dive deep into the world of switches, keycaps,
+                    and layouts.
+                  </p>
 
               <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">Why Mechanical?</h2>
               <p className="text-slate-700 leading-relaxed mb-4">
@@ -227,12 +316,14 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                 </p>
               </blockquote>
 
-              <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">Best Switches for Coding</h2>
-              <p className="text-slate-700 leading-relaxed">
-                While gamers prefer linear switches (Red), developers often find tactile switches (Brown) or clicky
-                switches (Blue) more satisfying for long coding sessions. The subtle "bump" helps prevent bottoming
-                out, which can reduce finger fatigue.
-              </p>
+                  <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">Best Switches for Coding</h2>
+                  <p className="text-slate-700 leading-relaxed">
+                    While gamers prefer linear switches (Red), developers often find tactile switches (Brown) or clicky
+                    switches (Blue) more satisfying for long coding sessions. The subtle "bump" helps prevent bottoming
+                    out, which can reduce finger fatigue.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Tags & Engagement */}
