@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
@@ -15,7 +16,8 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const [selectedSwitch, setSelectedSwitch] = useState('Tactile Blue');
   const [quantity, setQuantity] = useState(1);
   const swiperRef = useRef<SwiperType | null>(null);
-  const { addToCart } = useCart();
+  const router = useRouter();
+  const { addToCart, buyNow } = useCart();
 
   const images = [
     {
@@ -200,7 +202,19 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               <span className="material-symbols-outlined">shopping_cart</span>
               Add to Cart
             </button>
-            <button className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+            <button
+              onClick={() => {
+                buyNow({
+                  id: `product-${productId}`,
+                  name: 'Apex Pro RGB Mechanical Keyboard - Indian Edition',
+                  image: images[0].src,
+                  price: 12499,
+                  variant: `${selectedSwitch} Switch`,
+                }, quantity);
+                router.push('/checkout');
+              }}
+              className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+            >
               <span className="material-symbols-outlined">flash_on</span>
               Buy Now
             </button>

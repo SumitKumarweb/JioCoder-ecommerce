@@ -1,6 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCompare } from '@/contexts/CompareContext';
+import { useCart } from '@/contexts/CartContext';
 
 const StarRating = ({ rating }: { rating: number }) => {
   const fullStars = Math.floor(rating);
@@ -177,7 +179,9 @@ const getProductDetails = (productId: string) => {
 };
 
 export default function CompareTable() {
+  const router = useRouter();
   const { compareProducts, removeFromCompare } = useCompare();
+  const { buyNow } = useCart();
 
   if (compareProducts.length === 0) {
     return (
@@ -334,17 +338,33 @@ export default function CompareTable() {
             {/* Actions Row */}
             <tr className="bg-slate-50/50">
               <td className="p-6"></td>
-              {compareProducts.map((product) => (
-                <td key={product.id} className="p-6">
-                  <button className="w-full bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                    Buy Now
-                    <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
-                  </button>
-                  <button className="w-full mt-3 text-sm font-semibold text-primary hover:underline">
-                    Add to Wishlist
-                  </button>
-                </td>
-              ))}
+              {compareProducts.map((product) => {
+                const details = getProductDetails(product.id);
+                // Parse price from string format "₹3,499" to number
+                const price = parseInt(details.price.replace(/[₹,]/g, '')) || 0;
+                return (
+                  <td key={product.id} className="p-6">
+                    <button
+                      onClick={() => {
+                        buyNow({
+                          id: product.id,
+                          name: details.name,
+                          image: details.image,
+                          price: price,
+                        });
+                        router.push('/checkout');
+                      }}
+                      className="w-full bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                    >
+                      Buy Now
+                      <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
+                    </button>
+                    <button className="w-full mt-3 text-sm font-semibold text-primary hover:underline">
+                      Add to Wishlist
+                    </button>
+                  </td>
+                );
+              })}
             </tr>
           </tbody>
         </table>
