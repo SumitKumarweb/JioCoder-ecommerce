@@ -66,6 +66,7 @@ export default function AdminLayout({
 
   const menuItems = [
     { href: '/nimda-pro-sumit/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { href: '/nimda-pro-sumit/users', label: 'Users', icon: 'people' },
     { href: '/nimda-pro-sumit/products', label: 'Products', icon: 'inventory_2' },
     { href: '/nimda-pro-sumit/collections', label: 'Collections', icon: 'collections' },
     { href: '/nimda-pro-sumit/blogs', label: 'Blogs', icon: 'article' },
