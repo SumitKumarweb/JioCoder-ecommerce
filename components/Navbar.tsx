@@ -117,26 +117,26 @@ export default function Navbar() {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-3xl hidden md:flex items-center relative z-[60] search-container">
-            <div className="flex w-full bg-white rounded-lg overflow-hidden border-2 border-transparent focus-within:border-accent-green transition-all">
-              <select className="bg-slate-100 text-slate-700 text-sm font-medium border-none focus:ring-0 px-4 py-2.5 cursor-pointer hover:bg-slate-200 transition-colors">
-                <option>All Categories</option>
-                <option>Keyboards</option>
-                <option>Mouse Pads</option>
-                <option>USB Cables</option>
-                <option>Mice</option>
-              </select>
-              <div className="w-px h-6 bg-slate-300 self-center"></div>
+            <form
+              className="flex w-full bg-white rounded-lg overflow-hidden border-2 border-transparent focus-within:border-accent-green transition-all"
+              action="/products"
+              method="GET"
+            >
               <div className="relative flex-1">
                 <input
+                  name="q"
                   className="w-full border-none focus:ring-0 py-2.5 pl-4 pr-12 text-sm text-slate-900 placeholder-slate-400"
-                  placeholder="Search for 'Keyboards'..."
+                  placeholder="Search products..."
                   type="text"
                 />
-                <button className="absolute right-0 top-0 h-full px-4 text-slate-500 hover:text-primary transition-colors">
+                <button
+                  type="submit"
+                  className="absolute right-0 top-0 h-full px-4 text-slate-500 hover:text-primary transition-colors"
+                >
                   <span className="material-symbols-outlined">search</span>
                 </button>
               </div>
-            </div>
+            </form>
             <div className="search-overlay hidden absolute top-full left-0 w-full mt-2 bg-white text-slate-900 shadow-2xl rounded-xl border border-slate-100 overflow-hidden">
               <div className="grid grid-cols-12">
                 <div className="col-span-8 p-6 space-y-8">

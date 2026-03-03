@@ -105,14 +105,30 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
-    // Search filter
+    // Search filter with simple "similar word" support (handles plurals / partial matches)
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (product) =>
-          product.name.toLowerCase().includes(query) ||
-          product.brand.toLowerCase().includes(query)
-      );
+      const haystackForProduct = (product: Product) =>
+        `${product.name} ${product.brand}`.toLowerCase();
+
+      const tokens = searchQuery
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      result = result.filter((product) => {
+        const haystack = haystackForProduct(product);
+
+        // Every token must loosely match (substring, with basic plural handling)
+        return tokens.every((token) => {
+          if (haystack.includes(token)) return true;
+
+          // Basic plural/singular normalization (keyboard <-> keyboards)
+          const singular = token.endsWith('s') ? token.slice(0, -1) : token;
+          const plural = token.endsWith('s') ? token : `${token}s`;
+
+          return haystack.includes(singular) || haystack.includes(plural);
+        });
+      });
     }
 
     // Price filter
