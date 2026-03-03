@@ -1,11 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import MobileMenu from './MobileMenu';
 import LoginModal from './LoginModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
+
+type AdminNavItem = {
+  id: string;
+  label: string;
+  href: string;
+  enabled: boolean;
+};
+
+type AdminCollectionNavItem = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  featuredImage?: string;
+};
+
+const DEFAULT_ADMIN_NAV_ITEMS: AdminNavItem[] = [
+  { id: 'blog', label: 'Blog', href: '/blog', enabled: true },
+  { id: 'deals', label: 'Deals', href: '/sale', enabled: true },
+];
+
+const DEFAULT_COLLECTION_ITEMS: AdminCollectionNavItem[] = [
+  {
+    id: 'col-1',
+    name: 'Mechanical Keyboards',
+    slug: 'mechanical-keyboards',
+    description: 'Premium mechanical keyboards collection',
+    featuredImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
+  },
+  {
+    id: 'col-2',
+    name: 'Gaming Mice',
+    slug: 'gaming-mice',
+    description: 'High-performance gaming mice',
+  },
+];
 
 export default function Navbar() {
   const { openCart, getItemCount } = useCart();
@@ -13,6 +50,44 @@ export default function Navbar() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(DEFAULT_ADMIN_NAV_ITEMS);
+  const [collectionNavItems, setCollectionNavItems] = useState<AdminCollectionNavItem[]>(
+    DEFAULT_COLLECTION_ITEMS
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const stored = window.localStorage.getItem('adminNavbarItems');
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setAdminNavItems(parsed);
+      }
+    } catch (error) {
+      console.error('Failed to load admin navbar items from localStorage', error);
+    }
+
+    try {
+      const storedCollections = window.localStorage.getItem('adminCollections');
+      if (storedCollections) {
+        const parsedCollections = JSON.parse(storedCollections);
+        if (Array.isArray(parsedCollections)) {
+          const mapped: AdminCollectionNavItem[] = parsedCollections.map((col: any) => ({
+            id: col.id ?? col.slug ?? col.name,
+            name: col.name,
+            slug: col.slug,
+            description: col.description,
+            featuredImage: col.featuredImage,
+          }));
+          setCollectionNavItems(mapped);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load admin collections from localStorage', error);
+    }
+  }, []);
   
   return (
     <>
@@ -254,36 +329,41 @@ export default function Navbar() {
                 </a>
                 <div className="mega-menu hidden absolute top-20 left-0 w-full bg-white text-slate-900 shadow-2xl border-t border-slate-100 z-50">
                   <div className="max-w-[1440px] mx-auto px-10 lg:px-20 py-10 grid grid-cols-12 gap-10">
-                    {/* Featured Categories */}
+                    {/* Featured Collections (managed from admin / collections) */}
                     <div className="col-span-3 space-y-6">
                       <h4 className="text-xs uppercase font-black text-slate-400 tracking-widest">
-                        Featured Categories
+                        Featured Collections
                       </h4>
                       <div className="space-y-4">
-                        <a className="flex items-center gap-4 group" href="#">
-                          <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-colors">
-                            <span className="material-symbols-outlined">keyboard</span>
-                          </div>
-                          <span className="font-bold text-slate-700 group-hover:text-primary">Keyboards</span>
-                        </a>
-                        <a className="flex items-center gap-4 group" href="#">
-                          <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-colors">
-                            <span className="material-symbols-outlined">mouse</span>
-                          </div>
-                          <span className="font-bold text-slate-700 group-hover:text-primary">Mice</span>
-                        </a>
-                        <a className="flex items-center gap-4 group" href="#">
-                          <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-colors">
-                            <span className="material-symbols-outlined">cable</span>
-                          </div>
-                          <span className="font-bold text-slate-700 group-hover:text-primary">Cables</span>
-                        </a>
-                        <a className="flex items-center gap-4 group" href="#">
-                          <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-colors">
-                            <span className="material-symbols-outlined">layers</span>
-                          </div>
-                          <span className="font-bold text-slate-700 group-hover:text-primary">Desk Mats</span>
-                        </a>
+                        {collectionNavItems.slice(0, 4).map((collection) => (
+                          <a
+                            key={collection.id}
+                            className="flex items-center gap-4 group"
+                            href={`/collections/${collection.slug}`}
+                          >
+                            <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center overflow-hidden group-hover:bg-accent-green group-hover:text-white transition-colors">
+                              {collection.featuredImage ? (
+                                <img
+                                  src={collection.featuredImage}
+                                  alt={collection.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="material-symbols-outlined">collections</span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-700 group-hover:text-primary block truncate">
+                                {collection.name}
+                              </span>
+                              {collection.description && (
+                                <span className="text-xs text-slate-500 line-clamp-1">
+                                  {collection.description}
+                                </span>
+                              )}
+                            </div>
+                          </a>
+                        ))}
                       </div>
                     </div>
 
@@ -375,15 +455,18 @@ export default function Navbar() {
                 </a>
               </div>
 
-              {/* Blog */}
-              <a className="text-white/80 hover:text-white transition-colors" href="#">
-                Blog
-              </a>
-
-              {/* Deals */}
-              <a className="text-white/80 hover:text-white transition-colors" href="#">
-                Deals
-              </a>
+              {/* Admin managed nav items (e.g., Blog, Deals) */}
+              {adminNavItems
+                .filter((item) => item.enabled)
+                .map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="text-white/80 hover:text-white transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
             </div>
 
             {/* User Actions */}

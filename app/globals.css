@@ -44,6 +44,18 @@
   }
 }
 
+/* Ensure every clickable item shows pointer cursor */
+button,
+[role="button"],
+a[href],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+label[for],
+summary {
+  cursor: pointer;
+}
+
 /* Material Symbols font class */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
