@@ -11,7 +11,7 @@ const recommendedProducts = [
     price: 4999,
     rating: 4.8,
     reviewCount: 212,
-    badge: { text: 'Bestseller', color: 'primary' },
+    badge: { text: 'Bestseller', color: 'primary' as const },
   },
   {
     id: 'notfound-2',
@@ -20,7 +20,7 @@ const recommendedProducts = [
     price: 2499,
     rating: 4.7,
     reviewCount: 88,
-    badge: { text: 'Top Rated', color: 'primary' },
+    badge: { text: 'Top Rated', color: 'primary' as const },
   },
   {
     id: 'notfound-3',
@@ -37,7 +37,7 @@ const recommendedProducts = [
     price: 32999,
     rating: 4.9,
     reviewCount: 304,
-    badge: { text: 'New Arrival', color: 'green' },
+    badge: { text: 'New Arrival', color: 'green' as const },
   },
 ];
 

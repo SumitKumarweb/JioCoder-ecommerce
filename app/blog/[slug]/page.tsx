@@ -29,6 +29,7 @@ const defaultBlogPost = {
   images: [],
   videos: [],
   content: '',
+  summary: '', // Add summary property
 };
 
 const relatedProducts = [
@@ -110,6 +111,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             images: foundBlog.images || [],
             videos: foundBlog.videos || [],
             content: foundBlog.content || '',
+            summary: foundBlog.summary || '',
           });
         }
       } catch (e) {

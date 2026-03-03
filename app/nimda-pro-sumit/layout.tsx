@@ -84,7 +84,7 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <aside
           className={`fixed left-0 top-0 h-full bg-gray-900 text-white transition-all duration-300 z-50 ${
@@ -144,26 +144,30 @@ export default function AdminLayout({
           </div>
         </aside>
 
-        {/* Main Content */}
-        <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
-          {/* Top Bar */}
-          <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-            <div className="px-6 py-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {menuItems.find((item) => item.href === pathname)?.label || 'Admin'}
-              </h2>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <span className="material-symbols-outlined">account_circle</span>
-                  <span className="text-sm">{adminEmail}</span>
-                </div>
+      {/* Main Content */}
+      <div
+        className={`transition-all duration-300 flex-1 flex flex-col min-h-screen ${
+          sidebarOpen ? 'ml-64' : 'ml-20'
+        }`}
+      >
+        {/* Top Bar */}
+        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {menuItems.find((item) => item.href === pathname)?.label || 'Admin'}
+            </h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-gray-600">
+                <span className="material-symbols-outlined">account_circle</span>
+                <span className="text-sm">{adminEmail}</span>
               </div>
             </div>
-          </header>
+          </div>
+        </header>
 
-      {/* Page Content */}
-      <main className="p-6">{children}</main>
+        {/* Page Content */}
+        <main className="p-6 flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
-  </div>
   );
 }

@@ -13,6 +13,17 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,12 +53,101 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Reset form when switching tabs
+  useEffect(() => {
+    setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+    setError(null);
+    setSuccess(null);
+  }, [activeTab]);
+
   if (!shouldRender) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null); // Clear error when user types
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log(`${activeTab} form submitted`);
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+
+    try {
+      if (activeTab === 'signup') {
+        // Validate signup
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 8) {
+          setError('Password must be at least 8 characters long');
+          setIsLoading(false);
+          return;
+        }
+
+        // Call signup API
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Signup failed');
+        }
+
+        setSuccess('Account created successfully! You can now login.');
+        // Switch to login tab after 2 seconds
+        setTimeout(() => {
+          setActiveTab('login');
+          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+          setSuccess(null);
+        }, 2000);
+      } else {
+        // Call login API
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        setSuccess('Login successful!');
+        // Close modal after 1 second
+        setTimeout(() => {
+          onClose();
+          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+          setSuccess(null);
+          // TODO: Store user data in context/localStorage and redirect
+        }, 1000);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -148,6 +248,20 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
                 : 'Sign up to get started with JioCoder.'}
             </p>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <p className="text-sm text-green-600 font-medium">{success}</p>
+              </div>
+            )}
+
             {/* Form */}
             <form className="space-y-6" onSubmit={handleSubmit}>
               {activeTab === 'signup' && (
@@ -158,6 +272,9 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
                       person
                     </span>
                     <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
                       className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-slate-900 placeholder:text-slate-400"
                       placeholder="John Doe"
                       type="text"
@@ -174,6 +291,9 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
                     mail
                   </span>
                   <input
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-slate-900 placeholder:text-slate-400"
                     placeholder="name@company.com"
                     type="email"
@@ -203,6 +323,9 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
                     lock
                   </span>
                   <input
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-slate-900 placeholder:text-slate-400"
                     placeholder="••••••••"
                     type={showPassword ? 'text' : 'password'}
@@ -228,6 +351,9 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
                       lock
                     </span>
                     <input
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
                       className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-slate-900 placeholder:text-slate-400"
                       placeholder="••••••••"
                       type={showPassword ? 'text' : 'password'}
@@ -238,10 +364,15 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
               )}
 
               <button
-                className="w-full bg-primary hover:bg-primary/90 text-slate-900 font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-4"
+                className="w-full bg-primary hover:bg-primary/90 text-slate-900 font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
+                disabled={isLoading}
               >
-                {activeTab === 'login' ? 'Login to JioCoder' : 'Create Account'}
+                {isLoading
+                  ? 'Please wait...'
+                  : activeTab === 'login'
+                  ? 'Login to JioCoder'
+                  : 'Create Account'}
               </button>
             </form>
 
