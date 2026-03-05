@@ -23,11 +23,6 @@ type AdminCollectionNavItem = {
   featuredImage?: string;
 };
 
-const DEFAULT_ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { _id: 'blog', label: 'Blog', href: '/blog', enabled: true },
-  { _id: 'deals', label: 'Deals', href: '/sale', enabled: true },
-];
-
 export default function Navbar() {
   const { openCart, getItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

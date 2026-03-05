@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import HeroSkeleton from './HeroSkeleton';
 
 export type HeroSlide = {
   id: string;
@@ -20,6 +21,7 @@ export type HeroSlide = {
 
 export default function Hero() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadSlides = async () => {
@@ -32,6 +34,8 @@ export default function Hero() {
         setSlides(data || []);
       } catch (error) {
         console.error('Failed to load hero slides from API', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -39,6 +43,10 @@ export default function Hero() {
   }, []);
 
   const visibleSlides = slides.filter((slide) => slide.enabled !== false);
+
+  if (loading) {
+    return <HeroSkeleton />;
+  }
 
   if (visibleSlides.length === 0) {
     return null;

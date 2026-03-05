@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import FeaturedCategoriesSkeleton from './FeaturedCategoriesSkeleton';
 
 interface FeaturedCategory {
   _id: string;
@@ -13,25 +14,37 @@ interface FeaturedCategory {
 export default function FeaturedCategories() {
   const [categories, setCategories] = useState<FeaturedCategory[]>([]);
   const [viewAllUrl, setViewAllUrl] = useState('/products');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoading(true);
         const res = await fetch('/api/featured-categories');
         if (!res.ok) {
           throw new Error(`Failed to fetch featured categories: ${res.status}`);
         }
-        const data: FeaturedCategory[] = await res.json();
-        setCategories(data || []);
-        // Keep default view-all URL for now; can be made configurable later
-        setViewAllUrl('/products');
+        const data = await res.json();
+        // Handle both old format (array) and new format (object with categories and viewAllUrl)
+        if (Array.isArray(data)) {
+          setCategories(data || []);
+        } else {
+          setCategories(data.categories || []);
+          setViewAllUrl(data.viewAllUrl || '/products');
+        }
       } catch (error) {
         console.error('Failed to load featured categories from API', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadCategories();
   }, []);
+
+  if (loading) {
+    return <FeaturedCategoriesSkeleton count={5} />;
+  }
 
   if (categories.length === 0) {
     return null;

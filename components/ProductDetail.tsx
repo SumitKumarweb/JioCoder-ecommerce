@@ -16,6 +16,7 @@ import {
   CompleteSetupSkeleton,
   RecentlyViewedSkeleton,
 } from '@/components/ProductDetailSectionSkeletons';
+import ProductCarouselSkeleton from '@/components/ProductCarouselSkeleton';
 import { getCachedData, setCachedData, getProductCacheKey } from '@/utils/apiCache';
 
 interface ProductDetailProps {

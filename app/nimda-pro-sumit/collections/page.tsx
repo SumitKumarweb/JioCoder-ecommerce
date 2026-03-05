@@ -36,10 +36,13 @@ export default function CollectionsPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [originalProductIds, setOriginalProductIds] = useState<string[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [collectionForm, setCollectionForm] = useState({
     name: '',
     description: '',
     slug: '',
+    heroImage: '',
     metadata: {
       metaTitle: '',
       metaDescription: '',
@@ -227,7 +230,7 @@ export default function CollectionsPage() {
           name: collectionForm.name,
           slug: slug,
           description: collectionForm.description,
-          heroImage: collectionForm.metadata.ogImage || '',
+          heroImage: collectionForm.heroImage || '',
           isFeatured: false,
         }),
       });
@@ -242,6 +245,7 @@ export default function CollectionsPage() {
         name: '', 
         description: '', 
         slug: '',
+        heroImage: '',
         metadata: {
           metaTitle: '',
           metaDescription: '',
@@ -339,6 +343,82 @@ export default function CollectionsPage() {
       ...selectedCollection,
       productIds: selectedCollection.productIds.filter((id) => id !== productId),
     });
+  };
+
+  const handleEditCollection = () => {
+    if (!selectedCollection) return;
+    setIsEditMode(true);
+    setEditingCollection(selectedCollection);
+    setCollectionForm({
+      name: selectedCollection.name,
+      description: selectedCollection.description || '',
+      slug: selectedCollection.slug,
+      heroImage: selectedCollection.featuredImage || '',
+      metadata: selectedCollection.metadata || {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
+        canonicalUrl: '',
+      },
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditingCollection(null);
+    setCollectionForm({
+      name: '',
+      description: '',
+      slug: '',
+      heroImage: '',
+      metadata: {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
+        canonicalUrl: '',
+      },
+    });
+  };
+
+  const handleUpdateCollection = async () => {
+    if (!editingCollection) return;
+    
+    try {
+      const res = await fetch(`/api/admin/collections/${editingCollection.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: collectionForm.name,
+          slug: collectionForm.slug || collectionForm.name.toLowerCase().replace(/\s+/g, '-'),
+          description: collectionForm.description,
+          heroImage: collectionForm.heroImage,
+          isFeatured: editingCollection.metadata?.ogTitle ? true : false,
+          productIds: editingCollection.productIds,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update collection: ${res.status}`);
+      }
+
+      await reloadCollections();
+      setIsEditMode(false);
+      setEditingCollection(null);
+      setSaveMessage('Collection updated successfully!');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error) {
+      console.error('Failed to update collection', error);
+      setSaveMessage('Failed to update collection. Please try again.');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
   const filteredProducts = allProducts.filter((product) => {
@@ -447,7 +527,16 @@ export default function CollectionsPage() {
                     <p className="text-gray-600 mt-1">{selectedCollection.description}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    {hasUnsavedChanges && (
+                    {!isEditMode && (
+                      <button
+                        onClick={handleEditCollection}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-base">edit</span>
+                        Edit Collection
+                      </button>
+                    )}
+                    {hasUnsavedChanges && !isEditMode && (
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-orange-600 font-medium">Unsaved changes</span>
                         <button
@@ -472,6 +561,8 @@ export default function CollectionsPage() {
                         setSelectedCollection(null);
                         setOriginalProductIds([]);
                         setSelectedProducts([]);
+                        setIsEditMode(false);
+                        setEditingCollection(null);
                       }}
                       className="text-gray-400 hover:text-gray-600"
                     >
@@ -479,6 +570,96 @@ export default function CollectionsPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Edit Collection Form */}
+                {isEditMode && editingCollection && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Collection Details</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Collection Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={collectionForm.name}
+                          onChange={(e) => setCollectionForm({ ...collectionForm, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="Collection name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Slug
+                        </label>
+                        <input
+                          type="text"
+                          value={collectionForm.slug}
+                          onChange={(e) => setCollectionForm({ ...collectionForm, slug: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          placeholder="collection-slug"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate from name</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          value={collectionForm.description}
+                          onChange={(e) => setCollectionForm({ ...collectionForm, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          rows={3}
+                          placeholder="Collection description"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Hero Image URL
+                        </label>
+                        <div className="space-y-2">
+                          <input
+                            type="url"
+                            value={collectionForm.heroImage}
+                            onChange={(e) => setCollectionForm({ ...collectionForm, heroImage: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="https://example.com/image.jpg"
+                          />
+                          {collectionForm.heroImage && (
+                            <div className="mt-2">
+                              <img
+                                src={collectionForm.heroImage}
+                                alt="Hero image preview"
+                                className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Recommended: 1200x600px image for best display
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 pt-2">
+                        <button
+                          onClick={handleUpdateCollection}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-base">save</span>
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Search and Filter */}
                 <div className="mb-4 space-y-3">
@@ -784,6 +965,37 @@ export default function CollectionsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe this collection..."
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hero Image URL
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="url"
+                    value={collectionForm.heroImage}
+                    onChange={(e) =>
+                      setCollectionForm({ ...collectionForm, heroImage: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  {collectionForm.heroImage && (
+                    <div className="mt-2">
+                      <img
+                        src={collectionForm.heroImage}
+                        alt="Hero image preview"
+                        className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Recommended: 1200x600px image for best display
+                </p>
               </div>
 
               {/* SEO Metadata Section */}

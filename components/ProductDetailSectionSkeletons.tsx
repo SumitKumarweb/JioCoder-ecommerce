@@ -141,20 +141,25 @@ export function RecentlyViewedSkeleton() {
           <div className="h-10 w-10 rounded-full bg-slate-200"></div>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-            <div className="aspect-square bg-slate-200"></div>
-            <div className="p-4">
-              <div className="h-3 bg-slate-200 rounded w-24 mb-1"></div>
-              <div className="h-5 bg-slate-200 rounded w-full mb-2"></div>
-              <div className="flex items-center justify-between">
-                <div className="h-6 bg-slate-200 rounded w-20"></div>
-                <div className="h-4 bg-slate-200 rounded w-12"></div>
+      {/* Carousel skeleton with Swiper-like layout */}
+      <div className="overflow-hidden">
+        <div className="flex gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                <div className="aspect-square bg-slate-200"></div>
+                <div className="p-4">
+                  <div className="h-3 bg-slate-200 rounded w-24 mb-1"></div>
+                  <div className="h-5 bg-slate-200 rounded w-full mb-2"></div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-6 bg-slate-200 rounded w-20"></div>
+                    <div className="h-4 bg-slate-200 rounded w-12"></div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

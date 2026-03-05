@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
 
-    const blog = await Blog.create({
+    const blog = await .create({
       title: body.title,
       slug: body.slug,
       excerpt: body.excerpt,

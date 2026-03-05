@@ -9,37 +9,40 @@ type AdminNavItem = {
   enabled: boolean;
 };
 
-const DEFAULT_ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { id: 'blog', label: 'Blog', href: '/blog', enabled: true },
-  { id: 'deals', label: 'Deals', href: '/sale', enabled: true },
-];
-
 export default function AdminNavbarPage() {
-  const [items, setItems] = useState<AdminNavItem[]>(DEFAULT_ADMIN_NAV_ITEMS);
-  const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+  const [items, setItems] = useState<AdminNavItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Load configuration from localStorage
+  // Load configuration from API
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const stored = window.localStorage.getItem('adminNavbarItems');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
+    const loadNavbarItems = async () => {
+      try {
+        const res = await fetch('/api/admin/navbar');
+        if (!res.ok) {
+          throw new Error('Failed to fetch navbar items');
         }
-      } else {
-        // Initialize storage with defaults if nothing there
-        window.localStorage.setItem('adminNavbarItems', JSON.stringify(DEFAULT_ADMIN_NAV_ITEMS));
+        const data = await res.json();
+        
+        // Map MongoDB data to AdminNavItem format
+        const mappedItems: AdminNavItem[] = data.map((item: any) => ({
+          id: item._id || `item-${Date.now()}-${Math.random()}`,
+          label: item.label,
+          href: item.href,
+          enabled: item.enabled !== false,
+        }));
+        
+        setItems(mappedItems);
+      } catch (error) {
+        console.error('Failed to load navbar items from API', error);
+        setMessage('Failed to load navbar items. Please refresh the page.');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load admin navbar items from localStorage', error);
-    } finally {
-      setLoadedFromStorage(true);
-    }
+    };
+
+    loadNavbarItems();
   }, []);
 
   const handleAddItem = () => {
@@ -69,17 +72,39 @@ export default function AdminNavbarPage() {
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleSave = () => {
-    if (typeof window === 'undefined') return;
-
+  const handleSave = async () => {
     setSaving(true);
     setMessage(null);
 
     try {
-      window.localStorage.setItem('adminNavbarItems', JSON.stringify(items));
+      const res = await fetch('/api/admin/navbar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save navbar items');
+      }
+
+      const data = await res.json();
+      
+      // Update items with the saved data (including MongoDB _id)
+      if (data.items) {
+        const mappedItems: AdminNavItem[] = data.items.map((item: any, index: number) => ({
+          id: item._id || items[index]?.id || `item-${Date.now()}-${Math.random()}`,
+          label: item.label,
+          href: item.href,
+          enabled: item.enabled !== false,
+        }));
+        setItems(mappedItems);
+      }
+
       setMessage('Navbar configuration saved successfully.');
     } catch (error) {
-      console.error('Failed to save admin navbar items to localStorage', error);
+      console.error('Failed to save navbar items to API', error);
       setMessage('Failed to save configuration. Please try again.');
     } finally {
       setSaving(false);
@@ -87,7 +112,7 @@ export default function AdminNavbarPage() {
     }
   };
 
-  if (!loadedFromStorage) {
+  if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-gray-600">Loading navbar settings...</p>

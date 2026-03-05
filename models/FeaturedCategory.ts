@@ -1,29 +1,23 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IFeaturedCategory extends Document {
-  name: string;
-  image: string;
-  url: string;
+  collectionId: string; // Reference to Collection _id
   order: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
+export interface IFeaturedCategoryConfig extends Document {
+  viewAllUrl: string;
+  updatedAt?: Date;
+}
+
 const FeaturedCategorySchema: Schema<IFeaturedCategory> = new Schema(
   {
-    name: {
+    collectionId: {
       type: String,
       required: true,
-      trim: true,
-    },
-    image: {
-      type: String,
-      required: true,
-    },
-    url: {
-      type: String,
-      required: true,
-      trim: true,
+      ref: 'Collection',
     },
     order: {
       type: Number,
@@ -35,13 +29,30 @@ const FeaturedCategorySchema: Schema<IFeaturedCategory> = new Schema(
   }
 );
 
+const FeaturedCategoryConfigSchema: Schema<IFeaturedCategoryConfig> = new Schema(
+  {
+    viewAllUrl: {
+      type: String,
+      default: '/products',
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Clear cached models to prevent schema issues during hot-reloads
+if (mongoose.models.FeaturedCategoryConfig) {
+  delete (mongoose.models as any).FeaturedCategoryConfig;
+}
+if (mongoose.models.FeaturedCategory) {
+  delete (mongoose.models as any).FeaturedCategory;
+}
+
+export const FeaturedCategoryConfig: Model<IFeaturedCategoryConfig> =
+  mongoose.model<IFeaturedCategoryConfig>("FeaturedCategoryConfig", FeaturedCategoryConfigSchema);
+
 const FeaturedCategory: Model<IFeaturedCategory> =
-  mongoose.models.FeaturedCategory ||
-  mongoose.model<IFeaturedCategory>(
-    "FeaturedCategory",
-    FeaturedCategorySchema
-  );
+  mongoose.model<IFeaturedCategory>("FeaturedCategory", FeaturedCategorySchema);
 
 export default FeaturedCategory;
-
-

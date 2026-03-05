@@ -8,6 +8,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BlogCarouselSkeleton from '@/components/BlogCarouselSkeleton';
 import Breadcrumb from '@/components/Breadcrumb';
 
 const featuredPosts = [
@@ -191,55 +192,59 @@ export default function BlogPage() {
 
         {/* Featured Post Hero with Swiper */}
         <section className="mb-12 mt-6">
-          <Swiper
-            modules={[Autoplay, Pagination]}
-            spaceBetween={0}
-            slidesPerView={1}
-            autoplay={{
-              delay: 5000,
-              disableOnInteraction: false,
-            }}
-            pagination={{
-              clickable: true,
-              bulletClass: 'swiper-pagination-bullet !bg-white/50',
-              bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary',
-            }}
-            loop={true}
-            className="featured-swiper"
-          >
-            {displayFeaturedPosts.map((post) => (
-              <SwiperSlide key={post.id}>
-                <Link
-                  href={`/blog/${getPostSlug(post.id)}`}
-                  className="relative h-[500px] w-full overflow-hidden rounded-xl group cursor-pointer block"
-                >
-                  <img
-                    alt={post.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    src={post.image}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 p-8 md:p-12 max-w-3xl">
-                    <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider mb-4">
-                      {post.category}
-                    </span>
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">{post.title}</h2>
-                    <p className="text-slate-200 text-lg mb-6 line-clamp-2">{post.description}</p>
-                    <div className="flex items-center gap-4">
-                      <span className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
-                        Read Guide
-                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          {loading ? (
+            <BlogCarouselSkeleton />
+          ) : displayFeaturedPosts.length > 0 ? (
+            <Swiper
+              modules={[Autoplay, Pagination]}
+              spaceBetween={0}
+              slidesPerView={1}
+              autoplay={{
+                delay: 5000,
+                disableOnInteraction: false,
+              }}
+              pagination={{
+                clickable: true,
+                bulletClass: 'swiper-pagination-bullet !bg-white/50',
+                bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary',
+              }}
+              loop={displayFeaturedPosts.length > 1}
+              className="featured-swiper"
+            >
+              {displayFeaturedPosts.map((post) => (
+                <SwiperSlide key={post.id}>
+                  <Link
+                    href={`/blog/${getPostSlug(post.id)}`}
+                    className="relative h-[500px] w-full overflow-hidden rounded-xl group cursor-pointer block"
+                  >
+                    <img
+                      alt={post.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      src={post.image}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-8 md:p-12 max-w-3xl">
+                      <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider mb-4">
+                        {post.category}
                       </span>
-                      <span className="text-slate-300 text-sm font-medium flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">schedule</span>
-                        {post.readTime}
-                      </span>
+                      <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">{post.title}</h2>
+                      <p className="text-slate-200 text-lg mb-6 line-clamp-2">{post.description}</p>
+                      <div className="flex items-center gap-4">
+                        <span className="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
+                          Read Guide
+                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </span>
+                        <span className="text-slate-300 text-sm font-medium flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">schedule</span>
+                          {post.readTime}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : null}
         </section>
 
         {/* Category Filter Bar */}
