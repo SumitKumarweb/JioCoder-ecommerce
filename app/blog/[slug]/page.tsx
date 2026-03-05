@@ -25,6 +25,7 @@ interface BlogPost {
   comments?: number;
   images: string[];
   videos: string[];
+  description?: string;
   content?: string;
   summary?: string;
   relatedProducts?: RelatedProduct[];
@@ -143,6 +144,12 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                   <div className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
                   <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
                 </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <div className="h-5 bg-slate-200 rounded animate-pulse w-full" />
+                <div className="h-5 bg-slate-200 rounded animate-pulse w-3/4" />
               </div>
 
               {/* Featured image */}
@@ -350,6 +357,15 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 ))}
               </div>
             )}
+
+            
+            {/* Description */}
+            {blogPost.description && (
+              <p className="text-lg md:text-xl text-slate-500 leading-relaxed mb-8">
+                {blogPost.description}
+              </p>
+            )}
+
 
             {/* Content */}
             <div className="prose prose-slate max-w-none">
