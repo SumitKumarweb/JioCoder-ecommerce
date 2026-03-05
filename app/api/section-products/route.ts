@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
-import SectionProduct from "@/models/SectionProduct";
 import mongoose from "mongoose";
+// Import models in correct order - Product must be imported before SectionProduct
+// to ensure it's registered when SectionProduct.populate() is called
+import Product from "@/models/Product";
+import SectionProduct from "@/models/SectionProduct";
 
 // Helper function to check if MongoDB connection is ready
 function isConnected(): boolean {
@@ -63,6 +66,24 @@ export async function GET(req: NextRequest) {
     // Connect to database with retry logic
     try {
       await connectDB();
+      // Ensure Product model is registered before populate operations
+      // This is critical in serverless environments where models might not be loaded
+      // Check both mongoose.models and connection.models
+      const connection = mongoose.connection;
+      if (!mongoose.models.Product && !connection.models.Product) {
+        console.error("[SectionProducts API] Product model not registered! Attempting to register...");
+        // Force registration by accessing the Product model
+        // The import should have registered it, but in serverless it might not persist
+        void Product;
+        // Wait a tick to ensure registration completes
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      // Verify registration
+      if (!mongoose.models.Product && !connection.models.Product) {
+        console.error("[SectionProducts API] CRITICAL: Product model still not registered after import!");
+      } else {
+        console.log("[SectionProducts API] Product model is registered and ready for populate");
+      }
     } catch (dbError: any) {
       console.error("[SectionProducts API] Database connection failed:", dbError?.message || dbError);
       // Return empty array with diagnostic info in development
@@ -107,16 +128,63 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(response);
     }
 
-    // Fetch items with populate, but handle cases where product might be null (with retry)
+    // Fetch items and manually populate products to avoid serverless model registration issues
+    // This approach avoids the populate() method which requires model registration
     const items = await retryOperation(async () => {
-      return await SectionProduct.find(query)
-        .populate({
-          path: "product",
-          // Don't throw error if product is missing, just return null
-          options: { lean: true }
-        })
+      // Fetch section products first
+      const sectionProducts = await SectionProduct.find(query)
         .sort({ sectionType: 1, order: 1 })
         .lean();
+      
+      if (sectionProducts.length === 0) {
+        return [];
+      }
+      
+      // Extract product IDs (handle both ObjectId and string formats)
+      const productIds = sectionProducts
+        .map((sp: any) => {
+          const productId = sp.product;
+          if (!productId) return null;
+          // Convert to string for comparison, or keep as ObjectId
+          return productId.toString ? productId.toString() : productId;
+        })
+        .filter((id: any) => id != null);
+      
+      if (productIds.length === 0) {
+        // No product IDs, return section products with null products
+        return sectionProducts.map((sp: any) => ({ ...sp, product: null }));
+      }
+      
+      // Manually fetch products using Product model
+      // The Product import should have registered it, but we use it directly
+      let products: any[] = [];
+      try {
+        // Use the imported Product model directly
+        // This should work because the model is already registered when imported
+        products = await Product.find({ 
+          _id: { $in: productIds.map((id: string) => new mongoose.Types.ObjectId(id)) }
+        }).lean();
+      } catch (productError: any) {
+        console.error("[SectionProducts API] Error fetching products:", productError);
+        // If product fetch fails, return section products with null products
+        return sectionProducts.map((sp: any) => ({ ...sp, product: null }));
+      }
+      
+      // Create a map of product ID to product for quick lookup
+      const productMap = new Map();
+      products.forEach((product: any) => {
+        const productId = product._id?.toString() || product._id;
+        productMap.set(productId, product);
+      });
+      
+      // Join products with section products
+      return sectionProducts.map((sp: any) => {
+        const productId = sp.product?.toString ? sp.product.toString() : sp.product;
+        return {
+          ...sp,
+          product: productMap.get(productId) || null
+        };
+      });
     });
 
     console.log(`[SectionProducts API] Found ${items.length} items after query`);
