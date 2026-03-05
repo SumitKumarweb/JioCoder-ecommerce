@@ -5,6 +5,7 @@ import FeaturedCategories from "@/components/FeaturedCategories";
 import TrendingProducts from "@/components/TrendingProducts";
 import BestSellers from "@/components/BestSellers";
 import CommunityReviews from "@/components/CommunityReviews";
+import InstagramReels from "@/components/InstagramReels";
 import ProductSpotlight from "@/components/ProductSpotlight";
 import LiveSetupGallery from "@/components/LiveSetupGallery";
 import Features from "@/components/Features";
@@ -67,6 +68,7 @@ export default function Home() {
         <TrendingProducts />
         <BestSellers />
         <CommunityReviews />
+        <InstagramReels />
         <ProductSpotlight />
         <LiveSetupGallery />
       </main>

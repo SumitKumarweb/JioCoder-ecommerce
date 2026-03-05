@@ -21,80 +21,112 @@ interface Order {
   updatedAt: string;
 }
 
+// Map MongoDB status to admin display status
+const mapStatus = (mongoStatus: string): Order['status'] => {
+  const statusMap: Record<string, Order['status']> = {
+    'PENDING': 'pending',
+    'PAID': 'processing',
+    'SHIPPED': 'shipped',
+    'COMPLETED': 'delivered',
+    'CANCELLED': 'cancelled',
+  };
+  return statusMap[mongoStatus] || 'pending';
+};
+
+// Map admin display status to MongoDB status
+const mapStatusToMongo = (adminStatus: Order['status']): string => {
+  const statusMap: Record<Order['status'], string> = {
+    'pending': 'PENDING',
+    'processing': 'PAID',
+    'shipped': 'SHIPPED',
+    'delivered': 'COMPLETED',
+    'cancelled': 'CANCELLED',
+  };
+  return statusMap[adminStatus] || 'PENDING';
+};
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    setOrders([
-      {
-        id: '1',
-        orderNumber: 'ORD-001',
-        customerName: 'Rahul Sharma',
-        customerEmail: 'rahul@example.com',
-        products: [
-          { name: 'Keychron K2 Keyboard', quantity: 1, price: 7499 },
-          { name: 'Gaming Mouse', quantity: 1, price: 1999 },
-        ],
-        totalAmount: 9498,
-        status: 'processing',
-        paymentStatus: 'paid',
-        shippingAddress: 'Apartment 402, Green Heights, Powai, Mumbai - 400076',
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T11:00:00Z',
-      },
-      {
-        id: '2',
-        orderNumber: 'ORD-002',
-        customerName: 'Priya Patel',
-        customerEmail: 'priya@example.com',
-        products: [{ name: 'Logitech MX Keys', quantity: 1, price: 12995 }],
-        totalAmount: 12995,
-        status: 'shipped',
-        paymentStatus: 'paid',
-        shippingAddress: '123 Main Street, Bangalore - 560001',
-        createdAt: '2024-01-14T14:20:00Z',
-        updatedAt: '2024-01-15T09:00:00Z',
-      },
-      {
-        id: '3',
-        orderNumber: 'ORD-003',
-        customerName: 'Amit Kumar',
-        customerEmail: 'amit@example.com',
-        products: [{ name: 'Custom Keycaps Set', quantity: 2, price: 2499 }],
-        totalAmount: 4998,
-        status: 'delivered',
-        paymentStatus: 'paid',
-        shippingAddress: '456 Park Avenue, Delhi - 110001',
-        createdAt: '2024-01-13T16:45:00Z',
-        updatedAt: '2024-01-14T10:30:00Z',
-      },
-      {
-        id: '4',
-        orderNumber: 'ORD-004',
-        customerName: 'Sneha Reddy',
-        customerEmail: 'sneha@example.com',
-        products: [{ name: 'Mechanical Keyboard', quantity: 1, price: 8999 }],
-        totalAmount: 8999,
-        status: 'pending',
-        paymentStatus: 'pending',
-        shippingAddress: '789 Tech Park, Hyderabad - 500032',
-        createdAt: '2024-01-15T08:15:00Z',
-        updatedAt: '2024-01-15T08:15:00Z',
-      },
-    ]);
+    const loadOrders = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/admin/orders');
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+        const data = await response.json();
+        
+        // Transform MongoDB orders to admin format
+        const transformedOrders: Order[] = data.map((order: any) => {
+          const shippingAddr = order.shippingAddress || {};
+          const shippingAddressStr = shippingAddr.address
+            ? `${shippingAddr.address}${shippingAddr.locality ? `, ${shippingAddr.locality}` : ''}, ${shippingAddr.city || ''} - ${shippingAddr.pinCode || ''}`
+            : 'Address not provided';
+
+          return {
+            id: order._id,
+            orderNumber: order.orderNumber,
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+            products: order.items.map((item: any) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+            totalAmount: order.total,
+            status: mapStatus(order.status),
+            paymentStatus: (order.paymentStatus || 'PENDING').toLowerCase() as 'pending' | 'paid' | 'refunded',
+            shippingAddress: shippingAddressStr,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+          };
+        });
+
+        setOrders(transformedOrders);
+      } catch (error) {
+        console.error('Failed to load orders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOrders();
   }, []);
 
-  const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
-    setOrders(
-      orders.map((order) =>
-        order.id === orderId
-          ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
-          : order
-      )
-    );
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
+    try {
+      const mongoStatus = mapStatusToMongo(newStatus);
+      
+      // Update via API
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: mongoStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      // Update local state
+      setOrders(
+        orders.map((order) =>
+          order.id === orderId
+            ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+            : order
+        )
+      );
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      alert('Failed to update order status. Please try again.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -188,10 +220,19 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading orders...</p>
+        </div>
+      )}
+
       {/* Orders Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      {!isLoading && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -287,8 +328,9 @@ export default function OrdersPage() {
           </table>
         </div>
       </div>
+      )}
 
-      {filteredOrders.length === 0 && (
+      {!isLoading && filteredOrders.length === 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
           <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">
             shopping_bag

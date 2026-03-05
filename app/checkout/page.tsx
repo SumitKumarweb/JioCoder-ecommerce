@@ -304,6 +304,10 @@ export default function CheckoutPage() {
               <div className="p-6 space-y-4">
                 <Link
                   href="/checkout/payment"
+                  onClick={() => {
+                    // Save checkout form data to localStorage
+                    localStorage.setItem('checkoutFormData', JSON.stringify(formData));
+                  }}
                   className="w-full bg-primary hover:bg-primary/90 text-white h-14 rounded-lg font-bold text-lg shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   Continue to Payment

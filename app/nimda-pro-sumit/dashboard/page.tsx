@@ -14,6 +14,7 @@ interface StatCard {
 
 interface OrderRow {
   id: string;
+  orderNumber?: string;
   customerName: string;
   productName: string;
   amount: number;
@@ -25,55 +26,116 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderRow[]>([]);
   const [liveSales, setLiveSales] = useState<OrderRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace mock stats with real analytics from /api/admin/analytics
-    setStats([
-      {
-        title: 'Total Users',
-        value: '12,458',
-        change: '+12.5%',
-        changeType: 'positive',
-        icon: 'people',
-        color: 'bg-blue-500',
-      },
-      {
-        title: 'New Users (30 days)',
-        value: '1,234',
-        change: '+8.2%',
-        changeType: 'positive',
-        icon: 'person_add',
-        color: 'bg-green-500',
-      },
-      // Order stats can be calculated from real data later
-    ]);
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/admin/dashboard');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch dashboard data: ${res.status}`);
+        }
+        const data = await res.json();
+
+        // Format stats
+        const formattedStats: StatCard[] = [
+          {
+            title: 'Total Orders',
+            value: data.stats.totalOrders.toLocaleString(),
+            change: data.stats.ordersChange > 0 ? `+${data.stats.ordersChange}%` : `${data.stats.ordersChange}%`,
+            changeType: data.stats.ordersChange >= 0 ? 'positive' : 'negative',
+            icon: 'shopping_bag',
+            color: 'bg-blue-500',
+          },
+          {
+            title: 'Total Revenue',
+            value: `₹${data.stats.totalRevenue.toLocaleString('en-IN')}`,
+            change: data.stats.revenueChange > 0 ? `+${data.stats.revenueChange}%` : `${data.stats.revenueChange}%`,
+            changeType: data.stats.revenueChange >= 0 ? 'positive' : 'negative',
+            icon: 'payments',
+            color: 'bg-green-500',
+          },
+          {
+            title: 'Total Customers',
+            value: data.stats.totalCustomers.toLocaleString(),
+            change: undefined,
+            changeType: 'neutral',
+            icon: 'people',
+            color: 'bg-purple-500',
+          },
+          {
+            title: 'Pending Orders',
+            value: data.stats.pendingOrders.toLocaleString(),
+            change: undefined,
+            changeType: 'neutral',
+            icon: 'pending',
+            color: 'bg-yellow-500',
+          },
+          {
+            title: 'Completed Orders',
+            value: data.stats.completedOrders.toLocaleString(),
+            change: undefined,
+            changeType: 'neutral',
+            icon: 'check_circle',
+            color: 'bg-emerald-500',
+          },
+          {
+            title: 'Revenue (30 days)',
+            value: `₹${data.stats.revenueLast30Days.toLocaleString('en-IN')}`,
+            change: undefined,
+            changeType: 'neutral',
+            icon: 'trending_up',
+            color: 'bg-indigo-500',
+          },
+        ];
+
+        setStats(formattedStats);
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        // Fallback to empty stats
+        setStats([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
   }, []);
 
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const res = await fetch('/api/admin/orders');
+        const res = await fetch('/api/admin/dashboard');
         if (!res.ok) {
-          throw new Error(`Failed to fetch orders: ${res.status}`);
+          throw new Error(`Failed to fetch dashboard data: ${res.status}`);
         }
-        const data: any[] = await res.json();
-        const mapped: OrderRow[] =
-          data?.map((order) => ({
-            id: order._id,
-            customerName: order.user?.name || order.user?.email || 'Guest',
-            productName:
-              order.items?.[0]?.name || `${order.items?.length || 0} item(s)`,
-            amount: order.total,
-            status: order.status,
-            date: order.createdAt,
-          })) || [];
+        const data = await res.json();
 
-        // Recent orders: latest 5
-        setRecentOrders(mapped.slice(0, 5));
+        // Map recent orders
+        const mappedRecent: OrderRow[] = data.recentOrders?.map((order: any) => ({
+          id: order._id,
+          orderNumber: order.orderNumber,
+          customerName: order.customerName || order.customerEmail || 'Guest',
+          productName: order.productName,
+          amount: order.total,
+          status: order.status,
+          date: order.createdAt,
+        })) || [];
 
-        // Live sales: last 2 processing/paid orders
-        const live = mapped.filter((o) => o.status === 'PENDING' || o.status === 'PAID');
-        setLiveSales(live.slice(0, 2));
+        // Map live sales
+        const mappedLive: OrderRow[] = data.liveSales?.map((order: any) => ({
+          id: order._id,
+          orderNumber: order.orderNumber,
+          customerName: order.customerName || order.customerEmail || 'Guest',
+          productName: order.productName,
+          amount: order.total,
+          status: order.status,
+          date: order.createdAt,
+        })) || [];
+
+        setRecentOrders(mappedRecent);
+        setLiveSales(mappedLive);
       } catch (error) {
         console.error('Failed to load orders for dashboard', error);
       }
@@ -101,7 +163,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading dashboard data...</p>
+        </div>
+      )}
+
       {/* Stats Grid */}
+      {!isLoading && (
+        <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, index) => (
           <div
@@ -153,7 +225,7 @@ export default function DashboardPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Order ID
+                    Order #
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Customer
@@ -173,7 +245,9 @@ export default function DashboardPage() {
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {order.id}
+                      <Link href={`/nimda-pro-sumit/orders/${order.id}`} className="text-blue-600 hover:text-blue-800">
+                        {order.orderNumber || order.id.slice(-8)}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {order.customerName}
@@ -182,7 +256,7 @@ export default function DashboardPage() {
                       {order.productName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{order.amount.toLocaleString()}
+                      ₹{order.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -223,7 +297,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">₹{sale.amount.toLocaleString()}</p>
+                    <p className="font-semibold text-gray-900">₹{sale.amount.toLocaleString('en-IN')}</p>
                     <span className="inline-flex items-center gap-1 text-xs text-green-600 mt-1">
                       <span className="material-symbols-outlined text-sm">trending_up</span>
                       Live
@@ -237,6 +311,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

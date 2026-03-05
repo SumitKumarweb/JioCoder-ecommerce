@@ -35,14 +35,16 @@ export async function PUT(req: NextRequest, context: OrderRouteContext) {
     await connectDB();
     const body = await req.json();
 
+    const updateData: any = {};
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.paymentStatus !== undefined) updateData.paymentStatus = body.paymentStatus;
+    if (body.paymentId !== undefined) updateData.paymentId = body.paymentId;
+    if (body.paymentMethod !== undefined) updateData.paymentMethod = body.paymentMethod;
+    if (body.shippingAddress !== undefined) updateData.shippingAddress = body.shippingAddress;
+
     const order = await Order.findByIdAndUpdate(
       id,
-      {
-        status: body.status,
-        paymentId: body.paymentId,
-        paymentMethod: body.paymentMethod,
-        shippingAddress: body.shippingAddress,
-      },
+      updateData,
       { new: true }
     )
       .populate("user", "email name")

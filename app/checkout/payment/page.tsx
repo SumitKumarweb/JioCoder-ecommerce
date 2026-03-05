@@ -359,6 +359,19 @@ export default function PaymentPage() {
                 {/* CTA Button */}
                 <Link
                   href="/checkout/success"
+                  onClick={() => {
+                    // Save payment data to localStorage
+                    const paymentData = {
+                      method: selectedPaymentMethod,
+                      upiId: upiId,
+                      subtotal,
+                      gst,
+                      total,
+                      discount,
+                      finalTotal,
+                    };
+                    localStorage.setItem('paymentData', JSON.stringify(paymentData));
+                  }}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl mt-8 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 group"
                 >
                   Pay Now ₹{finalTotal.toLocaleString('en-IN')}

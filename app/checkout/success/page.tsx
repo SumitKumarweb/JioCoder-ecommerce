@@ -8,10 +8,19 @@ import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { useCart } from '@/contexts/CartContext';
 
+interface OrderData {
+  _id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+}
+
 export default function OrderSuccessPage() {
   const router = useRouter();
   const { cartItems, getTotalPrice, clearCart } = useCart();
-  const [orderId] = useState(() => `EC-${Math.floor(Math.random() * 100000000)}`);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(true);
   const [deliveryDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() + 3); // 3 days from now
@@ -26,40 +35,142 @@ export default function OrderSuccessPage() {
   // Store cart items before clearing (for display)
   const [orderedItems] = useState(cartItems);
 
-  // Clear cart after order is placed
+  // Create order in MongoDB
   useEffect(() => {
-    if (cartItems.length > 0) {
-      clearCart();
-    }
+    const createOrder = async () => {
+      // Get form data and payment data from localStorage
+      const formDataStr = localStorage.getItem('checkoutFormData');
+      const paymentDataStr = localStorage.getItem('paymentData');
+
+      if (!formDataStr || !paymentDataStr || orderedItems.length === 0) {
+        router.push('/cart');
+        return;
+      }
+
+      try {
+        const formData = JSON.parse(formDataStr);
+        const paymentData = JSON.parse(paymentDataStr);
+
+        // Prepare order items
+        const orderItems = orderedItems.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        }));
+
+        // Prepare shipping address
+        const shippingAddress = {
+          name: formData.fullName,
+          mobile: formData.mobile,
+          address: formData.address,
+          locality: formData.locality,
+          city: formData.city,
+          state: formData.state,
+          pinCode: formData.pinCode,
+          addressType: formData.addressType,
+        };
+
+        // Create order via API
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerName: formData.fullName,
+            customerEmail: formData.mobile ? `${formData.mobile}@example.com` : 'customer@example.com', // Generate email from mobile
+            items: orderItems,
+            total: paymentData.finalTotal,
+            currency: 'INR',
+            status: 'PENDING',
+            paymentStatus: 'PAID',
+            paymentMethod: paymentData.method,
+            shippingAddress: shippingAddress,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create order');
+        }
+
+        const createdOrder = await response.json();
+        setOrderData({
+          _id: createdOrder._id,
+          orderNumber: createdOrder.orderNumber,
+          customerName: createdOrder.customerName,
+          customerEmail: createdOrder.customerEmail,
+          total: createdOrder.total,
+        });
+
+        // Clear localStorage
+        localStorage.removeItem('checkoutFormData');
+        localStorage.removeItem('paymentData');
+
+        // Clear cart
+        clearCart();
+      } catch (error) {
+        console.error('Failed to create order:', error);
+        // Still redirect but show error
+        router.push('/cart');
+      } finally {
+        setIsCreatingOrder(false);
+      }
+    };
+
+    createOrder();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redirect to cart if no items (shouldn't happen, but safety check)
   useEffect(() => {
-    if (orderedItems.length === 0) {
+    if (!isCreatingOrder && orderedItems.length === 0 && !orderData) {
       router.push('/cart');
     }
-  }, [orderedItems.length, router]);
+  }, [isCreatingOrder, orderedItems.length, orderData, router]);
 
-  // Calculate total from ordered items
-  const total = orderedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const gst = Math.round(total * 0.18);
-  const totalWithGst = total + gst;
-  const discount = 1000;
-  const finalTotal = totalWithGst - discount;
-
-  // Sample email (in real app, this would come from user data)
-  const userEmail = 'rahul.sharma@example.in';
-
-  // Sample shipping address (in real app, this would come from checkout form)
-  const shippingAddress = {
-    name: 'Rahul Sharma',
-    address: 'Apartment 402, Green Heights, Powai',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    pinCode: '400076',
+  // Get shipping address from localStorage if available
+  const getShippingAddress = () => {
+    const formDataStr = localStorage.getItem('checkoutFormData');
+    if (formDataStr) {
+      const formData = JSON.parse(formDataStr);
+      return {
+        name: formData.fullName,
+        address: formData.address,
+        locality: formData.locality,
+        city: formData.city,
+        state: formData.state,
+        pinCode: formData.pinCode,
+      };
+    }
+    return {
+      name: 'Customer',
+      address: '',
+      city: '',
+      state: '',
+      pinCode: '',
+    };
   };
 
-  if (orderedItems.length === 0) {
+  const shippingAddress = getShippingAddress();
+  const userEmail = orderData?.customerEmail || 'customer@example.com';
+  const finalTotal = orderData?.total || 0;
+
+  if (isCreatingOrder) {
+    return (
+      <>
+        <Navbar />
+        <main className="max-w-3xl mx-auto px-4 py-12 md:py-20">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-slate-600">Creating your order...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (orderedItems.length === 0 || !orderData) {
     return null; // Will redirect
   }
 
@@ -97,7 +208,7 @@ export default function OrderSuccessPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Order ID</p>
-                <p className="text-lg font-mono font-bold text-slate-900">#{orderId}</p>
+                <p className="text-lg font-mono font-bold text-slate-900">#{orderData.orderNumber}</p>
               </div>
               <div className="md:text-right">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -121,9 +232,18 @@ export default function OrderSuccessPage() {
                   <p className="text-sm text-slate-500 mt-1 leading-relaxed">
                     {shippingAddress.name}
                     <br />
-                    {shippingAddress.address}
-                    <br />
-                    {shippingAddress.city}, {shippingAddress.state} - {shippingAddress.pinCode}
+                    {shippingAddress.address && (
+                      <>
+                        {shippingAddress.address}
+                        {shippingAddress.locality && `, ${shippingAddress.locality}`}
+                        <br />
+                      </>
+                    )}
+                    {shippingAddress.city && (
+                      <>
+                        {shippingAddress.city}, {shippingAddress.state} - {shippingAddress.pinCode}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -131,7 +251,7 @@ export default function OrderSuccessPage() {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link
-                  href={`/orders/${orderId}`}
+                  href={`/orders/${orderData._id}`}
                   className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 group"
                 >
                   <span>Track Order</span>

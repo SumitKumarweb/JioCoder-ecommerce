@@ -355,3 +355,25 @@ details[open] .faq-icon {
 .featured-swiper .swiper-button-prev:hover {
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* Best Sellers Swiper Navigation */
+.best-sellers-swiper-prev,
+.best-sellers-swiper-next {
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.best-sellers-swiper-prev.swiper-button-disabled,
+.best-sellers-swiper-next.swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+
+@media (max-width: 640px) {
+  .best-sellers-swiper-prev,
+  .best-sellers-swiper-next {
+    display: none !important;
+  }
+}

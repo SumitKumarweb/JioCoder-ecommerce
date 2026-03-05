@@ -2,40 +2,41 @@
 
 import { useEffect, useState } from 'react';
 
-interface CommunityReview {
+interface InstagramReel {
   _id: string;
-  avatarUrl?: string;
-  authorName: string;
-  content: string;
-  rating: number;
-  image?: string;
-  videoUrl?: string;
-  // Optional social-style fields
-  likes?: string;
-  comments?: number;
+  title: string;
+  instagramUrl: string;
+  thumbnailUrl?: string;
+  username: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
 }
 
-export default function CommunityReviews() {
-  const [reviews, setReviews] = useState<CommunityReview[]>([]);
+export default function InstagramReels() {
+  const [reels, setReels] = useState<InstagramReel[]>([]);
 
   useEffect(() => {
-    const loadReviews = async () => {
+    const loadReels = async () => {
       try {
-        const res = await fetch('/api/community-reviews');
+        const res = await fetch('/api/instagram-reels');
         if (!res.ok) {
-          throw new Error(`Failed to fetch community reviews: ${res.status}`);
+          throw new Error(`Failed to fetch Instagram reels: ${res.status}`);
         }
-        const data: CommunityReview[] = await res.json();
-        setReviews(data || []);
+        const data: InstagramReel[] = await res.json();
+        console.log('Instagram Reels API Response:', data);
+        console.log('Number of reels:', data?.length || 0);
+        setReels(data || []);
       } catch (error) {
-        console.error('Failed to load community reviews from API', error);
+        console.error('Failed to load Instagram reels from API', error);
       }
     };
 
-    loadReviews();
+    loadReels();
   }, []);
 
-  if (reviews.length === 0) {
+  if (reels.length === 0) {
     return null;
   }
 
@@ -43,42 +44,44 @@ export default function CommunityReviews() {
     <section className="space-y-6">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
-          <h3 className="text-2xl font-bold tracking-tight">Community Reviews</h3>
+          <h3 className="text-2xl font-bold tracking-tight">Instagram Reels</h3>
           <p className="text-slate-500 text-sm">
-            Authentic setup showcases from our premium community.
+            Latest reels from our community
           </p>
         </div>
         <a
           className="text-primary font-semibold text-sm flex items-center gap-1 hover:underline"
-          href="#"
+          href="https://www.instagram.com/jiocoder"
+          target="_blank"
+          rel="noopener noreferrer"
         >
           Follow @JioCoder
           <span className="material-symbols-outlined text-sm">open_in_new</span>
         </a>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {reviews.map((review) => (
+        {reels.map((reel) => (
           <a
-            key={review._id}
-            href={review.videoUrl || review.image || '#'}
+            key={reel._id}
+            href={reel.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer shadow-sm block"
+            className="relative aspect-[9/16] rounded-xl overflow-hidden group cursor-pointer shadow-sm"
           >
-            {review.image ? (
+            {reel.thumbnailUrl ? (
               <img
-                alt={`Video Review from ${review.authorName}`}
+                alt={reel.title}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                src={review.image}
+                src={reel.thumbnailUrl}
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Video';
+                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x533?text=Instagram+Reel';
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-purple-500/40 flex items-center justify-center">
                 <span className="material-symbols-outlined text-white text-4xl opacity-80">
-                  play_circle
+                  movie
                 </span>
               </div>
             )}
@@ -89,19 +92,19 @@ export default function CommunityReviews() {
             </div>
             <div className="absolute inset-0 video-overlay opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-white font-bold text-xs">{review.authorName}</span>
+                <span className="text-white font-bold text-xs">{reel.username}</span>
               </div>
               <p className="text-white text-[10px] leading-tight line-clamp-2 mb-2 italic">
-                {review.content}
+                {reel.title}
               </p>
               <div className="flex items-center gap-3 text-white">
                 <div className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-xs fill-1">favorite</span>
-                  <span className="text-[10px] font-bold">{review.likes}</span>
+                  <span className="text-[10px] font-bold">{reel.likes.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-xs">chat_bubble</span>
-                  <span className="text-[10px] font-bold">{review.comments}</span>
+                  <span className="text-[10px] font-bold">{reel.comments}</span>
                 </div>
               </div>
             </div>

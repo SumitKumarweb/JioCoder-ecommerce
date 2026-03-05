@@ -7,6 +7,8 @@ type OrderStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
+
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
   name: string;
@@ -15,9 +17,13 @@ export interface IOrderItem {
 }
 
 export interface IOrder extends Document {
+  orderNumber: string;
   user?: mongoose.Types.ObjectId;
+  customerName: string;
+  customerEmail: string;
   items: IOrderItem[];
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
   total: number;
   currency: string;
   paymentId?: string;
@@ -54,9 +60,26 @@ const OrderItemSchema = new Schema<IOrderItem>(
 
 const OrderSchema: Schema<IOrder> = new Schema(
   {
+    orderNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    customerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    customerEmail: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
     items: {
       type: [OrderItemSchema],
@@ -66,6 +89,11 @@ const OrderSchema: Schema<IOrder> = new Schema(
     status: {
       type: String,
       enum: ["PENDING", "PAID", "SHIPPED", "COMPLETED", "CANCELLED"],
+      default: "PENDING",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "PAID", "REFUNDED"],
       default: "PENDING",
     },
     total: {
@@ -92,6 +120,32 @@ const OrderSchema: Schema<IOrder> = new Schema(
     timestamps: true,
   }
 );
+
+// Generate order number before saving
+OrderSchema.pre('save', async function (next) {
+  if (!this.orderNumber) {
+    // Generate order number: ORD-YYYYMMDD-XXXXX (5 random digits)
+    const date = new Date();
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomNum = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    this.orderNumber = `ORD-${dateStr}-${randomNum}`;
+    
+    // Ensure uniqueness
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 10) {
+      const existing = await mongoose.models.Order?.findOne({ orderNumber: this.orderNumber });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        const randomNum = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+        this.orderNumber = `ORD-${dateStr}-${randomNum}`;
+        attempts++;
+      }
+    }
+  }
+  next();
+});
 
 const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
