@@ -129,29 +129,35 @@ export default function OrderSuccessPage() {
   }, [isCreatingOrder, orderedItems.length, orderData, router]);
 
   // Get shipping address from localStorage if available
-  const getShippingAddress = () => {
-    const formDataStr = localStorage.getItem('checkoutFormData');
-    if (formDataStr) {
-      const formData = JSON.parse(formDataStr);
-      return {
-        name: formData.fullName,
-        address: formData.address,
-        locality: formData.locality,
-        city: formData.city,
-        state: formData.state,
-        pinCode: formData.pinCode,
-      };
-    }
-    return {
-      name: 'Customer',
-      address: '',
-      city: '',
-      state: '',
-      pinCode: '',
-    };
-  };
+  const [shippingAddress, setShippingAddress] = useState({
+    name: 'Customer',
+    address: '',
+    locality: '',
+    city: '',
+    state: '',
+    pinCode: '',
+  });
 
-  const shippingAddress = getShippingAddress();
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const formDataStr = localStorage.getItem('checkoutFormData');
+      if (formDataStr) {
+        try {
+          const formData = JSON.parse(formDataStr);
+          setShippingAddress({
+            name: formData.fullName || 'Customer',
+            address: formData.address || '',
+            locality: formData.locality || '',
+            city: formData.city || '',
+            state: formData.state || '',
+            pinCode: formData.pinCode || '',
+          });
+        } catch (e) {
+          console.error('Failed to parse checkout form data:', e);
+        }
+      }
+    }
+  }, []);
   const userEmail = orderData?.customerEmail || 'customer@example.com';
   const finalTotal = orderData?.total || 0;
 

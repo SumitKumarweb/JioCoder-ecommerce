@@ -58,7 +58,7 @@ const OrderItemSchema = new Schema<IOrderItem>(
   { _id: false }
 );
 
-const OrderSchema: Schema<IOrder> = new Schema(
+const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: {
       type: String,
@@ -122,7 +122,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
 );
 
 // Generate order number before saving
-OrderSchema.pre('save', async function (next) {
+(OrderSchema as any).pre('save', async function (this: IOrder) {
   if (!this.orderNumber) {
     // Generate order number: ORD-YYYYMMDD-XXXXX (5 random digits)
     const date = new Date();
@@ -144,7 +144,6 @@ OrderSchema.pre('save', async function (next) {
       }
     }
   }
-  next();
 });
 
 const Order: Model<IOrder> =

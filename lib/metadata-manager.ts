@@ -54,18 +54,32 @@ export class MetadataManager {
     try {
       // Construct API URL - works for both server and client
       let apiUrl: string;
+      let shouldSkipFetch = false;
+      
       if (typeof window === 'undefined') {
         // Server-side: need absolute URL
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.jiocoder.com');
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
         apiUrl = `${baseUrl}/api/page-metadata?path=${encodeURIComponent(path)}`;
+        
+        // Skip fetch if trying to reach external URL during build (API won't be available)
+        // Only fetch if it's localhost or VERCEL_URL (during deployment)
+        if (baseUrl.includes('www.jiocoder.com') || baseUrl.includes('jiocoder.com')) {
+          // During build, external URLs won't be accessible, so skip
+          shouldSkipFetch = true;
+        }
       } else {
         // Client-side: use relative URL
         apiUrl = `/api/page-metadata?path=${encodeURIComponent(path)}`;
       }
       
+      if (shouldSkipFetch) {
+        return getFallbackMetadata(pageId);
+      }
+      
       const response = await fetch(apiUrl, {
-        cache: 'no-store', // Always fetch fresh data for metadata
+        // Use revalidate for ISR (Incremental Static Regeneration)
+        next: { revalidate: 3600 }, // Revalidate every hour
       });
 
       if (response.ok) {
@@ -85,7 +99,10 @@ export class MetadataManager {
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch metadata for ${path}:`, error);
+      // Silently fall back to default metadata
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(`Failed to fetch metadata for ${path}:`, error);
+      }
     }
 
     // Return fallback if API call fails
