@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Product from "@/models/Product";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+type PublicProductRouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export async function GET(_req: NextRequest, context: PublicProductRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const product = await Product.findById(params.id).lean();
+    const product = await Product.findById(id).lean();
 
     if (!product) {
       return NextResponse.json(

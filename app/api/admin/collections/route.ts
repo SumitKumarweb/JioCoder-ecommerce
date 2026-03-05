@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
-import Collection from "@/models\Collection";
+import Collection from "@/models/Collection";
 
 // NOTE: Add proper admin authentication/authorization here before using in production.
 

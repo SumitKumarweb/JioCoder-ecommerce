@@ -3,18 +3,15 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // NOTE: Add proper admin authentication/authorization here before using in production.
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+type AdminUserRouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: AdminUserRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const user = await User.findById(params.id).select("-password").lean();
+    const user = await User.findById(id).select("-password").lean();
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
@@ -30,8 +27,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: AdminUserRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
     const body = await req.json();
 
@@ -44,7 +42,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       updateData.password = await bcrypt.hash(body.password, 10);
     }
 
-    const user = await User.findByIdAndUpdate(params.id, updateData, {
+    const user = await User.findByIdAndUpdate(id, updateData, {
       new: true,
     })
       .select("-password")
@@ -64,10 +62,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: AdminUserRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const deleted = await User.findByIdAndDelete(params.id).lean();
+    const deleted = await User.findByIdAndDelete(id).lean();
 
     if (!deleted) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });

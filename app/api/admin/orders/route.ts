@@ -53,9 +53,10 @@ export async function POST(req: NextRequest) {
       shippingAddress: body.shippingAddress,
     });
 
-    const populated = await order
+    const populated = await Order.findById(order._id)
       .populate("user", "email name")
-      .populate("items.product");
+      .populate("items.product")
+      .lean();
 
     return NextResponse.json(populated, { status: 201 });
   } catch (error) {

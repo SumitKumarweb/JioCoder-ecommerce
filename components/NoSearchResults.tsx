@@ -7,7 +7,22 @@ interface NoSearchResultsProps {
   searchQuery?: string;
 }
 
-const recommendedProducts = [
+type RecommendedProduct = {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviewCount: number;
+  badge?: {
+    text: string;
+    color: 'primary' | 'red' | 'green';
+  };
+  discount?: number;
+};
+
+const recommendedProducts: RecommendedProduct[] = [
   {
     id: 'search-rec-1',
     name: 'Huntsman V3 Pro TKL Analog Optical Keyboard',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -14,6 +14,29 @@ import NoSearchResults from '@/components/NoSearchResults';
 const ITEMS_PER_PAGE = 12;
 
 export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Navbar />
+          <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 py-8">
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
+                <p className="text-gray-600">Loading products...</p>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </>
+      }
+    >
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+
+function ProductsPageContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
 

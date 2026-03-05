@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Order from "@/models/Order";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // NOTE: Add proper admin authentication/authorization here before using in production.
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+type OrderRouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: OrderRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const order = await Order.findById(params.id)
+    const order = await Order.findById(id)
       .populate("user", "email name")
       .populate("items.product")
       .lean();
@@ -32,13 +29,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: OrderRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
     const body = await req.json();
 
     const order = await Order.findByIdAndUpdate(
-      params.id,
+      id,
       {
         status: body.status,
         paymentId: body.paymentId,
@@ -65,10 +63,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: OrderRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const deleted = await Order.findByIdAndDelete(params.id).lean();
+    const deleted = await Order.findByIdAndDelete(id).lean();
 
     if (!deleted) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });

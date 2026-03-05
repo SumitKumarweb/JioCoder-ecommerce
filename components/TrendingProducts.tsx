@@ -5,6 +5,8 @@ import { useCompare } from '@/contexts/CompareContext';
 
 interface Product {
   _id: string;
+  id: string;
+  compareId: string;
   name: string;
   price: number;
   image: string;
@@ -29,6 +31,8 @@ export default function TrendingProducts() {
             .filter((p: any) => p)
             .map((p: any) => ({
               _id: p._id,
+              id: p._id,
+              compareId: `trending-${p._id}`,
               name: p.name,
               price: p.price,
               image: p.image,

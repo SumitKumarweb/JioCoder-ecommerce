@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
-import Collection from "@/models\Collection";
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+import Collection from "@/models/Collection";
 
 // NOTE: Add proper admin authentication/authorization here before using in production.
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+type CollectionRouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: CollectionRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const collection = await Collection.findById(params.id).lean();
+    const collection = await Collection.findById(id).lean();
 
     if (!collection) {
       return NextResponse.json(
@@ -32,13 +29,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: CollectionRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
     const body = await req.json();
 
     const collection = await Collection.findByIdAndUpdate(
-      params.id,
+      id,
       {
         name: body.name,
         slug: body.slug,
@@ -66,10 +64,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: CollectionRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const deleted = await Collection.findByIdAndDelete(params.id).lean();
+    const deleted = await Collection.findByIdAndDelete(id).lean();
 
     if (!deleted) {
       return NextResponse.json(

@@ -52,22 +52,27 @@ export default function BestSellers() {
         if (!res.ok) return;
         const data: any[] = await res.json();
 
-        const mapped: Array<Product & { badge?: string }> =
-          data?.map((item) => {
-            const p = item.product;
-            if (!p) return null;
-            return {
-              id: p._id,
-              name: p.name,
-              image: p.image,
-              price: p.price,
-              originalPrice: undefined,
-              brand: p.category || 'JioCoder',
-              rating: 4.5,
-              reviewCount: 0,
-              badge: item.badge,
-            };
-          }).filter((x: Product & { badge?: string } | null): x is Product & { badge?: string } => x !== null) || [];
+        const mapped =
+          (data ?? [])
+            .map((item) => {
+              const p = item.product;
+              if (!p) return null;
+              return {
+                id: p._id,
+                name: p.name,
+                image: p.image,
+                price: p.price,
+                originalPrice: undefined,
+                brand: p.category || 'JioCoder',
+                rating: 4.5,
+                reviewCount: 0,
+                badge: item.badge,
+              } as Product & { badge?: string };
+            })
+            .filter(
+              (x: Product & { badge?: string } | null): x is Product & { badge?: string } =>
+                x !== null
+            );
 
         setBestSellers(mapped);
       } catch (error) {

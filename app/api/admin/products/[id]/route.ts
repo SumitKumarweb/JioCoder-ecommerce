@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Product from "@/models/Product";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // NOTE: Add proper admin authentication/authorization here before using in production.
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+type AdminProductRouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: AdminProductRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const product = await Product.findById(params.id).lean();
+    const product = await Product.findById(id).lean();
 
     if (!product) {
       return NextResponse.json(
@@ -32,13 +29,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: AdminProductRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
     const body = await req.json();
 
     const product = await Product.findByIdAndUpdate(
-      params.id,
+      id,
       {
         name: body.name,
         price: body.price,
@@ -68,10 +66,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: AdminProductRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const deleted = await Product.findByIdAndDelete(params.id).lean();
+    const deleted = await Product.findByIdAndDelete(id).lean();
 
     if (!deleted) {
       return NextResponse.json(

@@ -8,6 +8,7 @@ interface CommunityReview {
   authorName: string;
   content: string;
   rating: number;
+  image?: string;
   // Optional social-style fields
   likes?: string;
   comments?: number;

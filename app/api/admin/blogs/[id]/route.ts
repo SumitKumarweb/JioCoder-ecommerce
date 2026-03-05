@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Blog from "@/models/Blog";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // NOTE: Add proper admin authentication/authorization here before using in production.
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+type BlogRouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_req: NextRequest, context: BlogRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const blog = await Blog.findById(params.id).lean();
+    const blog = await Blog.findById(id).lean();
 
     if (!blog) {
       return NextResponse.json({ message: "Blog not found" }, { status: 404 });
@@ -29,13 +26,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: RouteParams) {
+export async function PUT(req: NextRequest, context: BlogRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
     const body = await req.json();
 
     const blog = await Blog.findByIdAndUpdate(
-      params.id,
+      id,
       {
         title: body.title,
         slug: body.slug,
@@ -64,10 +62,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: BlogRouteContext) {
   try {
+    const { id } = await context.params;
     await connectDB();
-    const deleted = await Blog.findByIdAndDelete(params.id).lean();
+    const deleted = await Blog.findByIdAndDelete(id).lean();
 
     if (!deleted) {
       return NextResponse.json({ message: "Blog not found" }, { status: 404 });
