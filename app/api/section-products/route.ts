@@ -17,9 +17,20 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const sectionType = searchParams.get("sectionType");
 
+    console.log(`[SectionProducts API] Fetching products for sectionType: ${sectionType}`);
+
     const query: Record<string, unknown> = {};
     if (sectionType) {
       query.sectionType = sectionType;
+    }
+
+    // First, check if we have any SectionProduct documents at all
+    const totalCount = await SectionProduct.countDocuments(query);
+    console.log(`[SectionProducts API] Total SectionProduct documents found: ${totalCount}`);
+
+    if (totalCount === 0) {
+      console.warn(`[SectionProducts API] No SectionProduct documents found for sectionType: ${sectionType}`);
+      return NextResponse.json([]);
     }
 
     // Fetch items with populate, but handle cases where product might be null
@@ -32,13 +43,22 @@ export async function GET(req: NextRequest) {
       .sort({ sectionType: 1, order: 1 })
       .lean();
 
+    console.log(`[SectionProducts API] Found ${items.length} items after query`);
+
     // Filter out items where product is null or undefined (broken references)
     const validItems = items.filter((item: any) => {
-      return item.product && item.product._id;
+      const isValid = item.product && item.product._id;
+      if (!isValid) {
+        console.warn(`[SectionProducts API] Filtered out item ${item._id} - product is null or missing`);
+      }
+      return isValid;
     });
+
+    console.log(`[SectionProducts API] Valid items after filtering: ${validItems.length}`);
 
     // If no valid items, return empty array
     if (validItems.length === 0) {
+      console.warn(`[SectionProducts API] No valid items found for sectionType: ${sectionType}`);
       return NextResponse.json([]);
     }
 
@@ -73,9 +93,11 @@ export async function GET(req: NextRequest) {
       return result;
     });
 
+    console.log(`[SectionProducts API] Returning ${itemsWithFields.length} items for sectionType: ${sectionType}`);
     return NextResponse.json(itemsWithFields);
   } catch (error: any) {
-    console.error("Failed to fetch section products:", error);
+    console.error("[SectionProducts API] Failed to fetch section products:", error);
+    console.error("[SectionProducts API] Error stack:", error?.stack);
     // Return empty array instead of 500 to prevent breaking the page
     // Log the error for debugging but don't crash the frontend
     return NextResponse.json([], { status: 200 });
