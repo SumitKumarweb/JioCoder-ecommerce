@@ -2,5 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /nimda-pro-sumit/
 
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://www.jiocoder.com/sitemap.xml
 

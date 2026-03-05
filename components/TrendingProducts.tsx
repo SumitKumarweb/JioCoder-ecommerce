@@ -131,7 +131,7 @@ export default function TrendingProducts() {
             key={product.id}
             className="min-w-[300px] bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 flex flex-col transition-all hover:shadow-md group"
           >
-              <a href={`/product/${product._id}`} className="relative aspect-square bg-slate-50 overflow-hidden block">
+              <a href={`/product/${product.id}`} className="relative aspect-square bg-slate-50 overflow-hidden block">
               <span className="absolute top-3 left-3 z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px] fill-1">bolt</span>
                 Trending
@@ -146,7 +146,7 @@ export default function TrendingProducts() {
               </button>
             </a>
             <div className="p-4 flex-1 flex flex-col space-y-2">
-              <a href={`/product/${product._id}`} className="font-semibold text-base line-clamp-1 hover:text-primary transition-colors">
+              <a href={`/product/${product.id}`} className="font-semibold text-base line-clamp-1 hover:text-primary transition-colors">
                 {product.name}
               </a>
               <p className="text-xl font-bold">₹{product.price.toLocaleString()}</p>
