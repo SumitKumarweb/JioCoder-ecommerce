@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import InstagramReelsSkeleton from './skeletons/InstagramReelsSkeleton';
 
 interface InstagramReel {
   _id: string;
@@ -16,10 +17,12 @@ interface InstagramReel {
 
 export default function InstagramReels() {
   const [reels, setReels] = useState<InstagramReel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadReels = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/instagram-reels');
         if (!res.ok) {
           throw new Error(`Failed to fetch Instagram reels: ${res.status}`);
@@ -30,11 +33,17 @@ export default function InstagramReels() {
         setReels(data || []);
       } catch (error) {
         console.error('Failed to load Instagram reels from API', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadReels();
   }, []);
+
+  if (isLoading) {
+    return <InstagramReelsSkeleton />;
+  }
 
   if (reels.length === 0) {
     return null;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useCompare } from '@/contexts/CompareContext';
+import TrendingProductsSkeleton from './skeletons/TrendingProductsSkeleton';
 
 interface Product {
   _id: string;
@@ -16,30 +17,42 @@ export default function TrendingProducts() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadTrending = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/section-products?sectionType=TRENDING');
+        
+        // Handle non-OK responses gracefully
         if (!res.ok) {
-          throw new Error(`Failed to fetch trending products: ${res.status}`);
+          console.warn(`Failed to fetch trending products: ${res.status}`);
+          setTrendingProducts([]);
+          return;
         }
+        
         const data: any[] = await res.json();
+        
+        // Safely map and filter products
         const mapped: Product[] =
-          data
-            ?.map((item) => item.product)
-            .filter((p: any) => p)
+          (data || [])
+            ?.map((item) => item?.product)
+            .filter((p: any) => p && p._id && p.name && p.price !== undefined)
             .map((p: any) => ({
               _id: p._id,
               id: p.slug || p._id,  // prefer slug for clean URLs
               compareId: `trending-${p._id}`,
               name: p.name,
               price: p.price,
-              image: p.image,
+              image: p.image || '/placeholder-product.jpg',
             })) || [];
         setTrendingProducts(mapped);
       } catch (error) {
         console.error('Failed to load trending products from API', error);
+        setTrendingProducts([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -76,6 +89,10 @@ export default function TrendingProducts() {
       removeFromCompare(product.id);
     }
   };
+
+  if (isLoading) {
+    return <TrendingProductsSkeleton />;
+  }
 
   if (trendingProducts.length === 0) {
     return null;

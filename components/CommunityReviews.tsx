@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CommunityReviewsSkeleton from './skeletons/CommunityReviewsSkeleton';
 
 interface CommunityReview {
   _id: string;
@@ -17,10 +18,12 @@ interface CommunityReview {
 
 export default function CommunityReviews() {
   const [reviews, setReviews] = useState<CommunityReview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadReviews = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/community-reviews');
         if (!res.ok) {
           throw new Error(`Failed to fetch community reviews: ${res.status}`);
@@ -29,11 +32,17 @@ export default function CommunityReviews() {
         setReviews(data || []);
       } catch (error) {
         console.error('Failed to load community reviews from API', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadReviews();
   }, []);
+
+  if (isLoading) {
+    return <CommunityReviewsSkeleton />;
+  }
 
   if (reviews.length === 0) {
     return null;

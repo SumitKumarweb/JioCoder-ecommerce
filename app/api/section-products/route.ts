@@ -4,7 +4,15 @@ import SectionProduct from "@/models/SectionProduct";
 
 export async function GET(req: NextRequest) {
   try {
-    await connectDB();
+    // Connect to database with error handling
+    try {
+      await connectDB();
+    } catch (dbError: any) {
+      console.error("Database connection failed:", dbError?.message || dbError);
+      // Return empty array instead of 500 error to prevent breaking the page
+      // This allows the frontend to continue working even if DB is temporarily unavailable
+      return NextResponse.json([], { status: 200 });
+    }
 
     const { searchParams } = new URL(req.url);
     const sectionType = searchParams.get("sectionType");
@@ -14,20 +22,28 @@ export async function GET(req: NextRequest) {
       query.sectionType = sectionType;
     }
 
+    // Fetch items with populate, but handle cases where product might be null
     const items = await SectionProduct.find(query)
-      .populate("product")
+      .populate({
+        path: "product",
+        // Don't throw error if product is missing, just return null
+        options: { lean: true }
+      })
       .sort({ sectionType: 1, order: 1 })
       .lean();
 
-    console.log('GET /api/section-products - Raw items count:', items.length);
-    if (items.length > 0) {
-      console.log('First item raw from DB:', JSON.stringify(items[0], null, 2));
-      console.log('First item features:', items[0].features);
-      console.log('First item hotspots:', items[0].hotspots);
+    // Filter out items where product is null or undefined (broken references)
+    const validItems = items.filter((item: any) => {
+      return item.product && item.product._id;
+    });
+
+    // If no valid items, return empty array
+    if (validItems.length === 0) {
+      return NextResponse.json([]);
     }
 
     // Ensure all fields are included in the response - preserve empty arrays
-    const itemsWithFields = items.map((item: any) => {
+    const itemsWithFields = validItems.map((item: any) => {
       const result: any = {
         _id: item._id,
         product: item.product,
@@ -58,12 +74,11 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(itemsWithFields);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch section products:", error);
-    return NextResponse.json(
-      { message: "Failed to fetch section products" },
-      { status: 500 }
-    );
+    // Return empty array instead of 500 to prevent breaking the page
+    // Log the error for debugging but don't crash the frontend
+    return NextResponse.json([], { status: 200 });
   }
 }
 
