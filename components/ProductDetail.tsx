@@ -6,13 +6,26 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import { useCart } from '@/contexts/CartContext';
+import Breadcrumb from '@/components/Breadcrumb';
+import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
+import LazySection from '@/components/LazySection';
+import {
+  TechnicalSpecsSkeleton,
+  FAQSkeleton,
+  ReviewsSkeleton,
+  CompleteSetupSkeleton,
+  RecentlyViewedSkeleton,
+} from '@/components/ProductDetailSectionSkeletons';
+import { getCachedData, setCachedData, getProductCacheKey } from '@/utils/apiCache';
 
 interface ProductDetailProps {
   productId: string;
+  collectionSlug?: string;
 }
 
 interface ProductData {
   id: string;
+  slug?: string;
   name: string;
   image?: string;
   price: number;
@@ -22,8 +35,7 @@ interface ProductData {
   category?: string;
 }
 
-export default function ProductDetail({ productId }: ProductDetailProps) {
-  const [selectedImage, setSelectedImage] = useState(0);
+export default function ProductDetail({ productId, collectionSlug }: ProductDetailProps) {
   const [selectedSwitch, setSelectedSwitch] = useState('Tactile Blue');
   const [quantity, setQuantity] = useState(1);
   const swiperRef = useRef<SwiperType | null>(null);
@@ -32,14 +44,62 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadingRef = useRef<string | null>(null);
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
+    // Skip if already loading the same productId (prevents duplicate calls)
+    if (loadingRef.current === productId) return;
+    
+    // Skip if product already loaded matches current productId
+    if (product && (product.id === productId || product.slug === productId)) {
+      setLoading(false);
+      return;
+    }
+
+    loadingRef.current = productId;
+    redirectingRef.current = false;
+
     const loadProduct = async () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // Check cache first to avoid duplicate API calls
+        const cacheKey = getProductCacheKey(productId);
+        const cachedData = getCachedData<any>(cacheKey);
+        
+        if (cachedData) {
+          const productData = {
+            id: cachedData._id,
+            slug: cachedData.slug,
+            name: cachedData.name,
+            image: cachedData.image,
+            price: cachedData.price,
+            inStock: cachedData.inStock,
+            description: cachedData.description,
+            category: cachedData.category,
+          };
+          setProduct(productData);
+          setLoading(false);
+          loadingRef.current = null;
+          
+          // Handle redirect if needed (only once)
+          if (cachedData.slug && productId !== cachedData.slug && !redirectingRef.current) {
+            redirectingRef.current = true;
+            if (collectionSlug) {
+              router.replace(`/collections/${collectionSlug}/${cachedData.slug}`, { scroll: false });
+            } else {
+              router.replace(`/product/${cachedData.slug}`, { scroll: false });
+            }
+          }
+          return;
+        }
+        
+        // Fetch product data (collection API call removed - collection name derived from URL slug)
         const res = await fetch(`/api/products/${productId}`);
         if (!res.ok) {
+          loadingRef.current = null;
           if (res.status === 404) {
             setError('Product not found');
           } else {
@@ -49,17 +109,40 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           return;
         }
         const data: any = await res.json();
-        setProduct({
+        
+        // Cache the response to prevent duplicate calls
+        setCachedData(cacheKey, data, 5 * 60 * 1000); // 5 minutes cache
+        
+        const productData = {
           id: data._id,
+          slug: data.slug,
           name: data.name,
           image: data.image,
           price: data.price,
           inStock: data.inStock,
           description: data.description,
           category: data.category,
-        });
+        };
+        
+        setProduct(productData);
+        loadingRef.current = null;
+
+        // If productId is a MongoDB ID (not a slug), redirect to the clean slug URL
+        // This ensures URLs always use product names, never MongoDB IDs
+        // Only redirect once to prevent loops
+        if (data.slug && productId !== data.slug && !redirectingRef.current) {
+          redirectingRef.current = true;
+          if (collectionSlug) {
+            // Redirect to collection product URL: /collections/[collectionSlug]/[productSlug]
+            router.replace(`/collections/${collectionSlug}/${data.slug}`, { scroll: false });
+          } else {
+            // Redirect to standalone product URL: /product/[productSlug]
+            router.replace(`/product/${data.slug}`, { scroll: false });
+          }
+        }
       } catch (e) {
         console.error('Failed to load product', e);
+        loadingRef.current = null;
         setError('Failed to load product details');
         setProduct(null);
       } finally {
@@ -68,35 +151,8 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     };
 
     loadProduct();
-  }, [productId]);
-
-  const images = [
-    {
-      id: 0,
-      src: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB3jDG8-GJb5iwft3FeRWoFKCRIWAX7iHpHLHHi2OJGzbj92UWCqLfTCsR0LjCJx6DieDlsJIwKLqieNuc1FKPBePteLEsEVPNZo8ZNd5fApeBLlkoJKAeS1bcz0Y8itCoT6GJa6JhJbqL-2j5wzS0YbngWczynFDlx5siNRUjWWfeUnjXZNzptahs5rm172o7V6hYVUAK66mD9df4oEkgW16MwNht9ijPyB1zKqHqVKaVQgGWPd8GW_mvtsyDdNnLkeU4rNTo2wBPy',
-      alt: 'Main Keyboard Image',
-    },
-    {
-      id: 1,
-      src: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA637ssRpK2M3wo1M3cCA0_VRtLf0MX6GLbk4RH_gQgkFlR0Zz2KVLGqRm2IUvaLraAmSWBZbJuUy7kh90K56HLORhPZ9IHLhS5_zC3wGL5wIhz_drvfyzYWFs61sycdEMVxJm5jJrjD8w6rff6YHWfuH1roDMPqZrTteYVGX-C7fpTg26S5X7wiPoCGc7Hrh-We_CJfWZvgiBlrnOCayE5ZC8uXkPXZua8i6-TkXAKJ-WuLqERkKEyhhlDCmdPKfICp4ipWja9RQBe',
-      alt: 'Thumbnail 1',
-    },
-    {
-      id: 2,
-      src: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA2I-uABkYoYjL69fsMvG8Iqm9a1FlzTHRJ4CSA7N5lOQLHk_q6exQesz4-o_IrHM-jKZKDCyBnFRlK9gSVHQDi3i4aP7lqYIGyJKutoufRbXE9aqaZLwNBnbup6Kdbnp7HG9MblCSbofjNa9i5Fwh7lzmD60iHdzdXyzgtqhkdK9IbvJ2oPztbKGqqZ_XLU5lNLVpfoXmiQwLV3jbstp3buzeOfppmi6AX8cV-u3aFQU5CeW01wiqjiljaBo9XoY64GGP6YshGMxfQ',
-      alt: 'Thumbnail 2',
-    },
-    {
-      id: 3,
-      src: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCR5nA42Jx9_qQMo6BKjgMP36lKNTfKkHe2Ni2b4_lAcMrw-GdHd3tJdXYV9rf147Unj6ZY1WnlEBSw9_QMSJtMtErRFFda0b3v2xaamEXgabxC3fh4nEDknDdh-Y8IqEtRknwW1-PLrnuVNbkmIra5zEXcbb3vhVSv4u4yE8pzi1dotOVZsnBQ6WGbu03RwKrb8o0msoyGX6ij5lvXmKi_LFf6KolPNvc2319_taDN9vG_zfRjPkghi1Nb0GckIefSxCAQfv2NRMLe',
-      alt: 'Thumbnail 3',
-    },
-    {
-      id: 4,
-      src: 'https://lh3.googleusercontent.com/aida-public/AB6AXuANrD2c39RC2z7d8qIQHbUIvDmqMXofIceivPXO9aD5d5964or41aEFeeExwsFi57spiZc2MeynzzHRLzONM5B3vIHdf7JetHDEUsj9B6xSU-cLKZcFNIKNugQMuLwCMvlT6ukQOXGrAAodtA5Z1F-v0abL91na9xniiX5b2jA8OF5-d7dqDpUAsfQs7NL0klyloX35yWyWX_9A-YtGkybyvluGdt2U4_VX35KpHyT1n23vy9h6UDdcKaq6_f7bC7kDA6GlZcEgTNx2',
-      alt: 'Thumbnail 4',
-    },
-  ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId, collectionSlug]);
 
   const switchTypes = ['Tactile Blue', 'Linear Red', 'Silent Brown'];
 
@@ -105,12 +161,17 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
-          <p className="text-gray-600">Loading product...</p>
+      <>
+        {/* Breadcrumb skeleton */}
+        <div className="flex items-center gap-2 mb-6 animate-pulse">
+          <div className="h-4 bg-slate-200 rounded w-16"></div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
+          <div className="h-4 bg-slate-200 rounded w-24"></div>
+          <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
+          <div className="h-4 bg-slate-200 rounded w-32"></div>
         </div>
-      </div>
+        <ProductDetailSkeleton />
+      </>
     );
   }
 
@@ -131,49 +192,42 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
     );
   }
 
-  const displayImages = product.image
-    ? [
-        {
-          id: 0,
-          src: product.image,
-          alt: product.name,
-        },
-        ...images.slice(1),
-      ]
-    : images;
-
   return (
     <>
+      {/* Breadcrumb: Home > Collections > Collection Name > Product Name */}
+      <Breadcrumb
+        items={
+          collectionSlug
+            ? [
+                { label: 'Home', href: '/' },
+                { label: 'Collections', href: '/collections' },
+                { label: collectionSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), href: `/collections/${collectionSlug}` },
+                { label: product.name },
+              ]
+            : [
+                { label: 'Home', href: '/' },
+                { label: 'Products', href: '/products' },
+                { label: product.name },
+              ]
+        }
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
-        {/* Product Images */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="aspect-[4/3] rounded-xl overflow-hidden bg-white border border-slate-200 group relative">
-            <img
-              alt={displayImages[selectedImage].alt}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-zoom-in"
-              src={displayImages[selectedImage].src}
-            />
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
-              High-End Series
-            </div>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
-            {displayImages.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => setSelectedImage(index)}
-                className={`aspect-square rounded-lg overflow-hidden transition-opacity ${
-                  selectedImage === index
-                    ? 'border-2 border-primary opacity-100'
-                    : 'border border-slate-200 opacity-60 hover:opacity-100'
-                }`}
-              >
-                <img alt={image.alt} className="w-full h-full object-cover" src={image.src} />
-              </button>
-            ))}
-            <button className="aspect-square rounded-lg border border-slate-200 overflow-hidden opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center bg-slate-50">
-              <span className="material-symbols-outlined text-slate-400">play_circle</span>
-            </button>
+        {/* Product Image — only the admin-uploaded image is shown */}
+        <div className="lg:col-span-7">
+          <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-50 border border-slate-200 group">
+            {product.image ? (
+              <img
+                alt={product.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                src={product.image}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                <span className="material-symbols-outlined text-7xl mb-2">image</span>
+                <p className="text-sm font-medium">No image uploaded</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -280,7 +334,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 addToCart({
                   id: product.id,
                   name: product.name,
-                  image: product.image || displayImages[0].src,
+                  image: product.image || '',
                   price: product.price,
                   variant: `${selectedSwitch} Switch`,
                 });
@@ -295,7 +349,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
                 buyNow({
                   id: product.id,
                   name: product.name,
-                  image: product.image || displayImages[0].src,
+                  image: product.image || '',
                   price: product.price,
                   variant: `${selectedSwitch} Switch`,
                 }, quantity);
@@ -327,6 +381,9 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
       </div>
 
       {/* Technical Specifications */}
+      <LazySection
+        skeleton={<TechnicalSpecsSkeleton />}
+      >
       <section className="mt-20">
         <h2 className="text-2xl font-black mb-8 border-b-2 border-primary w-fit pb-2">
           Technical Specifications
@@ -378,8 +435,12 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </div>
         </div>
       </section>
+      </LazySection>
 
       {/* FAQ Section */}
+      <LazySection
+        skeleton={<FAQSkeleton />}
+      >
       <section className="mt-20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h2 className="text-2xl font-black border-b-2 border-primary w-fit pb-2">
@@ -444,8 +505,12 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </button>
         </div>
       </section>
+      </LazySection>
 
       {/* Customer Reviews */}
+      <LazySection
+        skeleton={<ReviewsSkeleton />}
+      >
       <section className="mt-20">
         <h2 className="text-2xl font-black mb-8 border-b-2 border-primary w-fit pb-2">
           Verified Customer Reviews
@@ -562,8 +627,12 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </div>
         </div>
       </section>
+      </LazySection>
 
       {/* Complete Your Setup */}
+      <LazySection
+        skeleton={<CompleteSetupSkeleton />}
+      >
       <section className="mt-20">
         <h2 className="text-2xl font-black mb-8 border-b-2 border-primary w-fit pb-2 uppercase tracking-tight">
           Complete Your Setup
@@ -659,8 +728,12 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </div>
         </div>
       </section>
+      </LazySection>
 
       {/* Recently Viewed */}
+      <LazySection
+        skeleton={<RecentlyViewedSkeleton />}
+      >
       <section className="mt-20">
         <div className="flex items-center justify-between mb-8 border-b-2 border-primary/10">
           <h2 className="text-2xl font-black border-b-2 border-primary w-fit pb-2 uppercase tracking-tight">
@@ -832,6 +905,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           </SwiperSlide>
         </Swiper>
       </section>
+      </LazySection>
     </>
   );
 }

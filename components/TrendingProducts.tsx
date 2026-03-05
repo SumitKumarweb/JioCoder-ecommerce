@@ -31,7 +31,7 @@ export default function TrendingProducts() {
             .filter((p: any) => p)
             .map((p: any) => ({
               _id: p._id,
-              id: p._id,
+              id: p.slug || p._id,  // prefer slug for clean URLs
               compareId: `trending-${p._id}`,
               name: p.name,
               price: p.price,

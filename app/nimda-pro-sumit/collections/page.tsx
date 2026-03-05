@@ -32,6 +32,10 @@ export default function CollectionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [originalProductIds, setOriginalProductIds] = useState<string[]>([]);
   const [collectionForm, setCollectionForm] = useState({
     name: '',
     description: '',
@@ -48,87 +52,211 @@ export default function CollectionsPage() {
   });
 
   useEffect(() => {
-    // Fetch products from admin products page (in real app, this would be an API call)
-    // For now, we'll use mock data that matches the products structure
-    const products: Product[] = [
-      {
-        id: 'keyboard-1',
-        name: 'Keychron K2 Keyboard',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-        price: 7499,
-        originalPrice: 9999,
-        rating: 4.5,
-        reviewCount: 2400,
-        brand: 'Keychron',
-        inStock: true,
-      },
-      {
-        id: 'keyboard-2',
-        name: 'Logitech MX Keys',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKsZQW7Nj6vNUklr5dWHdz5iJfptn4bvN3VhJPHWL1GnAZdGLW2rMKcvVd_zFLEQRH4GecddjmBOdn-uxam63prKZmXViUF8xIrjO4F_U7oF3v0iO4iNjAGitEpAob0PBeXyLAfe-OgJPEqkmZozUCVI_mW3rRUM_GAo2nF3n2KG5cwLvmyw7i8SDeuy40etjJKeTlen72g1t_UPzgke_zzEko3eJzGjgjKQIPGdpUMvGPJkt2KqveOeWJdOwrNtjDhnxlN52BXpUh',
-        price: 12995,
-        rating: 5,
-        reviewCount: 5800,
-        brand: 'Logitech',
-        inStock: true,
-      },
-    ];
-    setAllProducts(products);
+    // Fetch all products from API
+    const loadProducts = async () => {
+      setProductsLoading(true);
+      try {
+        const res = await fetch('/api/admin/products');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch products: ${res.status}`);
+        }
+        const data = await res.json();
+        // Map MongoDB product data to Product interface
+        const mappedProducts: Product[] = data.map((product: any) => ({
+          id: String(product._id || product.id), // Ensure ID is always a string
+          name: product.name,
+          image: product.image || '',
+          price: product.price || 0,
+          originalPrice: product.originalPrice,
+          rating: product.rating || 0,
+          reviewCount: product.reviewCount || 0,
+          brand: product.brand || product.category || 'Unknown',
+          inStock: product.inStock !== false,
+          badge: product.badge,
+          discount: product.discount,
+        }));
+        setAllProducts(mappedProducts);
+      } catch (error) {
+        console.error('Failed to load products from API', error);
+        setAllProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+    loadProducts();
 
-    // Mock collections data
-    setCollections([
-      {
-        id: 'col-1',
-        name: 'Mechanical Keyboards',
-        description: 'Premium mechanical keyboards collection',
-        slug: 'mechanical-keyboards',
-        productIds: ['keyboard-1', 'keyboard-2'],
-        createdAt: '2024-01-01',
-        featuredImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-      },
-      {
-        id: 'col-2',
-        name: 'Gaming Mice',
-        description: 'High-performance gaming mice',
-        slug: 'gaming-mice',
-        productIds: [],
-        createdAt: '2024-01-02',
-      },
-    ]);
+    // Fetch collections from MongoDB
+    const loadCollections = async () => {
+      try {
+        const res = await fetch('/api/admin/collections');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch collections: ${res.status}`);
+        }
+        const data = await res.json();
+        // Map MongoDB data to Collection interface
+        const mappedCollections: Collection[] = data.map((col: any) => ({
+          id: String(col._id || col.id), // Ensure ID is always a string
+          name: col.name,
+          description: col.description || '',
+          slug: col.slug,
+          productIds: (col.productIds || []).map((pid: any) => String(pid)), // Convert all productIds to strings
+          createdAt: col.createdAt ? new Date(col.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          featuredImage: col.heroImage,
+          metadata: col.metadata || {},
+        }));
+        setCollections(mappedCollections);
+      } catch (error) {
+        console.error('Failed to load collections from API', error);
+        setCollections([]);
+      }
+    };
+    loadCollections();
   }, []);
 
-  const handleCreateCollection = () => {
-    const slug = collectionForm.slug || collectionForm.name.toLowerCase().replace(/\s+/g, '-');
-    const newCollection: Collection = {
-      id: `col-${Date.now()}`,
-      name: collectionForm.name,
-      description: collectionForm.description,
-      slug: slug,
-      productIds: [],
-      createdAt: new Date().toISOString(),
-      metadata: collectionForm.metadata,
-    };
-    setCollections([...collections, newCollection]);
-    
-    // Save to localStorage
-    const savedCollections = JSON.parse(localStorage.getItem('adminCollections') || '[]');
-    localStorage.setItem('adminCollections', JSON.stringify([...savedCollections, newCollection]));
-    
-    setCollectionForm({ 
-      name: '', 
-      description: '', 
-      slug: '',
-      metadata: {
-        metaTitle: '',
-        metaDescription: '',
-        metaKeywords: '',
-        ogTitle: '',
-        ogDescription: '',
-        ogImage: '',
-        canonicalUrl: '',
-      },
-    });
-    setIsModalOpen(false);
+  // Helper function to reload collections
+  const reloadCollections = async () => {
+    try {
+      const res = await fetch('/api/admin/collections');
+      if (!res.ok) {
+        throw new Error(`Failed to fetch collections: ${res.status}`);
+      }
+      const data = await res.json();
+      const mappedCollections: Collection[] = data.map((col: any) => ({
+        id: String(col._id || col.id), // Ensure ID is always a string
+        name: col.name,
+        description: col.description || '',
+        slug: col.slug,
+        productIds: (col.productIds || []).map((pid: any) => String(pid)), // Convert all productIds to strings
+        createdAt: col.createdAt ? new Date(col.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        featuredImage: col.heroImage,
+        metadata: col.metadata || {},
+      }));
+      setCollections(mappedCollections);
+      
+      // If a collection is currently selected, update it with the latest data from MongoDB
+      if (selectedCollection) {
+        const updatedCollection = mappedCollections.find((col) => col.id === selectedCollection.id);
+        if (updatedCollection) {
+          setSelectedCollection(updatedCollection);
+          setOriginalProductIds(updatedCollection.productIds || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to reload collections', error);
+    }
+  };
+
+  // Save collection products to MongoDB
+  const handleSaveCollectionProducts = async () => {
+    if (!selectedCollection) return;
+
+    setSaving(true);
+    setSaveMessage(null);
+
+    try {
+      const res = await fetch(`/api/admin/collections/${selectedCollection.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: selectedCollection.name,
+          slug: selectedCollection.slug,
+          description: selectedCollection.description,
+          heroImage: selectedCollection.featuredImage,
+          isFeatured: false,
+          productIds: selectedCollection.productIds,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to save: ${res.status}`);
+      }
+
+      // Get saved data from response
+      const saved = await res.json();
+      
+      // Convert productIds to strings for consistency
+      const savedProductIds = (saved.productIds || []).map((pid: any) => String(pid));
+      
+      // Update original productIds to match current state
+      setOriginalProductIds(savedProductIds);
+      
+      // Update selected collection with saved data
+      const updatedCollection: Collection = {
+        ...selectedCollection,
+        productIds: savedProductIds,
+      };
+      setSelectedCollection(updatedCollection);
+      
+      // Also update the collections list to reflect the saved productIds
+      setCollections(
+        collections.map((col) =>
+          col.id === selectedCollection.id
+            ? { ...col, productIds: savedProductIds }
+            : col
+        )
+      );
+      
+      setSaveMessage('Products saved successfully!');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error) {
+      console.error('Failed to save collection products', error);
+      setSaveMessage('Failed to save. Please try again.');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = selectedCollection 
+    ? JSON.stringify(selectedCollection.productIds.sort()) !== JSON.stringify(originalProductIds.sort())
+    : false;
+
+  const handleCreateCollection = async () => {
+    try {
+      const slug = collectionForm.slug || collectionForm.name.toLowerCase().replace(/\s+/g, '-');
+      
+      const res = await fetch('/api/admin/collections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: collectionForm.name,
+          slug: slug,
+          description: collectionForm.description,
+          heroImage: collectionForm.metadata.ogImage || '',
+          isFeatured: false,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to create collection: ${res.status}`);
+      }
+
+      await reloadCollections();
+      
+      setCollectionForm({ 
+        name: '', 
+        description: '', 
+        slug: '',
+        metadata: {
+          metaTitle: '',
+          metaDescription: '',
+          metaKeywords: '',
+          ogTitle: '',
+          ogDescription: '',
+          ogImage: '',
+          canonicalUrl: '',
+        },
+      });
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create collection', error);
+      alert('Failed to create collection. Please try again.');
+    }
   };
 
   const handleBulkAddProducts = () => {
@@ -214,14 +342,22 @@ export default function CollectionsPage() {
   };
 
   const filteredProducts = allProducts.filter((product) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      product.name.toLowerCase().includes(query) ||
+      product.brand.toLowerCase().includes(query);
     return matchesSearch;
   });
 
   const collectionProducts = selectedCollection
-    ? allProducts.filter((p) => selectedCollection.productIds.includes(p.id))
+    ? allProducts.filter((p) => {
+        // Convert both IDs to strings for comparison to handle MongoDB ObjectId vs string mismatches
+        const productId = String(p.id);
+        const matches = selectedCollection.productIds.some((pid) => String(pid) === productId);
+        return matches;
+      })
     : [];
 
   return (
@@ -256,7 +392,11 @@ export default function CollectionsPage() {
                 }`}
               >
                 <button
-                  onClick={() => setSelectedCollection(collection)}
+                  onClick={() => {
+                    setSelectedCollection(collection);
+                    setOriginalProductIds(collection.productIds || []);
+                    setSelectedProducts([]);
+                  }}
                   className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
                 >
                   <div className="font-medium text-gray-900">{collection.name}</div>
@@ -266,12 +406,23 @@ export default function CollectionsPage() {
                   </div>
                 </button>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     if (confirm(`Are you sure you want to delete "${collection.name}"?`)) {
-                      setCollections(collections.filter((c) => c.id !== collection.id));
-                      if (selectedCollection?.id === collection.id) {
-                        setSelectedCollection(null);
+                      try {
+                        const res = await fetch(`/api/admin/collections/${collection.id}`, {
+                          method: 'DELETE',
+                        });
+                        if (!res.ok) {
+                          throw new Error(`Failed to delete collection: ${res.status}`);
+                        }
+                        await reloadCollections();
+                        if (selectedCollection?.id === collection.id) {
+                          setSelectedCollection(null);
+                        }
+                      } catch (error) {
+                        console.error('Failed to delete collection', error);
+                        alert('Failed to delete collection. Please try again.');
                       }
                     }
                   }}
@@ -295,12 +446,38 @@ export default function CollectionsPage() {
                     <h2 className="text-xl font-bold text-gray-900">{selectedCollection.name}</h2>
                     <p className="text-gray-600 mt-1">{selectedCollection.description}</p>
                   </div>
-                  <button
-                    onClick={() => setSelectedCollection(null)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {hasUnsavedChanges && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-orange-600 font-medium">Unsaved changes</span>
+                        <button
+                          onClick={handleSaveCollectionProducts}
+                          disabled={saving}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-base">
+                            {saving ? 'hourglass_empty' : 'save'}
+                          </span>
+                          {saving ? 'Saving...' : 'Save Products'}
+                        </button>
+                      </div>
+                    )}
+                    {saveMessage && (
+                      <span className={`text-sm ${saveMessage.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                        {saveMessage}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedCollection(null);
+                        setOriginalProductIds([]);
+                        setSelectedProducts([]);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Search and Filter */}
@@ -311,11 +488,16 @@ export default function CollectionsPage() {
                     </span>
                     <input
                       type="text"
-                      placeholder="Search products..."
+                      placeholder="Search products by name, brand, or description..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
+                    {searchQuery && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        Found {filteredProducts.filter((p) => !selectedCollection?.productIds.includes(p.id)).length} products matching "{searchQuery}"
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -436,10 +618,34 @@ export default function CollectionsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                    {filteredProducts
-                      .filter((p) => !selectedCollection.productIds.includes(p.id))
-                      .map((product) => {
+                  {productsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                        <p className="text-gray-600 text-sm">Loading products...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                      {filteredProducts.filter((p) => !selectedCollection.productIds.includes(p.id)).length === 0 ? (
+                        <div className="col-span-2 text-center py-8 text-gray-500">
+                          {searchQuery ? (
+                            <div>
+                              <span className="material-symbols-outlined text-4xl text-gray-300 mb-2 block">search_off</span>
+                              <p>No products found matching "{searchQuery}"</p>
+                              <p className="text-sm mt-1">Try a different search term</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="material-symbols-outlined text-4xl text-gray-300 mb-2 block">inventory_2</span>
+                              <p>No products available to add</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        filteredProducts
+                          .filter((p) => !selectedCollection.productIds.includes(p.id))
+                          .map((product) => {
                         const isSelected = selectedProducts.includes(product.id);
                         return (
                           <div
@@ -483,8 +689,10 @@ export default function CollectionsPage() {
                             </button>
                           </div>
                         );
-                      })}
-                  </div>
+                      })
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Collection Preview Link */}

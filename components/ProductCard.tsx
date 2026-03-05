@@ -16,6 +16,7 @@ interface ProductCardProps {
     color: 'red' | 'green' | 'primary';
   };
   discount?: number;
+  collectionSlug?: string;
 }
 
 export default function ProductCard({
@@ -28,6 +29,7 @@ export default function ProductCard({
   reviewCount,
   badge,
   discount,
+  collectionSlug,
 }: ProductCardProps) {
   const { addToCart } = useCart();
 
@@ -90,7 +92,7 @@ export default function ProductCard({
         </div>
       )}
       <div className="aspect-square rounded-lg bg-slate-50 mb-4 overflow-hidden relative">
-        <Link href={`/product/${id}`}>
+        <Link href={collectionSlug ? `/collections/${collectionSlug}/${id}` : `/product/${id}`}>
           <img
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -115,7 +117,7 @@ export default function ProductCard({
             ({reviewCount >= 1000 ? `${(reviewCount / 1000).toFixed(1)}k` : reviewCount})
           </span>
         </div>
-        <Link href={`/product/${id}`}>
+        <Link href={collectionSlug ? `/collections/${collectionSlug}/${id}` : `/product/${id}`}>
           <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[40px] hover:text-primary transition-colors">
             {name}
           </h3>

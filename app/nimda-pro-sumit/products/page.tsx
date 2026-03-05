@@ -92,7 +92,7 @@ export default function ProductsPage() {
         const data: any[] = await res.json();
         const mapped: ProductWithSku[] =
           data?.map((p) => ({
-            id: p._id,
+            id: p.slug || p._id,  // prefer slug for clean URLs
             name: p.name,
             image: p.image,
             price: p.price,

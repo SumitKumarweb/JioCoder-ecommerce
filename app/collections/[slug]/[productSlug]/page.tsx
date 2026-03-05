@@ -1,24 +1,26 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
-import ProductDetail from '@/components/ProductDetail';
+import CollectionProductDetail from './CollectionProductDetail';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'Product Details',
-  description: 'View detailed product information, specifications, reviews, and FAQs for premium mechanical keyboards and gaming peripherals.',
+  description: 'View detailed product information, specifications, reviews, and FAQs.',
   openGraph: {
     title: 'Product Details - JioCoder',
     description: 'View detailed product information, specifications, and reviews.',
-    url: '/product',
+    url: '/collections',
   },
 };
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default async function CollectionProductPage({ params }: { params: Promise<{ slug: string; productSlug: string }> }) {
+  const { slug, productSlug } = await params;
+  
   return (
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 py-5 sm:py-6 md:py-8 overflow-x-hidden">
-        <ProductDetail productId={params.id} />
+        <CollectionProductDetail productId={productSlug} collectionSlug={slug} />
       </main>
       <Footer />
     </>

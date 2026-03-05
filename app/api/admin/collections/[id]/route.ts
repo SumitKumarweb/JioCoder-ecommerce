@@ -38,13 +38,16 @@ export async function PUT(req: NextRequest, context: CollectionRouteContext) {
     const collection = await Collection.findByIdAndUpdate(
       id,
       {
-        name: body.name,
-        slug: body.slug,
-        description: body.description,
-        heroImage: body.heroImage,
-        isFeatured: body.isFeatured,
+        $set: {
+          name: body.name,
+          slug: body.slug,
+          description: body.description,
+          heroImage: body.heroImage,
+          isFeatured: body.isFeatured,
+          productIds: body.productIds || [],
+        },
       },
-      { new: true }
+      { new: true, strict: false } // strict: false ensures productIds is never stripped by cached schema
     ).lean();
 
     if (!collection) {

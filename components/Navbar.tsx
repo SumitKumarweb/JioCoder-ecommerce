@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import MobileMenu from './MobileMenu';
 import LoginModal from './LoginModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import { getCachedData, setCachedData } from '@/utils/apiCache';
 
 type AdminNavItem = {
   _id: string;
@@ -27,42 +28,58 @@ const DEFAULT_ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { _id: 'deals', label: 'Deals', href: '/sale', enabled: true },
 ];
 
-const DEFAULT_COLLECTION_ITEMS: AdminCollectionNavItem[] = [
-  {
-    _id: 'col-1',
-    name: 'Mechanical Keyboards',
-    slug: 'mechanical-keyboards',
-    description: 'Premium mechanical keyboards collection',
-    featuredImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-  },
-  {
-    _id: 'col-2',
-    name: 'Gaming Mice',
-    slug: 'gaming-mice',
-    description: 'High-performance gaming mice',
-  },
-];
-
 export default function Navbar() {
   const { openCart, getItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(DEFAULT_ADMIN_NAV_ITEMS);
-  const [collectionNavItems, setCollectionNavItems] = useState<AdminCollectionNavItem[]>(
-    DEFAULT_COLLECTION_ITEMS
-  );
+  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>([]);
+  const [collectionNavItems, setCollectionNavItems] = useState<AdminCollectionNavItem[]>([]);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent concurrent duplicate calls
+    if (loadingRef.current) return;
+
     const loadNavbarConfig = async () => {
+      loadingRef.current = true;
+      
       try {
+        // Check cache first - this prevents API calls on every page navigation/reload
+        const cacheKey = 'navbar:config';
+        const cachedData = getCachedData<{ navItems: AdminNavItem[]; collections: any[] }>(cacheKey);
+        
+        if (cachedData) {
+          // Use cached data - no API call needed
+          if (Array.isArray(cachedData.navItems) && cachedData.navItems.length > 0) {
+            setAdminNavItems(cachedData.navItems);
+          }
+
+          if (Array.isArray(cachedData.collections) && cachedData.collections.length > 0) {
+            const mapped: AdminCollectionNavItem[] = cachedData.collections.map((col: any) => ({
+              _id: col._id,
+              name: col.name,
+              slug: col.slug,
+              description: col.description,
+              featuredImage: col.heroImage,
+            }));
+            setCollectionNavItems(mapped);
+          }
+          
+          loadingRef.current = false;
+          return;
+        }
+
+        // Only make API call if cache is empty (first load or cache expired)
         const res = await fetch('/api/navbar');
         if (!res.ok) {
           throw new Error(`Failed to fetch navbar config: ${res.status}`);
         }
         const data: { navItems: AdminNavItem[]; collections: any[] } = await res.json();
+
+        // Cache the response for 10 minutes to prevent duplicate calls
+        setCachedData(cacheKey, data, 10 * 60 * 1000);
 
         if (Array.isArray(data.navItems) && data.navItems.length > 0) {
           setAdminNavItems(data.navItems);
@@ -80,6 +97,8 @@ export default function Navbar() {
         }
       } catch (error) {
         console.error('Failed to load navbar config from API', error);
+      } finally {
+        loadingRef.current = false;
       }
     };
 

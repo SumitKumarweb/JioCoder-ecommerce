@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -10,6 +10,8 @@ import ProductGrid, { Product } from '@/components/ProductGrid';
 import ProductSort, { SortOption } from '@/components/ProductSort';
 import Pagination from '@/components/Pagination';
 import NoSearchResults from '@/components/NoSearchResults';
+import ProductGridSkeleton from '@/components/ProductGridSkeleton';
+import { getCachedData, setCachedData } from '@/utils/apiCache';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -50,10 +52,26 @@ function ProductsPageContent() {
   });
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [currentPage, setCurrentPage] = useState(1);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate calls
+    if (loadingRef.current) return;
+    
     const loadProducts = async () => {
+      loadingRef.current = true;
       try {
+        // Check cache first
+        const cacheKey = 'products:all';
+        const cachedData = getCachedData<Product[]>(cacheKey);
+        
+        if (cachedData) {
+          setProducts(cachedData);
+          setLoading(false);
+          loadingRef.current = false;
+          return;
+        }
+
         const res = await fetch('/api/products');
         if (!res.ok) {
           throw new Error(`Failed to fetch products: ${res.status}`);
@@ -61,7 +79,7 @@ function ProductsPageContent() {
         const data: any[] = await res.json();
         const mapped: Product[] =
           data?.map((p) => ({
-            id: p._id,
+            id: p.slug || p._id,   // prefer slug for clean URLs, fall back to _id
             name: p.name,
             image: p.image,
             price: p.price,
@@ -71,11 +89,16 @@ function ProductsPageContent() {
             brand: p.category || 'JioCoder',
             inStock: p.inStock,
           })) || [];
+        
+        // Cache the response
+        setCachedData(cacheKey, mapped, 5 * 60 * 1000); // 5 minutes cache
+        
         setProducts(mapped);
       } catch (error) {
         console.error('Failed to load products from API', error);
       } finally {
         setLoading(false);
+        loadingRef.current = false;
       }
     };
 
@@ -227,12 +250,7 @@ function ProductsPageContent() {
 
             {/* Product Grid */}
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
-                  <p className="text-gray-600">Loading products...</p>
-                </div>
-              </div>
+              <ProductGridSkeleton count={12} />
             ) : (
               <ProductGrid products={paginatedProducts} />
             )}

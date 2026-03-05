@@ -58,7 +58,7 @@ export default function BestSellers() {
               const p = item.product;
               if (!p) return null;
               return {
-                id: p._id,
+                id: p.slug || p._id,  // prefer slug for clean URLs
                 name: p.name,
                 image: p.image,
                 price: p.price,

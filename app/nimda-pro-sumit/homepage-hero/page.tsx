@@ -3,45 +3,43 @@
 import { useEffect, useState } from 'react';
 import type { HeroSlide } from '@/components/Hero';
 
-const DEFAULT_HERO_SLIDES: HeroSlide[] = [
-  {
-    id: 'slide-1',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC2szADM5ISIXlgO-jmeh_WgCinJ9UftMKB7j6hbRvTZD5ugGjePtpr6m6DVHlXAPcWT6auCrnysq7_CpQwCJnpNpXlF2CwFWG46ax5ECUikI41JhnjQiN_2MxhxVr4VP_vnIIKjaaWwjTH7fUC2MvhBjuJL2RWLMZXlW9j-wgVELmIfI4q2tkSXebnBWq05UTZ9Rh8jilVaLs2osLyifV7aJuTcEgQyi5mJEZ2CK_sUwrFtxkOuHmN7uvsM8f-3Y_3Dq09Cx5Zgvfo',
-    tag: 'New Arrival',
-    title: 'Precision at your fingertips',
-    subtitle:
-      'Engineered for enthusiasts. Explore our curated collection of artisanal mechanical keyboards and bespoke switches.',
-    buttonText: 'Shop Now',
-    url: '/products',
-    enabled: true,
-  },
-];
-
 export default function HomepageHeroAdminPage() {
-  const [slides, setSlides] = useState<HeroSlide[]>(DEFAULT_HERO_SLIDES);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const stored = window.localStorage.getItem('adminHeroSlides');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSlides(parsed);
+    const loadSlides = async () => {
+      try {
+        const res = await fetch('/api/admin/homepage-hero');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch hero slides: ${res.status}`);
         }
-      } else {
-        window.localStorage.setItem('adminHeroSlides', JSON.stringify(DEFAULT_HERO_SLIDES));
+        const data = await res.json();
+        // Map MongoDB _id to id for compatibility with HeroSlide type
+        const mappedSlides = data.map((slide: any) => ({
+          id: slide._id || slide.id,
+          image: slide.image,
+          tag: slide.tag,
+          title: slide.title,
+          subtitle: slide.subtitle,
+          buttonText: slide.buttonText,
+          url: slide.url,
+          enabled: slide.enabled !== false,
+        }));
+        setSlides(mappedSlides);
+      } catch (error) {
+        console.error('Failed to load hero slides from API', error);
+        setMessage('Failed to load slides. Please refresh the page.');
+      } finally {
+        setLoading(false);
+        setLoaded(true);
       }
-    } catch (error) {
-      console.error('Failed to load hero slides from localStorage', error);
-    } finally {
-      setLoaded(true);
-    }
+    };
+
+    loadSlides();
   }, []);
 
   const handleChangeSlide = <K extends keyof HeroSlide>(
@@ -56,7 +54,7 @@ export default function HomepageHeroAdminPage() {
 
   const handleAddSlide = () => {
     const newSlide: HeroSlide = {
-      id: `slide-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       image: '',
       tag: '',
       title: 'New Slide',
@@ -72,17 +70,51 @@ export default function HomepageHeroAdminPage() {
     setSlides((prev) => prev.filter((slide) => slide.id !== id));
   };
 
-  const handleSave = () => {
-    if (typeof window === 'undefined') return;
-
+  const handleSave = async () => {
     setSaving(true);
     setMessage(null);
 
     try {
-      window.localStorage.setItem('adminHeroSlides', JSON.stringify(slides));
+      // Prepare slides data for MongoDB (remove temp IDs, keep structure)
+      const slidesToSave = slides.map((slide, index) => ({
+        image: slide.image,
+        tag: slide.tag || '',
+        title: slide.title,
+        subtitle: slide.subtitle || '',
+        buttonText: slide.buttonText || '',
+        url: slide.url || '/',
+        enabled: slide.enabled !== false,
+        order: index,
+      }));
+
+      const res = await fetch('/api/admin/homepage-hero', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slides: slidesToSave }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to save: ${res.status}`);
+      }
+
+      const saved = await res.json();
+      // Update slides with MongoDB _id
+      const updatedSlides = saved.map((slide: any, index: number) => ({
+        id: slide._id || slide.id,
+        image: slide.image,
+        tag: slide.tag,
+        title: slide.title,
+        subtitle: slide.subtitle,
+        buttonText: slide.buttonText,
+        url: slide.url,
+        enabled: slide.enabled !== false,
+      }));
+      setSlides(updatedSlides);
       setMessage('Homepage carousel saved successfully.');
     } catch (error) {
-      console.error('Failed to save hero slides to localStorage', error);
+      console.error('Failed to save hero slides to MongoDB', error);
       setMessage('Failed to save. Please try again.');
     } finally {
       setSaving(false);
@@ -90,7 +122,7 @@ export default function HomepageHeroAdminPage() {
     }
   };
 
-  if (!loaded) {
+  if (!loaded || loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-gray-600">Loading hero carousel settings...</p>

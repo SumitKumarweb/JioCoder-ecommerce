@@ -21,9 +21,10 @@ export interface Product {
 
 interface ProductGridProps {
   products: Product[];
+  collectionSlug?: string;
 }
 
-export default function ProductGrid({ products }: ProductGridProps) {
+export default function ProductGrid({ products, collectionSlug }: ProductGridProps) {
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -50,6 +51,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
           reviewCount={product.reviewCount}
           badge={product.badge}
           discount={product.discount}
+          collectionSlug={collectionSlug}
         />
       ))}
     </div>

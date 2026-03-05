@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IProduct extends Document {
   name: string;
+  slug?: string;
   price: number;
   currency: string;
   inStock: boolean;
@@ -18,6 +19,11 @@ const ProductSchema: Schema = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
     },
     price: {
       type: Number,
@@ -56,4 +62,3 @@ const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);
 
 export default Product;
-

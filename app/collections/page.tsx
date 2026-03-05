@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
+import CollectionCardSkeleton from '@/components/CollectionCardSkeleton';
 
 interface Collection {
   id: string;
@@ -20,32 +21,30 @@ export default function CollectionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch collections
-    // In a real app, this would be an API call
     const fetchCollections = async () => {
       setLoading(true);
-      
-      // Mock collections data (should match admin panel)
-      const mockCollections: Collection[] = [
-        {
-          id: 'col-1',
-          name: 'Mechanical Keyboards',
-          description: 'Premium mechanical keyboards collection',
-          slug: 'mechanical-keyboards',
-          productIds: ['keyboard-1', 'keyboard-2'],
-          featuredImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-        },
-        {
-          id: 'col-2',
-          name: 'Gaming Mice',
-          description: 'High-performance gaming mice',
-          slug: 'gaming-mice',
-          productIds: [],
-        },
-      ];
-
-      setCollections(mockCollections);
-      setLoading(false);
+      try {
+        const res = await fetch('/api/collections');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch collections: ${res.status}`);
+        }
+        const data = await res.json();
+        // Map MongoDB data to Collection interface
+        const mappedCollections: Collection[] = data.map((col: any) => ({
+          id: String(col._id || col.id),
+          name: col.name,
+          description: col.description || '',
+          slug: col.slug,
+          productIds: (col.productIds || []).map(String), // Correctly load productIds from MongoDB
+          featuredImage: col.heroImage,
+        }));
+        setCollections(mappedCollections);
+      } catch (error) {
+        console.error('Failed to load collections from API', error);
+        setCollections([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchCollections();
@@ -55,12 +54,20 @@ export default function CollectionsPage() {
     return (
       <>
         <Navbar />
-        <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-20 py-4 sm:py-6">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading collections...</p>
-            </div>
+        <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-20 py-4 sm:py-6 space-y-8">
+          <Breadcrumb autoGenerate={true} />
+          
+          {/* Page Header Skeleton */}
+          <div className="text-center space-y-4">
+            <div className="h-10 bg-slate-200 rounded w-64 mx-auto animate-pulse"></div>
+            <div className="h-5 bg-slate-200 rounded w-96 mx-auto animate-pulse"></div>
+          </div>
+
+          {/* Collections Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <CollectionCardSkeleton key={index} />
+            ))}
           </div>
         </main>
         <Footer />
