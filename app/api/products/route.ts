@@ -1,53 +1,40 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
+import Product from "@/models/Product";
 
-// Temporary in-memory product list to demonstrate backend wiring.
-// Replace this with a real database or external API when ready.
-const products = [
-  {
-    id: "1",
-    name: "Gaming Monitor 27\"",
-    price: 299.99,
-    currency: "USD",
-    inStock: true,
-  },
-  {
-    id: "2",
-    name: "Mechanical Keyboard RGB",
-    price: 129.0,
-    currency: "USD",
-    inStock: true,
-  },
-  {
-    id: "3",
-    name: "Studio Headphones",
-    price: 199.0,
-    currency: "USD",
-    inStock: false,
-  },
-];
-
-export async function GET() {
+// Public products API for the main website (no admin-only fields here)
+// Supports basic filtering via query params: ?category=&inStock=true
+export async function GET(req: NextRequest) {
   try {
-    // Connect to MongoDB
     await connectDB();
-    
-    // TODO: Replace with actual database query
-    // Example: const products = await Product.find({});
-    
-    return NextResponse.json({ 
-      products,
-      database: "connected"
-    });
+
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get("category");
+    const inStock = searchParams.get("inStock");
+
+    const query: Record<string, unknown> = {};
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (inStock === "true") {
+      query.inStock = true;
+    } else if (inStock === "false") {
+      query.inStock = false;
+    }
+
+    const products = await Product.find(query).lean();
+
+    return NextResponse.json(products);
   } catch (error) {
+    console.error("Failed to fetch products:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch products",
-        products: [], // Fallback to empty array
+        message: "Failed to fetch products",
       },
       { status: 500 }
     );
   }
 }
-
 

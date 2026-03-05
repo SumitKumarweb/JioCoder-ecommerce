@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -11,87 +11,14 @@ import ProductSort, { SortOption } from '@/components/ProductSort';
 import Pagination from '@/components/Pagination';
 import NoSearchResults from '@/components/NoSearchResults';
 
-// Sample product data
-const allProducts: Product[] = [
-  {
-    id: 'keyboard-1',
-    name: 'Keychron K2 Wireless Mechanical Keyboard Version 2 (Brown Switches)',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-    price: 7499,
-    originalPrice: 9999,
-    rating: 4.5,
-    reviewCount: 2400,
-    badge: { text: '-25%', color: 'red' },
-    discount: 25,
-    brand: 'Keychron',
-    inStock: true,
-  },
-  {
-    id: 'keyboard-2',
-    name: 'Logitech MX Keys S Wireless Illuminated Keyboard',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKsZQW7Nj6vNUklr5dWHdz5iJfptn4bvN3VhJPHWL1GnAZdGLW2rMKcvVd_zFLEQRH4GecddjmBOdn-uxam63prKZmXViUF8xIrjO4F_U7oF3v0iO4iNjAGitEpAob0PBeXyLAfe-OgJPEqkmZozUCVI_mW3rRUM_GAo2nF3n2KG5cwLvmyw7i8SDeuy40etjJKeTlen72g1t_UPzgke_zzEko3eJzGjgjKQIPGdpUMvGPJkt2KqveOeWJdOwrNtjDhnxlN52BXpUh',
-    price: 12995,
-    rating: 5,
-    reviewCount: 5800,
-    badge: { text: 'Premium', color: 'primary' },
-    brand: 'Logitech',
-    inStock: true,
-  },
-  {
-    id: 'keyboard-3',
-    name: 'Razer BlackWidow V4 Pro - Wired Mechanical Gaming Keyboard',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAS59MUEXh5N0DoJaIdeXwNwD1LGPeXpqEVA0gT3lkoZUa4HRR2mCmM3Po5tke9Za9nmh6XiwsU8rIRnBFBnnbVE5LMvdMDD7NIvLg2Qg2SC6r5jASnqFEDsg1VKZg6NRMklHgp6Y3Gwqrfq4udscbkJXLW4F4ORvxjqbx28xO-YenU2EKo5UAa3XnMvWgOmV81Rfq_ILUBKhv8-6RCJbpC26l2gTJk-HanaOHEX1V1t44lyrh01ijJGQF0AWXsSvHavsWke03HY13',
-    price: 22499,
-    rating: 4,
-    reviewCount: 128,
-    badge: { text: 'New Arrival', color: 'green' },
-    brand: 'Razer',
-    inStock: true,
-  },
-  {
-    id: 'keyboard-4',
-    name: 'Zebronics Nitro Mechanical Keyboard with Blue Switches',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCZNsIP1JJIDCULhFFOPEqVSCYrky1goaw05IyTO6v0Qg8Iq0f8fP_584BIrA6eK1E50ppyPbzL6Br8Tw9Hj7H4jjFMdXS8GRwddWVzjVSrZFo7OBYieDLfEiduX3MUTFDErzOLJ8bWnnt1vsnxtvaT-PbuZ4Vuj-sCwcoeHX4-dO8JVXFoutoADeIZLfn4PqL9gvb_gcVqEEIYYnWZI14KxhEVk4DKxdy0_HeFtGYlJkelk6xmmS8VDZ1Q_fx_06vQYhUunvgdOqog',
-    price: 2499,
-    originalPrice: 4199,
-    rating: 4.5,
-    reviewCount: 15000,
-    badge: { text: '-40%', color: 'red' },
-    discount: 40,
-    brand: 'Zebronics',
-    inStock: true,
-  },
-  {
-    id: 'keyboard-5',
-    name: 'TVS-Gold Bharat USB Wired Mechanical Keyboard',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBv7diH_jsOvKWsVWNLm9SjogcAexMdfW54gdEjThb36gkwFGBylahxLY4h8fd3DB7iAPcQXZNXucrP2EhuE7TOPS3K-tMPEqm4rSxFa6HXrI-upjyECuXGAdw62dXn8QJhAmzQ18GZNRTROD3VdZITs0z42Ca1hHB0N7rLnivp9MdtSZy9makZoB0zxiRMU0DbkdOGErZo8ji3XO0o7XmjkNhY-XRm20MnzrRmMA6ejv_qesZ8MXrpEQ24OpnByCkX6Iz9Giz84YoA',
-    price: 2650,
-    rating: 5,
-    reviewCount: 45000,
-    brand: 'TVS Gold',
-    inStock: true,
-  },
-  {
-    id: 'keyboard-6',
-    name: 'Logitech G915 TKL Tenkeyless Lightspeed Wireless RGB',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgkg93ONA_IxvSv-l0E-2eLSWDKcKJS-u2y9MjXifgeZ3555IrfLN6LgOwnywFsyYX9_GIjgD1McoIcAPnTaU42e3nDU0kzwaaoS5VKFbH8tgDy7pl5vJDc2G_c_MNfT-GSYYl32XntdqGjetSr2Q3vxGxt1sbVMcqfxdPAYBx_BTGnXfo15J74gmv4KAOl0Z_x31r60CJZRAlSarLDfP2EfkwWEFybLU3oVlS-4GhfocDl9cO7wchRCdmveoVWo4sjc1M29toiG95',
-    price: 19995,
-    originalPrice: 23995,
-    rating: 4,
-    reviewCount: 892,
-    badge: { text: '-15%', color: 'red' },
-    discount: 15,
-    brand: 'Logitech',
-    inStock: true,
-  },
-];
-
 const ITEMS_PER_PAGE = 12;
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
     priceRange: [500, 50000],
     brands: [],
@@ -101,9 +28,40 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [currentPage, setCurrentPage] = useState(1);
 
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch products: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const mapped: Product[] =
+          data?.map((p) => ({
+            id: p._id,
+            name: p.name,
+            image: p.image,
+            price: p.price,
+            originalPrice: undefined,
+            rating: 4.5,
+            reviewCount: 0,
+            brand: p.category || 'JioCoder',
+            inStock: p.inStock,
+          })) || [];
+        setProducts(mapped);
+      } catch (error) {
+        console.error('Failed to load products from API', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   // Filter products
   const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
+    let result = [...products];
 
     // Search filter with simple "similar word" support (handles plurals / partial matches)
     if (searchQuery) {
@@ -152,7 +110,7 @@ export default function ProductsPage() {
     }
 
     return result;
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, products]);
 
   // Sort products
   const sortedProducts = useMemo(() => {
@@ -200,7 +158,7 @@ export default function ProductsPage() {
   };
 
   // Show NoSearchResults if search query exists but no results found
-  if (searchQuery && sortedProducts.length === 0) {
+  if (!loading && searchQuery && sortedProducts.length === 0) {
     return (
       <>
         <Navbar />
@@ -245,7 +203,16 @@ export default function ProductsPage() {
             </div>
 
             {/* Product Grid */}
-            <ProductGrid products={paginatedProducts} />
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
+                  <p className="text-gray-600">Loading products...</p>
+                </div>
+              </div>
+            ) : (
+              <ProductGrid products={paginatedProducts} />
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (

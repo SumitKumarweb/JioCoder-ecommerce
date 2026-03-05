@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
@@ -11,6 +11,17 @@ interface ProductDetailProps {
   productId: string;
 }
 
+interface ProductData {
+  id: string;
+  name: string;
+  image?: string;
+  price: number;
+  originalPrice?: number;
+  inStock: boolean;
+  description?: string;
+  category?: string;
+}
+
 export default function ProductDetail({ productId }: ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSwitch, setSelectedSwitch] = useState('Tactile Blue');
@@ -18,6 +29,46 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const swiperRef = useRef<SwiperType | null>(null);
   const router = useRouter();
   const { addToCart, buyNow } = useCart();
+  const [product, setProduct] = useState<ProductData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`/api/products/${productId}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Product not found');
+          } else {
+            setError('Failed to load product details');
+          }
+          setProduct(null);
+          return;
+        }
+        const data: any = await res.json();
+        setProduct({
+          id: data._id,
+          name: data.name,
+          image: data.image,
+          price: data.price,
+          inStock: data.inStock,
+          description: data.description,
+          category: data.category,
+        });
+      } catch (e) {
+        console.error('Failed to load product', e);
+        setError('Failed to load product details');
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [productId]);
 
   const images = [
     {
@@ -52,6 +103,45 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
   const increaseQuantity = () => setQuantity((q) => q + 1);
   const decreaseQuantity = () => setQuantity((q) => Math.max(1, q - 1));
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
+          <p className="text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <span className="material-symbols-outlined text-5xl text-gray-300 mb-3">inventory_2</span>
+        <p className="text-gray-700 font-semibold mb-2">
+          {error || 'Product not found.'}
+        </p>
+        <button
+          onClick={() => router.push('/products')}
+          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+        >
+          Back to Products
+        </button>
+      </div>
+    );
+  }
+
+  const displayImages = product.image
+    ? [
+        {
+          id: 0,
+          src: product.image,
+          alt: product.name,
+        },
+        ...images.slice(1),
+      ]
+    : images;
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
@@ -59,16 +149,16 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         <div className="lg:col-span-7 space-y-4">
           <div className="aspect-[4/3] rounded-xl overflow-hidden bg-white border border-slate-200 group relative">
             <img
-              alt={images[selectedImage].alt}
+              alt={displayImages[selectedImage].alt}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-zoom-in"
-              src={images[selectedImage].src}
+              src={displayImages[selectedImage].src}
             />
             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
               High-End Series
             </div>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
-            {images.map((image, index) => (
+            {displayImages.map((image, index) => (
               <button
                 key={image.id}
                 onClick={() => setSelectedImage(index)}
@@ -91,7 +181,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
         <div className="lg:col-span-5 space-y-6">
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-primary leading-tight mb-2">
-              Apex Pro RGB Mechanical Keyboard - Indian Edition
+              {product.name}
             </h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center text-amber-500">
@@ -107,7 +197,7 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
               <span className="h-4 w-px bg-slate-300"></span>
               <span className="text-emerald-600 text-sm font-bold flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">check_circle</span>
-                In Stock
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
               </span>
             </div>
           </div>
@@ -115,10 +205,8 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
           {/* Price Card */}
           <div className="p-4 sm:p-6 bg-white border border-slate-200 rounded-xl space-y-4 shadow-sm">
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl md:text-4xl font-black text-primary">₹12,499</span>
-              <span className="text-lg text-slate-400 line-through">₹18,999</span>
-              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded">
-                35% OFF
+              <span className="text-2xl sm:text-3xl md:text-4xl font-black text-primary">
+                ₹{product.price.toLocaleString('en-IN')}
               </span>
             </div>
             <p className="text-sm text-slate-500">Inclusive of all taxes. Free express shipping.</p>
@@ -190,10 +278,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             <button
               onClick={() => {
                 addToCart({
-                  id: `product-${productId}`,
-                  name: 'Apex Pro RGB Mechanical Keyboard - Indian Edition',
-                  image: images[0].src,
-                  price: 12499,
+                  id: product.id,
+                  name: product.name,
+                  image: product.image || displayImages[0].src,
+                  price: product.price,
                   variant: `${selectedSwitch} Switch`,
                 });
               }}
@@ -205,10 +293,10 @@ export default function ProductDetail({ productId }: ProductDetailProps) {
             <button
               onClick={() => {
                 buyNow({
-                  id: `product-${productId}`,
-                  name: 'Apex Pro RGB Mechanical Keyboard - Indian Edition',
-                  image: images[0].src,
-                  price: 12499,
+                  id: product.id,
+                  name: product.name,
+                  image: product.image || displayImages[0].src,
+                  price: product.price,
                   variant: `${selectedSwitch} Switch`,
                 }, quantity);
                 router.push('/checkout');

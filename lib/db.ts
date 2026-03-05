@@ -46,21 +46,17 @@ async function connectDB() {
       socketTimeoutMS: databaseConfig.connectionOptions.socketTimeoutMS,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts)
+    .then((mongoose) => {
       console.log(`✅ MongoDB connected to ${databaseConfig.projectName} (${databaseConfig.projectId})`);
       console.log(`📍 Timezone: ${databaseConfig.timezone} (${databaseConfig.connectionOptions.tz})`);
       return mongoose;
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err);
+      throw err;
     });
   }
-
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    console.error('❌ MongoDB connection error:', e);
-    throw e;
-  }
-
   return cached.conn;
 }
 

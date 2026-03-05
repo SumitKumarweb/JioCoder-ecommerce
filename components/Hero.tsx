@@ -18,72 +18,24 @@ export type HeroSlide = {
   enabled?: boolean;
 };
 
-const DEFAULT_HERO_SLIDES: HeroSlide[] = [
-  {
-    id: 'slide-1',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC2szADM5ISIXlgO-jmeh_WgCinJ9UftMKB7j6hbRvTZD5ugGjePtpr6m6DVHlXAPcWT6auCrnysq7_CpQwCJnpNpXlF2CwFWG46ax5ECUikI41JhnjQiN_2MxhxVr4VP_vnIIKjaaWwjTH7fUC2MvhBjuJL2RWLMZXlW9j-wgVELmIfI4q2tkSXebnBWq05UTZ9Rh8jilVaLs2osLyifV7aJuTcEgQyi5mJEZ2CK_sUwrFtxkOuHmN7uvsM8f-3Y_3Dq09Cx5Zgvfo',
-    tag: 'New Arrival',
-    title: 'Precision at your fingertips',
-    subtitle:
-      'Engineered for enthusiasts. Explore our curated collection of artisanal mechanical keyboards and bespoke switches.',
-    buttonText: 'Shop Now',
-    url: '/products',
-    enabled: true,
-  },
-  {
-    id: 'slide-2',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDVA_-B12wrZHmkzZ0JS_w6YqBEeiWUHL-yo3FEwx9c9gXaJTZSRmBDVKQi4WgAoT1pgIxToDSiT6FRcVKmxerqeO-f9IYBLjIf0ZuyfqFNRhxhDS5Kuo3dGmO2L1BWOd88iu9s6hysFVNVyYWJ_qsjVHKMTsKJeYiMca5mmQ-CvDEDa-H62n7_lAGLE0RXrB0xGRSjU24V7KGl_DwmxjY830FIxC9VpaX14WXWTlwTLNARvo7gzXP97WcgP6hiEXeD8KwXmgJVHRyT',
-    tag: 'Featured',
-    title: 'Premium Mechanical Keyboards',
-    subtitle:
-      'Discover the perfect typing experience with our handpicked selection of premium mechanical keyboards.',
-    buttonText: 'Explore Keyboards',
-    url: '/products?category=keyboards',
-    enabled: true,
-  },
-  {
-    id: 'slide-3',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-    tag: 'Limited Edition',
-    title: 'Artisan Collection',
-    subtitle:
-      'Exclusive designs crafted for the discerning enthusiast. Limited edition keyboards and accessories.',
-    buttonText: 'View Collection',
-    url: '/collections/artisan-collection',
-    enabled: true,
-  },
-  {
-    id: 'slide-4',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCKQyC6WFTf8MJOcWjJFwxdZ56gafGjIO355ezHoArGqNVxMvTh7rSuWRStgoQ2e0SCBcXgVU0QW2IYM3qSa4FZMO9-MIfH_KWadR2rwSHDAF9YZen4Z-E3y1tXF3GrXMChtxeB4u_v4nEJHTWnabdNueSJS0SWbBkwWIKtXFz1Iqlu2JGFHU7MJ3YOZ6O9b_lFV_W3fizQDFR7wleMqzOZ8a16yecgjjuiSvZ_4-WpIfo-W-_npJyLCHNUZJRXbJHkW3BfxMHrQOxh',
-    tag: 'Best Seller',
-    title: 'Gaming Peripherals',
-    subtitle: 'Elevate your gaming setup with our premium gaming mice, keyboards, and accessories.',
-    buttonText: 'Shop Gaming',
-    url: '/products?category=gaming',
-    enabled: true,
-  },
-];
-
 export default function Hero() {
-  const [slides, setSlides] = useState<HeroSlide[]>(DEFAULT_HERO_SLIDES);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const stored = window.localStorage.getItem('adminHeroSlides');
-      if (!stored) return;
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setSlides(parsed);
+    const loadSlides = async () => {
+      try {
+        const res = await fetch('/api/hero');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch hero slides: ${res.status}`);
+        }
+        const data: HeroSlide[] = await res.json();
+        setSlides(data || []);
+      } catch (error) {
+        console.error('Failed to load hero slides from API', error);
       }
-    } catch (error) {
-      console.error('Failed to load hero slides from localStorage', error);
-    }
+    };
+
+    loadSlides();
   }, []);
 
   const visibleSlides = slides.filter((slide) => slide.enabled !== false);

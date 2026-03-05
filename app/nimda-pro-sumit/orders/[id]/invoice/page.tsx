@@ -7,7 +7,7 @@ interface Order {
   id: string;
   orderNumber: string;
   customerName: string;
-  customerPhone: string;
+  customerPhone?: string;
   shippingAddress: {
     name: string;
     address: string;
@@ -18,7 +18,7 @@ interface Order {
   };
   items: Array<{
     name: string;
-    sku: string;
+    sku?: string;
     quantity: number;
     price: number;
   }>;
@@ -36,30 +36,50 @@ export default function InvoicePage() {
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockOrder: Order = {
-      id: '4',
-      orderNumber: 'JC-88291',
-      customerName: 'Arpit Shrivastava',
-      customerPhone: '+91 98765 43210',
-      shippingAddress: {
-        name: 'Arpit Shrivastava',
-        address: '74/B, Cyber Towers, Sector 62',
-        city: 'Noida',
-        state: 'Uttar Pradesh',
-        pincode: '201301',
-        country: 'India',
-      },
-      items: [
-        { name: 'CodeRunner Pro TKL', sku: 'CR-TKL-BLUE', quantity: 1, price: 8499 },
-        { name: 'ZenFlow Ergo Mouse', sku: 'ZF-MSE-01', quantity: 1, price: 4200 },
-        { name: 'Vortex Desk Mat (XXL)', sku: 'VX-MAT-XXL', quantity: 2, price: 1250 },
-      ],
-      total: 17934.82,
-      weight: 1.2,
-      createdAt: '2024-01-15T08:15:00Z',
+    const loadOrder = async () => {
+      try {
+        const res = await fetch(`/api/admin/orders/${orderId}`);
+        if (!res.ok) {
+          setOrder(null);
+          return;
+        }
+        const data: any = await res.json();
+
+        const items =
+          data.items?.map((item: any) => ({
+            name: item.name,
+            sku: item.product?.sku,
+            quantity: item.quantity,
+            price: item.price,
+          })) || [];
+
+        const mapped: Order = {
+          id: data._id,
+          orderNumber: data._id.slice(-6).toUpperCase(),
+          customerName: data.user?.name || data.user?.email || 'Guest',
+          customerPhone: data.shippingAddress?.phone,
+          shippingAddress: {
+            name: data.shippingAddress?.name || data.user?.name || 'Customer',
+            address: data.shippingAddress?.address || '',
+            city: data.shippingAddress?.city || '',
+            state: data.shippingAddress?.state || '',
+            pincode: data.shippingAddress?.pincode || '',
+            country: data.shippingAddress?.country || 'India',
+          },
+          items,
+          total: data.total,
+          weight: data.weight || 1.0,
+          createdAt: data.createdAt,
+        };
+
+        setOrder(mapped);
+      } catch (error) {
+        console.error('Failed to load invoice order', error);
+        setOrder(null);
+      }
     };
-    setOrder(mockOrder);
+
+    loadOrder();
   }, [orderId]);
 
   const handlePrint = () => {

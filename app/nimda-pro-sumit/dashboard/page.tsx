@@ -12,22 +12,22 @@ interface StatCard {
   color: string;
 }
 
-interface Order {
+interface OrderRow {
   id: string;
   customerName: string;
   productName: string;
   amount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
   date: string;
 }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [liveSales, setLiveSales] = useState<Order[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderRow[]>([]);
+  const [liveSales, setLiveSales] = useState<OrderRow[]>([]);
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
+    // TODO: Replace mock stats with real analytics from /api/admin/analytics
     setStats([
       {
         title: 'Total Users',
@@ -45,112 +45,54 @@ export default function DashboardPage() {
         icon: 'person_add',
         color: 'bg-green-500',
       },
-      {
-        title: 'Orders (Last 7 days)',
-        value: '456',
-        change: '+15.3%',
-        changeType: 'positive',
-        icon: 'shopping_cart',
-        color: 'bg-purple-500',
-      },
-      {
-        title: 'Total Orders',
-        value: '8,923',
-        change: '+5.1%',
-        changeType: 'positive',
-        icon: 'receipt_long',
-        color: 'bg-orange-500',
-      },
-      {
-        title: 'Total Revenue',
-        value: '₹45,67,890',
-        change: '+18.7%',
-        changeType: 'positive',
-        icon: 'payments',
-        color: 'bg-indigo-500',
-      },
-      {
-        title: 'Live Sales',
-        value: '23',
-        icon: 'trending_up',
-        color: 'bg-red-500',
-      },
-    ]);
-
-    setRecentOrders([
-      {
-        id: 'ORD-001',
-        customerName: 'Rahul Sharma',
-        productName: 'Keychron K2 Keyboard',
-        amount: 7499,
-        status: 'processing',
-        date: '2024-01-15',
-      },
-      {
-        id: 'ORD-002',
-        customerName: 'Priya Patel',
-        productName: 'Logitech MX Keys',
-        amount: 12995,
-        status: 'shipped',
-        date: '2024-01-14',
-      },
-      {
-        id: 'ORD-003',
-        customerName: 'Amit Kumar',
-        productName: 'Gaming Mouse Pro',
-        amount: 3499,
-        status: 'delivered',
-        date: '2024-01-13',
-      },
-      {
-        id: 'ORD-004',
-        customerName: 'Sneha Reddy',
-        productName: 'Custom Keycaps Set',
-        amount: 2499,
-        status: 'pending',
-        date: '2024-01-15',
-      },
-      {
-        id: 'ORD-005',
-        customerName: 'Vikram Singh',
-        productName: 'Mechanical Keyboard',
-        amount: 8999,
-        status: 'processing',
-        date: '2024-01-14',
-      },
-    ]);
-
-    setLiveSales([
-      {
-        id: 'ORD-006',
-        customerName: 'Anjali Mehta',
-        productName: 'Wireless Mouse',
-        amount: 1999,
-        status: 'processing',
-        date: new Date().toISOString(),
-      },
-      {
-        id: 'ORD-007',
-        customerName: 'Rajesh Nair',
-        productName: 'Keyboard Stand',
-        amount: 1499,
-        status: 'processing',
-        date: new Date().toISOString(),
-      },
+      // Order stats can be calculated from real data later
     ]);
   }, []);
 
-  const getStatusColor = (status: string) => {
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const res = await fetch('/api/admin/orders');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch orders: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const mapped: OrderRow[] =
+          data?.map((order) => ({
+            id: order._id,
+            customerName: order.user?.name || order.user?.email || 'Guest',
+            productName:
+              order.items?.[0]?.name || `${order.items?.length || 0} item(s)`,
+            amount: order.total,
+            status: order.status,
+            date: order.createdAt,
+          })) || [];
+
+        // Recent orders: latest 5
+        setRecentOrders(mapped.slice(0, 5));
+
+        // Live sales: last 2 processing/paid orders
+        const live = mapped.filter((o) => o.status === 'PENDING' || o.status === 'PAID');
+        setLiveSales(live.slice(0, 2));
+      } catch (error) {
+        console.error('Failed to load orders for dashboard', error);
+      }
+    };
+
+    loadOrders();
+  }, []);
+
+  const getStatusColor = (status: OrderRow['status']) => {
     switch (status) {
-      case 'pending':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
+      case 'PAID':
         return 'bg-blue-100 text-blue-800';
-      case 'shipped':
+      case 'SHIPPED':
         return 'bg-purple-100 text-purple-800';
-      case 'delivered':
+      case 'COMPLETED':
         return 'bg-green-100 text-green-800';
-      case 'cancelled':
+      case 'CANCELLED':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';

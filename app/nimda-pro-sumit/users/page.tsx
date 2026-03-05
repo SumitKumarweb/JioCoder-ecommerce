@@ -53,63 +53,33 @@ export default function UsersPage() {
   });
 
   useEffect(() => {
-    // Load users from localStorage
-    const saved = localStorage.getItem('adminUsers');
-    if (saved) {
-      setUsers(JSON.parse(saved));
-    } else {
-      // Default mock users
-      const mockUsers: User[] = [
-        {
-          id: 'user-1',
-          name: 'Arpit Shrivastava',
-          email: 'arpit.sh@jiocoder.com',
-          phone: '+91 98765 43210',
-          role: 'customer',
-          status: 'active',
-          registeredDate: '2023-10-15',
-          lastLogin: '2024-01-20',
-          totalOrders: 12,
-          totalSpent: 125000,
-          address: {
-            street: '74/B, Cyber Towers, Sector 62',
-            city: 'Noida',
-            state: 'Uttar Pradesh',
-            zipCode: '201301',
-            country: 'India',
-          },
-          preferences: {
-            newsletter: true,
-            smsNotifications: false,
-          },
-        },
-        {
-          id: 'user-2',
-          name: 'Rohan Verma',
-          email: 'rohan.verma@example.com',
-          phone: '+91 98765 12345',
-          role: 'customer',
-          status: 'active',
-          registeredDate: '2023-11-20',
-          lastLogin: '2024-01-19',
-          totalOrders: 5,
-          totalSpent: 45000,
-        },
-        {
-          id: 'user-3',
-          name: 'Admin User',
-          email: 'admin@jiocoder.com',
-          role: 'admin',
-          status: 'active',
-          registeredDate: '2023-01-01',
-          lastLogin: '2024-01-20',
-          totalOrders: 0,
-          totalSpent: 0,
-        },
-      ];
-      setUsers(mockUsers);
-      localStorage.setItem('adminUsers', JSON.stringify(mockUsers));
-    }
+    const loadUsers = async () => {
+      try {
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch users: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const mapped: User[] =
+          data?.map((u) => ({
+            id: u._id,
+            name: u.name || u.email,
+            email: u.email,
+            phone: '',
+            role: 'customer',
+            status: 'active',
+            registeredDate: new Date(u.createdAt || new Date()).toISOString().split('T')[0],
+            lastLogin: new Date(u.updatedAt || u.createdAt || new Date()).toISOString().split('T')[0],
+            totalOrders: 0,
+            totalSpent: 0,
+          })) || [];
+        setUsers(mapped);
+      } catch (error) {
+        console.error('Failed to load admin users from API', error);
+      }
+    };
+
+    loadUsers();
   }, []);
 
   const handleAddUser = () => {
@@ -164,70 +134,88 @@ export default function UsersPage() {
       return;
     }
 
-    if (editingUser) {
-      const updated = users.map((u) =>
-        u.id === editingUser.id
-          ? {
-              ...u,
-              name: formData.name,
+    const save = async () => {
+      try {
+        if (editingUser) {
+          // Update existing user (email/name only for now)
+          const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               email: formData.email,
-              phone: formData.phone,
-              role: formData.role,
-              status: formData.status,
-              avatar: formData.avatar,
-              address: {
-                street: formData.street,
-                city: formData.city,
-                state: formData.state,
-                zipCode: formData.zipCode,
-                country: formData.country,
-              },
-              preferences: {
-                newsletter: formData.newsletter,
-                smsNotifications: formData.smsNotifications,
-              },
-            }
-          : u
-      );
-      setUsers(updated);
-      localStorage.setItem('adminUsers', JSON.stringify(updated));
-    } else {
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.role,
-        status: formData.status,
-        avatar: formData.avatar,
-        registeredDate: new Date().toISOString().split('T')[0],
-        totalOrders: 0,
-        totalSpent: 0,
-        address: {
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          country: formData.country,
-        },
-        preferences: {
-          newsletter: formData.newsletter,
-          smsNotifications: formData.smsNotifications,
-        },
-      };
-      const updated = [...users, newUser];
-      setUsers(updated);
-      localStorage.setItem('adminUsers', JSON.stringify(updated));
-    }
-    setIsModalOpen(false);
+              name: formData.name,
+              // Optional password change
+              password: formData.password || undefined,
+            }),
+          });
+          if (!res.ok) throw new Error('Failed to update user');
+          const updatedUser = await res.json();
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === editingUser.id
+                ? {
+                    ...u,
+                    name: updatedUser.name || updatedUser.email,
+                    email: updatedUser.email,
+                  }
+                : u
+            )
+          );
+        } else {
+          // Create new user
+          const res = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: formData.email,
+              name: formData.name,
+              password: formData.password,
+            }),
+          });
+          if (!res.ok) throw new Error('Failed to create user');
+          const created = await res.json();
+          const newUser: User = {
+            id: created._id,
+            name: created.name || created.email,
+            email: created.email,
+            phone: formData.phone,
+            role: formData.role,
+            status: formData.status,
+            registeredDate: new Date(created.createdAt || new Date()).toISOString().split('T')[0],
+            totalOrders: 0,
+            totalSpent: 0,
+          };
+          setUsers((prev) => [...prev, newUser]);
+        }
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error('Failed to save user', error);
+        alert('Failed to save user. Please try again.');
+      }
+    };
+
+    void save();
   };
 
   const handleDeleteUser = (id: string) => {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      const updated = users.filter((u) => u.id !== id);
-      setUsers(updated);
-      localStorage.setItem('adminUsers', JSON.stringify(updated));
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
     }
+
+    const remove = async () => {
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete user');
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+      } catch (error) {
+        console.error('Failed to delete user', error);
+        alert('Failed to delete user. Please try again.');
+      }
+    };
+
+    void remove();
   };
 
   const handleToggleStatus = (id: string, currentStatus: string) => {

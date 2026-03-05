@@ -8,14 +8,14 @@ import LoginModal from './LoginModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 type AdminNavItem = {
-  id: string;
+  _id: string;
   label: string;
   href: string;
   enabled: boolean;
 };
 
 type AdminCollectionNavItem = {
-  id: string;
+  _id: string;
   name: string;
   slug: string;
   description?: string;
@@ -23,13 +23,13 @@ type AdminCollectionNavItem = {
 };
 
 const DEFAULT_ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { id: 'blog', label: 'Blog', href: '/blog', enabled: true },
-  { id: 'deals', label: 'Deals', href: '/sale', enabled: true },
+  { _id: 'blog', label: 'Blog', href: '/blog', enabled: true },
+  { _id: 'deals', label: 'Deals', href: '/sale', enabled: true },
 ];
 
 const DEFAULT_COLLECTION_ITEMS: AdminCollectionNavItem[] = [
   {
-    id: 'col-1',
+    _id: 'col-1',
     name: 'Mechanical Keyboards',
     slug: 'mechanical-keyboards',
     description: 'Premium mechanical keyboards collection',
@@ -37,7 +37,7 @@ const DEFAULT_COLLECTION_ITEMS: AdminCollectionNavItem[] = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
   },
   {
-    id: 'col-2',
+    _id: 'col-2',
     name: 'Gaming Mice',
     slug: 'gaming-mice',
     description: 'High-performance gaming mice',
@@ -56,37 +56,34 @@ export default function Navbar() {
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const loadNavbarConfig = async () => {
+      try {
+        const res = await fetch('/api/navbar');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch navbar config: ${res.status}`);
+        }
+        const data: { navItems: AdminNavItem[]; collections: any[] } = await res.json();
 
-    try {
-      const stored = window.localStorage.getItem('adminNavbarItems');
-      if (!stored) return;
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        setAdminNavItems(parsed);
-      }
-    } catch (error) {
-      console.error('Failed to load admin navbar items from localStorage', error);
-    }
+        if (Array.isArray(data.navItems) && data.navItems.length > 0) {
+          setAdminNavItems(data.navItems);
+        }
 
-    try {
-      const storedCollections = window.localStorage.getItem('adminCollections');
-      if (storedCollections) {
-        const parsedCollections = JSON.parse(storedCollections);
-        if (Array.isArray(parsedCollections)) {
-          const mapped: AdminCollectionNavItem[] = parsedCollections.map((col: any) => ({
-            id: col.id ?? col.slug ?? col.name,
+        if (Array.isArray(data.collections) && data.collections.length > 0) {
+          const mapped: AdminCollectionNavItem[] = data.collections.map((col: any) => ({
+            _id: col._id,
             name: col.name,
             slug: col.slug,
             description: col.description,
-            featuredImage: col.featuredImage,
+            featuredImage: col.heroImage,
           }));
           setCollectionNavItems(mapped);
         }
+      } catch (error) {
+        console.error('Failed to load navbar config from API', error);
       }
-    } catch (error) {
-      console.error('Failed to load admin collections from localStorage', error);
-    }
+    };
+
+    loadNavbarConfig();
   }, []);
   
   return (
@@ -337,7 +334,7 @@ export default function Navbar() {
                       <div className="space-y-4">
                         {collectionNavItems.slice(0, 4).map((collection) => (
                           <a
-                            key={collection.id}
+                            key={collection._id}
                             className="flex items-center gap-4 group"
                             href={`/collections/${collection.slug}`}
                           >
@@ -460,7 +457,7 @@ export default function Navbar() {
                 .filter((item) => item.enabled)
                 .map((item) => (
                   <Link
-                    key={item.id}
+                    key={item._id}
                     href={item.href}
                     className="text-white/80 hover:text-white transition-colors"
                   >

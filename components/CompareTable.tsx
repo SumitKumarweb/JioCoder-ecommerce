@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCart } from '@/contexts/CartContext';
@@ -35,153 +36,67 @@ const StarRating = ({ rating }: { rating: number }) => {
   );
 };
 
-// Mock product details - in a real app, this would come from an API
-const getProductDetails = (productId: string) => {
-  const details: Record<string, any> = {
-    'trending-1': {
-      name: 'Arctic Mist PBT Keycap Set',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvGH-EeXfLPuwhzrnO3Ynx3TvEgLyyf3w9A7Ku9MYJXzUSg2T6V66y2UeVfWRXErQGUzLuau8p2vpuruuQI1DMHt3I-DPjPhiMgfM9GuKqeglLmHGiJbgkvgwj0Q38TiqNwiDFfSAbkM-W7hONdowZfcjqeXqcrrt8bFfzniZIvddBpqwFYuA-vQhuRaxLg3hFgLl3sNDGXaMsza6QqOHuBVFNN1S15yKqDUR5vZm1mcbCFowTeykGjZIINx45hBbvsEciIvsTgQnL',
-      rating: 4.5,
-      reviews: 428,
-      price: '₹3,499',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'PBT Keycaps',
-      switchDetail: 'Double-shot ABS',
-      connectivity: 'USB-C Wired',
-      connectivityDetail: '',
-      backlighting: 'SOUTH-FACING RGB',
-      backlightingColor: 'bg-primary/10 text-primary',
-      backlightingDot: 'bg-primary',
-      warranty: '1 Year Standard Domestic Warranty',
-    },
-    'trending-2': {
-      name: 'Air75 V2 Low-Profile Keyboard',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKQyC6WFTf8MJOcWjJFwxdZ56gafGjIO355ezHoArGqNVxMvTh7rSuWRStgoQ2e0SCBcXgVU0QW2IYM3qSa4FZMO9-MIfH_KWadR2rwSHDAF9YZen4Z-E3y1tXF3GrXMChtxeB4u_v4nEJHTWnabdNueSJS0SWbBkwWIKtXFz1Iqlu2JGFHU7MJ3YOZ6O9b_lFV_W3fizQDFR7wleMqzOZ8a16yecgjjuiSvZ_4-WpIfo-W-_npJyLCHNUZJRXbJHkW3BfxMHrQOxh',
-      rating: 4.0,
-      reviews: 892,
-      price: '₹12,999',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'Low-Profile Mechanical',
-      switchDetail: 'NuPhy Red Linear',
-      connectivity: 'USB-C Wired',
-      connectivityDetail: 'Bluetooth 5.0',
-      backlighting: 'PER-KEY RGB',
-      backlightingColor: 'bg-green-100 text-green-700',
-      backlightingDot: 'bg-green-500',
-      warranty: '2 Years International Manufacturer Warranty',
-    },
-    'trending-3': {
-      name: 'Logitech G Pro X Superlight',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-      rating: 4.5,
-      reviews: 1205,
-      price: '₹11,495',
-      stock: 'Only 4 left',
-      stockColor: 'text-red-500',
-      switchType: 'Optical',
-      switchDetail: 'Hero 25K Sensor',
-      connectivity: 'Lightspeed Wireless',
-      connectivityDetail: 'USB Receiver',
-      backlighting: 'LIGHTSYNC RGB',
-      backlightingColor: 'bg-slate-100 text-slate-700',
-      backlightingDot: 'bg-slate-400',
-      warranty: '2 Years Limited Hardware Warranty',
-    },
-    'bestseller-1': {
-      name: 'K2 Wireless Mechanical Keyboard',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVA_-B12wrZHmkzZ0JS_w6YqBEeiWUHL-yo3FEwx9c9gXaJTZSRmBDVKQi4WgAoT1pgIxToDSiT6FRcVKmxerqeO-f9IYBLjIf0ZuyfqFNRhxhDS5Kuo3dGmO2L1BWOd88iu9s6hysFVNVyYWJ_qsjVHKMTsKJeYiMca5mmQ-CvDEDa-H62n7_lAGLE0RXrB0xGRSjU24V7KGl_DwmxjY830FIxC9VpaX14WXWTlwTLNARvo7gzXP97WcgP6hiEXeD8KwXmgJVHRyT',
-      rating: 4.5,
-      reviews: 428,
-      price: '₹8,499',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'Mechanical',
-      switchDetail: 'Keychron K Pro (Brown)',
-      connectivity: 'USB-C Wired',
-      connectivityDetail: 'Bluetooth 5.1',
-      backlighting: 'SOUTH-FACING RGB',
-      backlightingColor: 'bg-primary/10 text-primary',
-      backlightingDot: 'bg-primary',
-      warranty: '1 Year Standard Domestic Warranty',
-    },
-    'bestseller-2': {
-      name: 'MX Master 3S Wireless',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-      rating: 5.0,
-      reviews: 892,
-      price: '₹9,995',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'Optical / Mechanical',
-      switchDetail: 'Razer Yellow Linear',
-      connectivity: 'USB-C Wired',
-      connectivityDetail: '8000Hz Polling',
-      backlighting: 'PER-KEY CHROMA RGB',
-      backlightingColor: 'bg-green-100 text-green-700',
-      backlightingDot: 'bg-green-500',
-      warranty: '2 Years International Manufacturer Warranty',
-    },
-    'bestseller-3': {
-      name: 'Model O- Lightweight Mouse',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXnDBW3fSizAUrZ3rDyY0N8oBsxZTcTyXhEnkE-quqlp2znS6pBe13Nc6ooE1Y67L5DivsQxEUa1YeI9BY2KEeGEz4bziPlw29DdC3AlrEGO7RWx9xG7voi8pKEz0xKLSAL_eCZrN5rKS1ufnWR1If-JnGZbDfz2os0oftjy-7YvpN73BhPYBFUYonV0HU6KDUBEvEwblDHfIZpQb5a4YXQbP_jbeIBsY1hnxyPdXNd7WCrbn3PFzswOpEVckWI2HmHDPhhu-Ki7qG',
-      rating: 4.0,
-      reviews: 89,
-      price: '₹4,299',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'Mechanical (Swappable)',
-      switchDetail: 'GX Blue Clicky',
-      connectivity: 'Lightspeed Wireless',
-      connectivityDetail: 'Bluetooth 5.1',
-      backlighting: 'LIGHTSYNC RGB',
-      backlightingColor: 'bg-slate-100 text-slate-700',
-      backlightingDot: 'bg-slate-400',
-      warranty: '2 Years Limited Hardware Warranty',
-    },
-    'bestseller-4': {
-      name: 'Pro Coiled Aviator Cable',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgdShxLlKCypMs41C4ireig29gMbYTcanzcugGp8t-hCCcH_Bbydd3W8vCLPbdtGLpSXlecsJdUMyEZ-R4i7d56copAT6erQtq1DkZiY77ZFMnlBetA9tX24i75RATOLlC7Agaffx_2fpn0jNJndIDhahEGWK-Imu1QevPVpOZSfabGlFPLjePlxNSS2hp3EGuNRrsoQsDtjEYf_jq9pwnJHYLnQ9yCq8HZLNBS9Ivrh3oJH5kktTCbvODwFUo5iwnmnjxVUCx-0NL',
-      rating: 5.0,
-      reviews: 56,
-      price: '₹1,999',
-      stock: 'In Stock',
-      stockColor: 'text-green-600',
-      switchType: 'USB-C Cable',
-      switchDetail: 'Coiled Design',
-      connectivity: 'USB-C Wired',
-      connectivityDetail: '',
-      backlighting: 'N/A',
-      backlightingColor: 'bg-slate-100 text-slate-700',
-      backlightingDot: 'bg-slate-400',
-      warranty: '6 Months Warranty',
-    },
-  };
-
-  return details[productId] || {
-    name: 'Product',
-    image: '',
-    rating: 4.0,
-    reviews: 0,
-    price: '₹0',
-    stock: 'In Stock',
-    stockColor: 'text-green-600',
-    switchType: 'N/A',
-    switchDetail: '',
-    connectivity: 'N/A',
-    connectivityDetail: '',
-    backlighting: 'N/A',
-    backlightingColor: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400',
-    backlightingDot: 'bg-slate-400',
-    warranty: 'Standard Warranty',
-  };
-};
+interface ProductDetails {
+  name: string;
+  image: string;
+  rating: number;
+  reviews: number;
+  price: string;
+  stock: string;
+  stockColor: string;
+  switchType: string;
+  switchDetail: string;
+  connectivity: string;
+  connectivityDetail: string;
+  backlighting: string;
+  backlightingColor: string;
+  backlightingDot: string;
+  warranty: string;
+}
 
 export default function CompareTable() {
   const router = useRouter();
   const { compareProducts, removeFromCompare } = useCompare();
   const { buyNow } = useCart();
+  const [detailsMap, setDetailsMap] = React.useState<Record<string, ProductDetails>>({});
+
+  React.useEffect(() => {
+    const loadDetails = async () => {
+      if (compareProducts.length === 0) return;
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) return;
+        const data: any[] = await res.json();
+
+        const map: Record<string, ProductDetails> = {};
+        data.forEach((p) => {
+          map[p._id] = {
+            name: p.name,
+            image: p.image,
+            rating: p.rating ?? 4.5,
+            reviews: p.reviewCount ?? 0,
+            price: `₹${(p.price ?? 0).toLocaleString('en-IN')}`,
+            stock: p.inStock ? 'In Stock' : 'Out of Stock',
+            stockColor: p.inStock ? 'text-green-600' : 'text-red-500',
+            switchType: p.switchType || 'N/A',
+            switchDetail: '',
+            connectivity: p.connectivity || 'N/A',
+            connectivityDetail: '',
+            backlighting: p.backlighting || 'N/A',
+            backlightingColor: 'bg-slate-100 text-slate-700',
+            backlightingDot: 'bg-slate-400',
+            warranty: p.warranty || 'Standard Warranty',
+          };
+        });
+
+        setDetailsMap(map);
+      } catch (error) {
+        console.error('Failed to load compare details', error);
+      }
+    };
+
+    void loadDetails();
+  }, [compareProducts]);
 
   if (compareProducts.length === 0) {
     return (
@@ -203,7 +118,7 @@ export default function CompareTable() {
                 </span>
               </th>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id] as ProductDetails | undefined;
                 return (
                   <th
                     key={product.id}
@@ -216,18 +131,26 @@ export default function CompareTable() {
                       <span className="material-symbols-outlined">close</span>
                     </button>
                     <div className="flex flex-col items-center gap-4">
-                      <img
-                        alt={product.name}
-                        className="w-48 h-32 object-contain rounded-lg shadow-md"
-                        src={details.image || product.image}
-                      />
+                      {details && (
+                        <img
+                          alt={product.name}
+                          className="w-48 h-32 object-contain rounded-lg shadow-md"
+                          src={details.image || product.image}
+                        />
+                      )}
                       <div className="text-center">
-                        <h3 className="font-bold text-lg leading-tight">{details.name}</h3>
+                        <h3 className="font-bold text-lg leading-tight">
+                          {details?.name || product.name}
+                        </h3>
                         <div className="flex items-center justify-center gap-1 mt-1">
-                          <StarRating rating={details.rating} />
-                          <span className="text-[12px] text-slate-400 ml-1">
-                            ({details.reviews})
-                          </span>
+                          {details && (
+                            <>
+                              <StarRating rating={details.rating} />
+                              <span className="text-[12px] text-slate-400 ml-1">
+                                ({details.reviews})
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -243,13 +166,17 @@ export default function CompareTable() {
                 Price
               </td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id];
                 return (
                   <td key={product.id} className="p-6">
-                    <div className="text-2xl font-black text-primary">{details.price}</div>
-                    <div className={`text-xs font-semibold mt-1 ${details.stockColor}`}>
-                      {details.stock}
-                    </div>
+                    {details && (
+                      <>
+                        <div className="text-2xl font-black text-primary">{details.price}</div>
+                        <div className={`text-xs font-semibold mt-1 ${details.stockColor}`}>
+                          {details.stock}
+                        </div>
+                      </>
+                    )}
                   </td>
                 );
               })}
@@ -261,11 +188,11 @@ export default function CompareTable() {
                 Switch Type
               </td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id];
                 return (
                   <td key={product.id} className="p-6">
-                    <div className="font-medium">{details.switchType}</div>
-                    {details.switchDetail && (
+                    <div className="font-medium">{details?.switchType || 'N/A'}</div>
+                    {details?.switchDetail && (
                       <div className="text-sm text-slate-500">{details.switchDetail}</div>
                     )}
                   </td>
@@ -279,16 +206,18 @@ export default function CompareTable() {
                 Connectivity
               </td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id];
                 return (
                   <td key={product.id} className="p-6">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-slate-400">
-                        {details.connectivity.includes('Wireless') ? 'wifi' : 'usb'}
+                        {details && typeof details.connectivity === 'string' && details.connectivity.includes('Wireless')
+                          ? 'wifi'
+                          : 'usb'}
                       </span>
-                      <span>{details.connectivity}</span>
+                      <span>{details?.connectivity || 'N/A'}</span>
                     </div>
-                    {details.connectivityDetail && (
+                    {details?.connectivityDetail && (
                       <div className="text-sm text-slate-500 mt-1">{details.connectivityDetail}</div>
                     )}
                   </td>
@@ -302,19 +231,21 @@ export default function CompareTable() {
                 Backlighting
               </td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id];
                 return (
                   <td key={product.id} className="p-6">
-                    <div
-                      className={`inline-flex items-center gap-2 px-2.5 py-1 ${details.backlightingColor} text-xs font-bold rounded-full`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full ${details.backlightingDot} ${
-                          details.backlighting.includes('RGB') ? 'animate-pulse' : ''
-                        }`}
-                      ></span>
-                      {details.backlighting}
-                    </div>
+                    {details && (
+                      <div
+                        className={`inline-flex items-center gap-2 px-2.5 py-1 ${details.backlightingColor} text-xs font-bold rounded-full`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${details.backlightingDot} ${
+                            details.backlighting.includes('RGB') ? 'animate-pulse' : ''
+                          }`}
+                        ></span>
+                        {details.backlighting}
+                      </div>
+                    )}
                   </td>
                 );
               })}
@@ -326,10 +257,10 @@ export default function CompareTable() {
                 Warranty
               </td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
+                const details = detailsMap[product.id];
                 return (
                   <td key={product.id} className="p-6 text-sm">
-                    {details.warranty}
+                    {details?.warranty || 'Standard Warranty'}
                   </td>
                 );
               })}
@@ -339,18 +270,26 @@ export default function CompareTable() {
             <tr className="bg-slate-50/50">
               <td className="p-6"></td>
               {compareProducts.map((product) => {
-                const details = getProductDetails(product.id);
-                // Parse price from string format "₹3,499" to number
-                const price = parseInt(details.price.replace(/[₹,]/g, '')) || 0;
+                const details = detailsMap[product.id];
+                const numericPrice =
+                  details && typeof details.price === 'string'
+                    ? parseInt(details.price.replace(/[₹,]/g, ''), 10) || 0
+                    : typeof product.price === 'number'
+                    ? product.price
+                    : 0;
                 return (
                   <td key={product.id} className="p-6">
                     <button
                       onClick={() => {
+                        const safeDetails = details || {
+                          name: product.name,
+                          image: product.image,
+                        } as ProductDetails;
                         buyNow({
                           id: product.id,
-                          name: details.name,
-                          image: details.image,
-                          price: price,
+                          name: safeDetails.name,
+                          image: safeDetails.image,
+                          price: numericPrice,
                         });
                         router.push('/checkout');
                       }}

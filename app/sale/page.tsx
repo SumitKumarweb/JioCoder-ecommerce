@@ -133,7 +133,7 @@ const bundles: Bundle[] = [
 ];
 
 export default function SalePage() {
-  const { addToCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const [timeLeft, setTimeLeft] = useState({
     hours: 2,
     minutes: 45,
@@ -178,14 +178,24 @@ export default function SalePage() {
   };
 
   const handleAddBundle = (bundle: Bundle) => {
-    // Add bundle as a single item to cart
-    addToCart({
-      id: bundle.id,
-      name: bundle.name,
-      image: bundle.products[0].image,
-      price: bundle.salePrice,
-      variant: bundle.description,
+    // Calculate price per product (distribute bundle price evenly)
+    const pricePerProduct = Math.round(bundle.salePrice / bundle.products.length);
+    
+    // Add each product from the bundle to cart individually
+    bundle.products.forEach((product, index) => {
+      addToCart({
+        id: `${bundle.id}-product-${index}`,
+        name: product.name,
+        image: product.image,
+        price: pricePerProduct,
+        variant: product.specs,
+      }, false); // Don't open drawer for each item, only after all are added
     });
+    
+    // Open cart drawer after all products are added
+    setTimeout(() => {
+      openCart();
+    }, 100);
   };
 
   return (

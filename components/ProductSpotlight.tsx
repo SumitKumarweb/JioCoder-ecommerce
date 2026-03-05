@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
   image: string;
   price: number;
@@ -15,35 +15,32 @@ export default function ProductSpotlight() {
   const [spotlightProduct, setSpotlightProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    // Load spotlight product from localStorage (in real app, this would be an API call)
-    if (typeof window !== 'undefined') {
-      const savedSectionProducts = localStorage.getItem('sectionProducts');
-      const sectionProducts = savedSectionProducts ? JSON.parse(savedSectionProducts) : [];
-      
-      // Mock products data (should match admin products)
-      const allProducts: Product[] = [
-        {
-          id: 'spotlight-1',
-          name: 'Titan-X Pro Mouse',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-          price: 8999,
-          brand: 'JioCoder',
-        },
-      ];
-
-      // Get spotlight product
-      const spotlightConfig = sectionProducts.find((sp: any) => sp.sectionType === 'spotlight');
-      if (spotlightConfig) {
-        const product = allProducts.find((p) => p.id === spotlightConfig.productId);
-        if (product) {
+    const loadSpotlight = async () => {
+      try {
+        const res = await fetch('/api/section-products?sectionType=SPOTLIGHT');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch spotlight product: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const first = data?.[0]?.product;
+        if (first) {
+          const product: Product = {
+            _id: first._id,
+            name: first.name,
+            image: first.image,
+            price: first.price,
+            brand: first.brand ?? 'JioCoder',
+          };
           setSpotlightProduct(product);
         } else {
-          setSpotlightProduct(allProducts[0]); // Fallback to default
+          setSpotlightProduct(null);
         }
-      } else {
-        setSpotlightProduct(allProducts[0]); // Default product
+      } catch (error) {
+        console.error('Failed to load spotlight product from API', error);
       }
-    }
+    };
+
+    loadSpotlight();
   }, []);
 
   if (!spotlightProduct) {
@@ -68,7 +65,7 @@ export default function ProductSpotlight() {
           </li>
         </ul>
         <Link
-          href={`/product/${spotlightProduct.id}`}
+          href={`/product/${spotlightProduct._id}`}
           className="inline-block bg-accent-green text-primary px-8 py-3 rounded-lg font-bold hover:brightness-110 transition-all"
         >
           Pre-order Now

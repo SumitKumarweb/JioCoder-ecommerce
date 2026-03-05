@@ -6,24 +6,24 @@ import Link from 'next/link';
 
 interface OrderItem {
   name: string;
-  sku: string;
+  sku?: string;
   quantity: number;
   price: number;
-  image: string;
+  image?: string;
 }
 
-interface Order {
+interface OrderDetails {
   id: string;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
-  customerPhone: string;
+  customerPhone?: string;
   items: OrderItem[];
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-  paymentMethod: string;
-  transactionId: string;
-  gateway: string;
+  status: string;
+  paymentStatus: string;
+  paymentMethod?: string;
+  transactionId?: string;
+  gateway?: string;
   shippingAddress: {
     name: string;
     address: string;
@@ -48,78 +48,72 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockOrders: Order[] = [
-      {
-        id: '4',
-        orderNumber: 'JC-88291',
-        customerName: 'Arpit Shrivastava',
-        customerEmail: 'arpit.sh@jiocoder.com',
-        customerPhone: '+91 98765 43210',
-        items: [
-          {
-            name: 'CodeRunner Pro TKL',
-            sku: 'CR-TKL-BLUE',
-            quantity: 1,
-            price: 8499,
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA5aQPzk3NtVM3lqwMIOn-jl9zFoZuj1t9Lq7p7WppEj-BowuwflySFjmVwtv2VOnITAY4g8gJCIbzS6V4aIRJd3qO3-qfVfrVYK3wnR4uyLxBRh6OmfbpDEcvFS5Ql8fbccmn-C1Z5UACU7NfAWCZlPQkuN9VcDQ7j-uD08uGKABjuZq-TFAiMwf5g0eKdjCXpSrrP-AVDSfKjDqrs4FiW0uoZo811MCf1wqc-WbSIM9FlY53r1Zy317sEGuzb_vvtUH3DiVqvVHVg',
-          },
-          {
-            name: 'ZenFlow Ergo Mouse',
-            sku: 'ZF-MSE-01',
-            quantity: 1,
-            price: 4200,
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAImgGFTn5kg_Wlg4ZgPWlVbzkVT7kGoGM0N4TT2zidGhaBjv2eI2UgMtnIYa0Y2LflIb2yjFxyXugzKtdVpWutkpEzYOAyrcKSJq1EN2DPBOK7TTndMYqC6-uubAYFepCSTEULCpBDUCXQx-KhLiB8Q_3oGssb0WBHbAgroHYNCjc0XjPxmqZFgLjWBB644uFEFZJR6O92b7ip9-eSK1ghED68icYLuVKNjw_wfTXTsrR-7fg6kXcxF8mSLYczOYssXwHRAHALpJrL',
-          },
-          {
-            name: 'Vortex Desk Mat (XXL)',
-            sku: 'VX-MAT-XXL',
-            quantity: 2,
-            price: 1250,
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD62fRRSFIG9YPGW4F8WWT4mdutOTaSjHvBcfRLXb9mwREj-rP6j65x7XkR3BV9IrUWAeGf0_b-0wQpzpFeDQJVpbDFbGYvN4pNrkN14lE6iaYoWWl_Voj9sUaF7slIaXGbRQQS9tn_UzCnov6blKJ6a8KX0dDrtj9Ik4z7dkZMh35CfaI69d1G5GwsQqMgFasblCPhERNwh7u0qbtrmigPtb4wCw-lVWpWfFdBXZ7Sj-eIKvgtDEAnYhnoZp2MCkQ6zqCmP7I1fGOn',
-          },
-        ],
-        status: 'pending',
-        paymentStatus: 'paid',
-        paymentMethod: 'UPI',
-        transactionId: 'TXN-8829100192',
-        gateway: 'Razorpay',
-        shippingAddress: {
-          name: 'Arpit Shrivastava',
-          address: '74/B, Cyber Towers, Sector 62',
-          city: 'Noida',
-          state: 'Uttar Pradesh',
-          pincode: '201301',
-          country: 'India',
-        },
-        subtotal: 15199,
-        shipping: 0,
-        tax: 2735.82,
-        total: 17934.82,
-        createdAt: '2024-01-15T08:15:00Z',
-        notes: [
-          {
-            author: 'System Automator',
-            message: 'Order successfully verified. Inventory reserved from Warehouse A.',
-            timestamp: '2024-01-15T08:32:00Z',
-          },
-          {
-            author: 'Meghna (Support)',
-            message: 'Customer requested express delivery if possible. Checking logistics partners.',
-            timestamp: '2024-01-15T10:10:00Z',
-          },
-        ],
-      },
-    ];
+    const loadOrder = async () => {
+      try {
+        const res = await fetch(`/api/admin/orders/${orderId}`);
+        if (!res.ok) {
+          setOrder(null);
+          setLoading(false);
+          return;
+        }
+        const data: any = await res.json();
 
-    const foundOrder = mockOrders.find((o) => o.id === orderId);
-    setOrder(foundOrder || null);
-    setLoading(false);
+        const items: OrderItem[] =
+          data.items?.map((item: any) => ({
+            name: item.name,
+            sku: item.product?.sku,
+            quantity: item.quantity,
+            price: item.price,
+            image: item.product?.image,
+          })) || [];
+
+        const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+        const shipping = 0;
+        const tax = Math.round(subtotal * 0.18);
+
+        const mapped: OrderDetails = {
+          id: data._id,
+          orderNumber: data._id.slice(-6).toUpperCase(),
+          customerName: data.user?.name || data.user?.email || 'Guest',
+          customerEmail: data.user?.email || '',
+          customerPhone: data.shippingAddress?.phone,
+          items,
+          status: (data.status || 'PENDING').toLowerCase(),
+          paymentStatus: data.paymentId ? 'paid' : 'pending',
+          paymentMethod: data.paymentMethod,
+          transactionId: data.paymentId,
+          gateway: 'Online',
+          shippingAddress: {
+            name: data.shippingAddress?.name || data.user?.name || 'Customer',
+            address: data.shippingAddress?.address || '',
+            city: data.shippingAddress?.city || '',
+            state: data.shippingAddress?.state || '',
+            pincode: data.shippingAddress?.pincode || '',
+            country: data.shippingAddress?.country || 'India',
+          },
+          subtotal,
+          shipping,
+          tax,
+          total: subtotal + shipping + tax,
+          createdAt: data.createdAt,
+          notes: [],
+        };
+
+        setOrder(mapped);
+      } catch (error) {
+        console.error('Failed to load order details', error);
+        setOrder(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrder();
   }, [orderId]);
 
   const handleAcceptOrder = () => {

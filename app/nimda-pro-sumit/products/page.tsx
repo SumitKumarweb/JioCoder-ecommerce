@@ -79,62 +79,49 @@ export default function ProductsPage() {
   const [newAnswer, setNewAnswer] = useState('');
   const [newTag, setNewTag] = useState('');
   const [availableProducts, setAvailableProducts] = useState<ProductWithSku[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Mock products - replace with API call
-    const mockProducts: ProductWithSku[] = [
-      {
-        id: 'keyboard-1',
-        name: 'Keychron K2 Wireless Mechanical Keyboard Version 2 (Brown Switches)',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-        price: 7499,
-        originalPrice: 9999,
-        rating: 4.5,
-        reviewCount: 2400,
-        brand: 'Keychron',
-        inStock: true,
-        sku: 'KC-K2-BROWN-001',
-        description: 'Wireless mechanical keyboard with brown switches',
-        category: 'Keyboards',
-        stock: 45,
-        images: [
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-        ],
-        videos: [],
-        technicalSpecs: [
-          { key: 'Switch Type', value: 'Brown Switches' },
-          { key: 'Connectivity', value: 'Wireless + USB-C' },
-          { key: 'Battery Life', value: 'Up to 400 hours' },
-        ],
-        qna: [
-          { question: 'Is this keyboard compatible with Mac?', answer: 'Yes, it works with Mac, Windows, and Linux.' },
-        ],
-        relatedProducts: ['keyboard-2'],
-        tags: ['wireless', 'mechanical', 'brown-switch', 'mac-compatible'],
-      },
-      {
-        id: 'keyboard-2',
-        name: 'Logitech MX Keys S Wireless Illuminated Keyboard',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKsZQW7Nj6vNUklr5dWHdz5iJfptn4bvN3VhJPHWL1GnAZdGLW2rMKcvVd_zFLEQRH4GecddjmBOdn-uxam63prKZmXViUF8xIrjO4F_U7oF3v0iO4iNjAGitEpAob0PBeXyLAfe-OgJPEqkmZozUCVI_mW3rRUM_GAo2nF3n2KG5cwLvmyw7i8SDeuy40etjJKeTlen72g1t_UPzgke_zzEko3eJzGjgjKQIPGdpUMvGPJkt2KqveOeWJdOwrNtjDhnxlN52BXpUh',
-        price: 12995,
-        rating: 5,
-        reviewCount: 5800,
-        brand: 'Logitech',
-        inStock: true,
-        sku: 'LOG-MX-KEYS-S-001',
-        description: 'Premium wireless keyboard with backlighting',
-        category: 'Keyboards',
-        stock: 32,
-        images: [],
-        videos: [],
-        technicalSpecs: [],
-        qna: [],
-        relatedProducts: [],
-        tags: [],
-      },
-    ];
-    setProducts(mockProducts);
-    setAvailableProducts(mockProducts);
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/admin/products');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch products: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const mapped: ProductWithSku[] =
+          data?.map((p) => ({
+            id: p._id,
+            name: p.name,
+            image: p.image,
+            price: p.price,
+            originalPrice: undefined,
+            rating: 4.5,
+            reviewCount: 0,
+            brand: p.category || 'JioCoder',
+            inStock: p.inStock,
+            sku: p.sku,
+            description: p.description,
+            category: p.category,
+            stock: p.stock,
+            images: p.images || [],
+            videos: p.videos || [],
+            technicalSpecs: p.technicalSpecs || [],
+            qna: p.qna || [],
+            relatedProducts: p.relatedProducts || [],
+            tags: p.tags || [],
+          })) || [];
+        setProducts(mapped);
+        setAvailableProducts(mapped);
+      } catch (error) {
+        console.error('Failed to load admin products from API', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
   }, []);
 
   const handleAddProduct = () => {
@@ -206,68 +193,76 @@ export default function ProductsPage() {
   };
 
   const handleSaveProduct = () => {
-    if (editingProduct) {
-      // Update existing product
-      setProducts(
-        products.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                ...formData,
-                price: parseFloat(formData.price),
-                originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-                rating: parseFloat(formData.rating),
-                reviewCount: parseInt(formData.reviewCount),
-                stock: formData.stock ? parseInt(formData.stock) : undefined,
-                images: formData.images,
-                videos: formData.videos,
-                technicalSpecs: formData.technicalSpecs,
-                qna: formData.qna,
-                relatedProducts: formData.relatedProducts,
-                tags: formData.tags,
-              }
-            : p
-        )
-      );
-    } else {
-      // Add new product
-      const newProduct: ProductWithSku = {
-        id: `product-${Date.now()}`,
-        name: formData.name,
-        image: formData.image || formData.images[0] || '',
-        price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-        brand: formData.brand,
-        rating: parseFloat(formData.rating),
-        reviewCount: parseInt(formData.reviewCount),
-        inStock: formData.inStock,
-        sku: formData.sku,
-        description: formData.description,
-        category: formData.category,
-        stock: formData.stock ? parseInt(formData.stock) : undefined,
-        images: formData.images,
-        videos: formData.videos,
-        technicalSpecs: formData.technicalSpecs,
-        qna: formData.qna,
-        relatedProducts: formData.relatedProducts,
-        tags: formData.tags,
-        metadata: formData.metadata,
-      };
-      setProducts([...products, newProduct]);
-      setAvailableProducts([...products, newProduct]);
-      
-      // Save to localStorage
-      const savedProducts: ProductWithSku[] = JSON.parse(localStorage.getItem('adminProducts') || '[]');
-      localStorage.setItem('adminProducts', JSON.stringify([...savedProducts, newProduct]));
-    }
-    
-    // Save all products to localStorage after any update
-    const allProducts = editingProduct 
-      ? products.map((p) => (p.id === editingProduct.id ? { ...p, ...formData, price: parseFloat(formData.price), originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined, rating: parseFloat(formData.rating), reviewCount: parseInt(formData.reviewCount), stock: formData.stock ? parseInt(formData.stock) : undefined, images: formData.images, videos: formData.videos, technicalSpecs: formData.technicalSpecs, qna: formData.qna, relatedProducts: formData.relatedProducts, tags: formData.tags, metadata: formData.metadata } : p))
-      : [...products, { id: `product-${Date.now()}`, name: formData.name, image: formData.image || formData.images[0] || '', price: parseFloat(formData.price), originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined, brand: formData.brand, rating: parseFloat(formData.rating), reviewCount: parseInt(formData.reviewCount), inStock: formData.inStock, sku: formData.sku, description: formData.description, category: formData.category, stock: formData.stock ? parseInt(formData.stock) : undefined, images: formData.images, videos: formData.videos, technicalSpecs: formData.technicalSpecs, qna: formData.qna, relatedProducts: formData.relatedProducts, tags: formData.tags, metadata: formData.metadata }];
-    localStorage.setItem('adminProducts', JSON.stringify(allProducts));
-    
-    setIsModalOpen(false);
+    const save = async () => {
+      try {
+        const payload = {
+          name: formData.name,
+          price: parseFloat(formData.price),
+          currency: 'INR',
+          inStock: formData.inStock,
+          description: formData.description,
+          image: formData.image || formData.images[0],
+          category: formData.category,
+        };
+
+        if (editingProduct) {
+          const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error('Failed to update product');
+          const updated = await res.json();
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === editingProduct.id
+                ? {
+                    ...p,
+                    id: updated._id,
+                    name: updated.name,
+                    image: updated.image,
+                    price: updated.price,
+                    brand: updated.category || p.brand,
+                    inStock: updated.inStock,
+                    description: updated.description,
+                    category: updated.category,
+                  }
+                : p
+            )
+          );
+        } else {
+          const res = await fetch('/api/admin/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error('Failed to create product');
+          const created = await res.json();
+          const newProduct: ProductWithSku = {
+            id: created._id,
+            name: created.name,
+            image: created.image,
+            price: created.price,
+            originalPrice: undefined,
+            brand: created.category || 'JioCoder',
+            rating: 4.5,
+            reviewCount: 0,
+            inStock: created.inStock,
+            description: created.description,
+            category: created.category,
+          };
+          setProducts((prev) => [...prev, newProduct]);
+          setAvailableProducts((prev) => [...prev, newProduct]);
+        }
+
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error('Failed to save product', error);
+        alert('Failed to save product. Please try again.');
+      }
+    };
+
+    void save();
   };
 
   const addImage = () => {
@@ -348,9 +343,23 @@ export default function ProductsPage() {
   };
 
   const handleDeleteProduct = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter((p) => p.id !== id));
-    }
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    const remove = async () => {
+      try {
+        const res = await fetch(`/api/admin/products/${id}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete product');
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        setAvailableProducts((prev) => prev.filter((p) => p.id !== id));
+      } catch (error) {
+        console.error('Failed to delete product', error);
+        alert('Failed to delete product. Please try again.');
+      }
+    };
+
+    void remove();
   };
 
   const filteredProducts = products.filter(
@@ -423,7 +432,20 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.map((product) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    Loading products...
+                  </td>
+                </tr>
+              ) : filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    No products found.
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
@@ -485,7 +507,8 @@ export default function ProductsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

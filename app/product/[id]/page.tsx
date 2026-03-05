@@ -15,18 +15,13 @@ export const metadata: Metadata = {
 };
 
 export default function ProductPage({ params }: { params: { id: string } }) {
-  // Product name - in a real app, this would come from a database/API
-  const productName = 'Apex Pro RGB Mechanical Keyboard - Indian Edition';
-  const collectionName = 'Keyboards';
-
   return (
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 py-5 sm:py-6 md:py-8 overflow-x-hidden">
         <Breadcrumb 
           autoGenerate={true}
-          collectionName={collectionName}
-          productName={productName}
+          // Names will be auto-generated from the current route / product page
         />
         <ProductDetail productId={params.id} />
       </main>

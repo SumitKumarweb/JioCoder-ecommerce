@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCompare } from '@/contexts/CompareContext';
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
   price: number;
   image: string;
@@ -16,59 +16,30 @@ export default function TrendingProducts() {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    // Load trending products from localStorage (in real app, this would be an API call)
-    if (typeof window !== 'undefined') {
-      const savedSectionProducts = localStorage.getItem('sectionProducts');
-      const sectionProducts = savedSectionProducts ? JSON.parse(savedSectionProducts) : [];
-      
-      // Mock products data (should match admin products)
-      const allProducts: Product[] = [
-        {
-          id: 'trending-1',
-          name: 'Arctic Mist PBT Keycap Set',
-          price: 3499,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvGH-EeXfLPuwhzrnO3Ynx3TvEgLyyf3w9A7Ku9MYJXzUSg2T6V66y2UeVfWRXErQGUzLuau8p2vpuruuQI1DMHt3I-DPjPhiMgfM9GuKqeglLmHGiJbgkvgwj0Q38TiqNwiDFfSAbkM-W7hONdowZfcjqeXqcrrt8bFfzniZIvddBpqwFYuA-vQhuRaxLg3hFgLl3sNDGXaMsza6QqOHuBVFNN1S15yKqDUR5vZm1mcbCFowTeykGjZIINx45hBbvsEciIvsTgQnL',
-        },
-        {
-          id: 'trending-2',
-          name: 'Air75 V2 Low-Profile Keyboard',
-          price: 12999,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKQyC6WFTf8MJOcWjJFwxdZ56gafGjIO355ezHoArGqNVxMvTh7rSuWRStgoQ2e0SCBcXgVU0QW2IYM3qSa4FZMO9-MIfH_KWadR2rwSHDAF9YZen4Z-E3y1tXF3GrXMChtxeB4u_v4nEJHTWnabdNueSJS0SWbBkwWIKtXFz1Iqlu2JGFHU7MJ3YOZ6O9b_lFV_W3fizQDFR7wleMqzOZ8a16yecgjjuiSvZ_4-WpIfo-W-_npJyLCHNUZJRXbJHkW3BfxMHrQOxh',
-        },
-        {
-          id: 'trending-3',
-          name: 'Logitech G Pro X Superlight',
-          price: 11495,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-        },
-        {
-          id: 'trending-4',
-          name: 'Onyx Felt Large Desk Pad',
-          price: 1899,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUuF1Tp2OQwl4ZcwIYnoPlMn05i9umoW5eaHxwxtpfbTCaK2avQqZln8FS3uW4YJu0Igiu_44aN5rueJLPl3RiPtaeTL0-3Sd7KMOKMzYaNFarJ22INs8uCqbO0SI4SJ1kDizPd7lqChN8PV97H1uz3z6OHox1gcpPYuoSt53UrMIrCiYnhJ_Y0lDi7_S3Kf0Vh-OP39jHCCDJe7E8aGFHz6gxklTDoG2-A2_el3BECN-iZ_ba1Q_9Fv991ECfpWfC4uuy4c4nEs8o',
-        },
-        {
-          id: 'trending-5',
-          name: 'Carbon Fiber Coiled Aviator Cable',
-          price: 2299,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgdShxLlKCypMs41C4ireig29gMbYTcanzcugGp8t-hCCcH_Bbydd3W8vCLPbdtGLpSXlecsJdUMyEZ-R4i7d56copAT6erQtq1DkZiY77ZFMnlBetA9tX24i75RATOLlC7Agaffx_2fpn0jNJndIDhahEGWK-Imu1QevPVpOZSfabGlFPLjePlxNSS2hp3EGuNRrsoQsDtjEYf_jq9pwnJHYLnQ9yCq8HZLNBS9Ivrh3oJH5kktTCbvODwFUo5iwnmnjxVUCx-0NL',
-        },
-      ];
+    const loadTrending = async () => {
+      try {
+        const res = await fetch('/api/section-products?sectionType=TRENDING');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch trending products: ${res.status}`);
+        }
+        const data: any[] = await res.json();
+        const mapped: Product[] =
+          data
+            ?.map((item) => item.product)
+            .filter((p: any) => p)
+            .map((p: any) => ({
+              _id: p._id,
+              name: p.name,
+              price: p.price,
+              image: p.image,
+            })) || [];
+        setTrendingProducts(mapped);
+      } catch (error) {
+        console.error('Failed to load trending products from API', error);
+      }
+    };
 
-      // Filter and sort trending products
-      const trendingConfigs = sectionProducts
-        .filter((sp: any) => sp.sectionType === 'trending')
-        .sort((a: any, b: any) => a.order - b.order);
-      
-      const mappedProducts = trendingConfigs
-        .map((config: any) => {
-          const product = allProducts.find((p) => p.id === config.productId);
-          return product || null;
-        })
-        .filter((item: Product | null): item is Product => item !== null);
-
-      setTrendingProducts(mappedProducts.length > 0 ? mappedProducts : allProducts);
-    }
+    loadTrending();
   }, []);
 
   const scrollLeft = () => {
@@ -139,7 +110,7 @@ export default function TrendingProducts() {
             key={product.id}
             className="min-w-[300px] bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 flex flex-col transition-all hover:shadow-md group"
           >
-            <a href={`/product/${product.id}`} className="relative aspect-square bg-slate-50 overflow-hidden block">
+              <a href={`/product/${product._id}`} className="relative aspect-square bg-slate-50 overflow-hidden block">
               <span className="absolute top-3 left-3 z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
                 <span className="material-symbols-outlined text-[12px] fill-1">bolt</span>
                 Trending
@@ -154,7 +125,7 @@ export default function TrendingProducts() {
               </button>
             </a>
             <div className="p-4 flex-1 flex flex-col space-y-2">
-              <a href={`/product/${product.id}`} className="font-semibold text-base line-clamp-1 hover:text-primary transition-colors">
+              <a href={`/product/${product._id}`} className="font-semibold text-base line-clamp-1 hover:text-primary transition-colors">
                 {product.name}
               </a>
               <p className="text-xl font-bold">₹{product.price.toLocaleString()}</p>

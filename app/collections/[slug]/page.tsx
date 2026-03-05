@@ -17,78 +17,58 @@ export default function CollectionPage() {
     name: string;
     description: string;
     slug: string;
-    productIds: string[];
   } | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch collection and products
-    // In a real app, this would be an API call
     const fetchCollection = async () => {
       setLoading(true);
-      
-      // Mock collections data (should match admin panel)
-      const collections = [
-        {
-          id: 'col-1',
-          name: 'Mechanical Keyboards',
-          description: 'Premium mechanical keyboards collection',
-          slug: 'mechanical-keyboards',
-          productIds: ['keyboard-1', 'keyboard-2'],
-        },
-        {
-          id: 'col-2',
-          name: 'Gaming Mice',
-          description: 'High-performance gaming mice',
-          slug: 'gaming-mice',
-          productIds: [],
-        },
-      ];
+      try {
+        // Fetch collection metadata from admin collections API
+        const collRes = await fetch('/api/admin/collections');
+        if (!collRes.ok) throw new Error('Failed to fetch collections');
+        const collections: any[] = await collRes.json();
+        const foundCollection = collections.find((col) => col.slug === slug);
 
-      const foundCollection = collections.find((col) => col.slug === slug);
-      
-      if (foundCollection) {
-        setCollection(foundCollection);
-        
-        // Mock products data (should match admin products)
-        const allProducts: Product[] = [
-          {
-            id: 'keyboard-1',
-            name: 'Keychron K2 Wireless Mechanical Keyboard Version 2 (Brown Switches)',
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-            price: 7499,
-            originalPrice: 9999,
-            rating: 4.5,
-            reviewCount: 2400,
-            badge: { text: '-25%', color: 'red' },
-            discount: 25,
-            brand: 'Keychron',
-            inStock: true,
-          },
-          {
-            id: 'keyboard-2',
-            name: 'Logitech MX Keys S Wireless Illuminated Keyboard',
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKsZQW7Nj6vNUklr5dWHdz5iJfptn4bvN3VhJPHWL1GnAZdGLW2rMKcvVd_zFLEQRH4GecddjmBOdn-uxam63prKZmXViUF8xIrjO4F_U7oF3v0iO4iNjAGitEpAob0PBeXyLAfe-OgJPEqkmZozUCVI_mW3rRUM_GAo2nF3n2KG5cwLvmyw7i8SDeuy40etjJKeTlen72g1t_UPzgke_zzEko3eJzGjgjKQIPGdpUMvGPJkt2KqveOeWJdOwrNtjDhnxlN52BXpUh',
-            price: 12995,
-            rating: 5,
-            reviewCount: 5800,
-            badge: { text: 'Premium', color: 'primary' },
-            brand: 'Logitech',
-            inStock: true,
-          },
-        ];
+        if (foundCollection) {
+          setCollection({
+            id: foundCollection._id,
+            name: foundCollection.name,
+            description: foundCollection.description || '',
+            slug: foundCollection.slug,
+          });
 
-        // Filter products that belong to this collection
-        const collectionProducts = allProducts.filter((product) =>
-          foundCollection.productIds.includes(product.id)
-        );
-        
-        setProducts(collectionProducts);
+          // Fetch products for this collection by category = collection.slug
+          const prodRes = await fetch(`/api/products?category=${encodeURIComponent(foundCollection.slug)}`);
+          if (prodRes.ok) {
+            const prodData: any[] = await prodRes.json();
+            const mapped: Product[] =
+              prodData?.map((p) => ({
+                id: p._id,
+                name: p.name,
+                image: p.image,
+                price: p.price,
+                originalPrice: undefined,
+                rating: 4.5,
+                reviewCount: 0,
+                brand: p.category || 'JioCoder',
+                inStock: p.inStock,
+              })) || [];
+            setProducts(mapped);
+          }
+        } else {
+          setCollection(null);
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error('Failed to load collection products', error);
+        setCollection(null);
+        setProducts([]);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     fetchCollection();

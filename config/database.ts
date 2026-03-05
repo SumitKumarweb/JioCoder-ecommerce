@@ -8,7 +8,7 @@ export const databaseConfig = {
   projectId: '69a6bf316c74219f0cc1ad19',
   projectName: 'JioCoder',
   timezone: '+05:30', // New Delhi, India
-  defaultDatabase: 'jiocoder',
+  defaultDatabase: 'JioCoder',
   
   // Connection options
   connectionOptions: {

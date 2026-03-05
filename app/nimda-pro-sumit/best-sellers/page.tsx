@@ -43,61 +43,30 @@ export default function BestSellersPage() {
         localStorage.setItem('bestSellers', JSON.stringify(defaultBestSellers));
       }
 
-      // Load all products (in real app, fetch from API)
-      // For now, we'll use mock products that match the best sellers structure
-      const products: Product[] = [
-        {
-          id: 'bestseller-1',
-          name: 'K2 Wireless Mechanical Keyboard',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVA_-B12wrZHmkzZ0JS_w6YqBEeiWUHL-yo3FEwx9c9gXaJTZSRmBDVKQi4WgAoT1pgIxToDSiT6FRcVKmxerqeO-f9IYBLjIf0ZuyfqFNRhxhDS5Kuo3dGmO2L1BWOd88iu9s6hysFVNVyYWJ_qsjVHKMTsKJeYiMca5mmQ-CvDEDa-H62n7_lAGLE0RXrB0xGRSjU24V7KGl_DwmxjY830FIxC9VpaX14WXWTlwTLNARvo7gzXP97WcgP6hiEXeD8KwXmgJVHRyT',
-          price: 8499,
-          originalPrice: 9999,
-          brand: 'Keychron',
-          rating: 4,
-          reviewCount: 128,
-        },
-        {
-          id: 'bestseller-2',
-          name: 'MX Master 3S Wireless',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKPTnPR2ZYt_a6VaISccTem49dOMrTwIeqIByZotD0MSDbynXY1x4jRH3kg8-Zh-qrbNn1w0WLg2nfSAzcB8STxJNCIKxO5SUb6EHtAd-_H9SntE78Ey0byBkeSf2PMVLS-ndiYmeQaWRKT5ZdiF4DIJh837aYSuixZD12MhQQN2TxFwEvl014VM1X3bhPHDJmuFIxzRrjbiYKMIu6nIdy13CpeF94iJsBTtzZLSLKI4FKoZrqif0csbfYmFwMxn0qhzkkrBNVyjWB',
-          price: 9995,
-          originalPrice: 10995,
-          brand: 'Logitech',
-          rating: 5,
-          reviewCount: 450,
-        },
-        {
-          id: 'bestseller-3',
-          name: 'Model O- Lightweight Mouse',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXnDBW3fSizAUrZ3rDyY0N8oBsxZTcTyXhEnkE-quqlp2znS6pBe13Nc6ooE1Y67L5DivsQxEUa1YeI9BY2KEeGEz4bziPlw29DdC3AlrEGO7RWx9xG7voi8pKEz0xKLSAL_eCZrN5rKS1ufnWR1If-JnGZbDfz2os0oftjy-7YvpN73BhPYBFUYonV0HU6KDUBEvEwblDHfIZpQb5a4YXQbP_jbeIBsY1hnxyPdXNd7WCrbn3PFzswOpEVckWI2HmHDPhhu-Ki7qG',
-          price: 4299,
-          originalPrice: 5999,
-          brand: 'Glorious',
-          rating: 4,
-          reviewCount: 89,
-        },
-        {
-          id: 'bestseller-4',
-          name: 'Pro Coiled Aviator Cable',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgdShxLlKCypMs41C4ireig29gMbYTcanzcugGp8t-hCCcH_Bbydd3W8vCLPbdtGLpSXlecsJdUMyEZ-R4i7d56copAT6erQtq1DkZiY77ZFMnlBetA9tX24i75RATOLlC7Agaffx_2fpn0jNJndIDhahEGWK-Imu1QevPVpOZSfabGlFPLjePlxNSS2hp3EGuNRrsoQsDtjEYf_jq9pwnJHYLnQ9yCq8HZLNBS9Ivrh3oJH5kktTCbvODwFUo5iwnmnjxVUCx-0NL',
-          price: 1999,
-          originalPrice: 2499,
-          brand: 'JioCoder Custom',
-          rating: 5,
-          reviewCount: 56,
-        },
-        {
-          id: 'keyboard-1',
-          name: 'Keychron K2 Keyboard',
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYYaK_kJQeDLBQe_vIhIfpvQFrKWDFMzT5uCj-WYv4_Yrg8fBz0tLw3B9Di8OGJpUq6MS2iK7p15s5cKdz59YvQTQOjXTWOvBvyGTlzbKzJDwOAxraZuylCZ8xUVYoya5pU74k7JRqXqhvZ6r5ByCp17LNHrQHqlKOWtSEVRu-oZViU2TpmAJIJCSgq7dgdOEZzSbDpZZgpzybypXPIFAnmRFPQ9V99esFHJeUFY0OObx28cOWcU-chPhuaZDKDNKacxKTB2qZ9-Yb',
-          price: 7499,
-          originalPrice: 9999,
-          brand: 'Keychron',
-          rating: 4.5,
-          reviewCount: 2400,
-        },
-      ];
-      setAllProducts(products);
+      // Load all products from admin products API
+      const loadProducts = async () => {
+        try {
+          const res = await fetch('/api/admin/products');
+          if (!res.ok) return;
+          const data: any[] = await res.json();
+          const mapped: Product[] =
+            data?.map((p) => ({
+              id: p._id,
+              name: p.name,
+              image: p.image,
+              price: p.price,
+              originalPrice: undefined,
+              brand: p.category || 'JioCoder',
+              rating: 4.5,
+              reviewCount: 0,
+            })) || [];
+          setAllProducts(mapped);
+        } catch (error) {
+          console.error('Failed to load products for best sellers', error);
+        }
+      };
+
+      void loadProducts();
     }
   }, []);
 
