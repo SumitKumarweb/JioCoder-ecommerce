@@ -97,19 +97,83 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
           return;
         }
         
-        // Fetch product data (collection API call removed - collection name derived from URL slug)
-        const res = await fetch(`/api/products/${productId}`);
-        if (!res.ok) {
-          loadingRef.current = null;
-          if (res.status === 404) {
-            setError('Product not found');
-          } else {
-            setError('Failed to load product details');
+        // Fetch product data with retry logic
+        let data: any = null;
+        let lastError: Error | null = null;
+        const maxRetries = 3;
+        const retryDelay = 1000; // Start with 1 second
+        const timeout = 10000; // 10 second timeout
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            const res = await fetch(`/api/products/${productId}`, {
+              signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+              loadingRef.current = null;
+              if (res.status === 404) {
+                setError('Product not found');
+                setProduct(null);
+                return;
+              } else if (res.status === 503) {
+                // Service unavailable - retry
+                if (attempt < maxRetries) {
+                  console.warn(`[ProductDetail] Service unavailable, retrying... (attempt ${attempt}/${maxRetries})`);
+                  await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+                  continue;
+                } else {
+                  setError('Service temporarily unavailable. Please refresh the page.');
+                  setProduct(null);
+                  return;
+                }
+              } else {
+                setError('Failed to load product details');
+                setProduct(null);
+                return;
+              }
+            }
+
+            data = await res.json();
+            break; // Success, exit retry loop
+          } catch (fetchError: any) {
+            lastError = fetchError;
+            
+            // Check if it's a timeout or network error that we should retry
+            const isRetryableError = 
+              fetchError?.name === 'AbortError' ||
+              fetchError?.name === 'TypeError' ||
+              fetchError?.message?.includes('fetch') ||
+              fetchError?.message?.includes('network') ||
+              fetchError?.message?.includes('timeout');
+
+            if (isRetryableError && attempt < maxRetries) {
+              console.warn(`[ProductDetail] Network error, retrying... (attempt ${attempt}/${maxRetries}):`, fetchError.message);
+              await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+              continue;
+            } else {
+              // Non-retryable error or max retries reached
+              console.error('[ProductDetail] Failed to fetch product:', fetchError);
+              loadingRef.current = null;
+              setError('Failed to load product details. Please check your connection and try again.');
+              setProduct(null);
+              return;
+            }
           }
+        }
+
+        if (!data) {
+          loadingRef.current = null;
+          setError(lastError ? 'Failed to load product details' : 'No data received');
           setProduct(null);
           return;
         }
-        const data: any = await res.json();
         
         // Cache the response to prevent duplicate calls
         setCachedData(cacheKey, data, 5 * 60 * 1000); // 5 minutes cache
