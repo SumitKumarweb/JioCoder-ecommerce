@@ -1,5 +1,5 @@
-// Client-side metadata manager for reading metadata from localStorage
-// Note: This is for client-side use. Server-side metadata should use generateMetadata()
+// Metadata manager for reading metadata from API
+// Supports both server-side (generateMetadata) and client-side use
 
 export interface PageMetadata {
   metaTitle: string;
@@ -21,21 +21,96 @@ export interface ProductMetadata {
   canonicalUrl?: string;
 }
 
+// Map pageId to path
+function getPathFromPageId(pageId: string): string {
+  const pathMap: { [key: string]: string } = {
+    home: '/',
+    about: '/about',
+    products: '/products',
+    collections: '/collections',
+  };
+  return pathMap[pageId] || `/${pageId}`;
+}
+
+// Minimal fallback metadata
+function getFallbackMetadata(pageId: string): PageMetadata {
+  const path = getPathFromPageId(pageId);
+  
+  return {
+    metaTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
+    metaDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder.',
+    metaKeywords: 'mechanical keyboards, gaming mice, keycaps, custom cables, gaming peripherals',
+    ogTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
+    ogDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables.',
+    ogImage: '',
+    canonicalUrl: path,
+  };
+}
+
 export class MetadataManager {
-  getPageMetadata(pageId: string): PageMetadata {
-    if (typeof window === 'undefined') {
-      // Server-side: return defaults
-      return this.getDefaultPageMetadata(pageId);
+  async getPageMetadata(pageId: string): Promise<PageMetadata> {
+    const path = getPathFromPageId(pageId);
+    
+    try {
+      // Construct API URL - works for both server and client
+      let apiUrl: string;
+      if (typeof window === 'undefined') {
+        // Server-side: need absolute URL
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.jiocoder.com');
+        apiUrl = `${baseUrl}/api/page-metadata?path=${encodeURIComponent(path)}`;
+      } else {
+        // Client-side: use relative URL
+        apiUrl = `/api/page-metadata?path=${encodeURIComponent(path)}`;
+      }
+      
+      const response = await fetch(apiUrl, {
+        cache: 'no-store', // Always fetch fresh data for metadata
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Map API response to PageMetadata interface
+        if (data && data.path) {
+          return {
+            metaTitle: data.metaTitle || '',
+            metaDescription: data.metaDescription || '',
+            metaKeywords: data.metaKeywords || '',
+            ogTitle: data.ogTitle || data.metaTitle || '',
+            ogDescription: data.ogDescription || data.metaDescription || '',
+            ogImage: data.ogImage || '',
+            canonicalUrl: data.canonicalUrl || path,
+          };
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to fetch metadata for ${path}:`, error);
     }
 
-    const saved = localStorage.getItem('pageMetadata');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed[pageId]) {
-        return parsed[pageId];
+    // Return fallback if API call fails
+    return getFallbackMetadata(pageId);
+  }
+
+  // Synchronous version for backward compatibility (uses fallback)
+  getPageMetadataSync(pageId: string): PageMetadata {
+    if (typeof window !== 'undefined') {
+      // Client-side: try localStorage first
+      const saved = localStorage.getItem('pageMetadata');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed[pageId]) {
+            return parsed[pageId];
+          }
+        } catch (e) {
+          console.error('Failed to parse localStorage metadata:', e);
+        }
       }
     }
-    return this.getDefaultPageMetadata(pageId);
+    
+    // Return fallback
+    return getFallbackMetadata(pageId);
   }
 
   getProductMetadata(productId: string): ProductMetadata | null {
@@ -45,9 +120,13 @@ export class MetadataManager {
 
     const saved = localStorage.getItem('adminProducts');
     if (saved) {
-      const products = JSON.parse(saved);
-      const product = products.find((p: any) => p.id === productId);
-      return product?.metadata || null;
+      try {
+        const products = JSON.parse(saved);
+        const product = products.find((p: any) => p.id === productId);
+        return product?.metadata || null;
+      } catch (e) {
+        console.error('Failed to parse localStorage products:', e);
+      }
     }
     return null;
   }
@@ -59,55 +138,15 @@ export class MetadataManager {
 
     const saved = localStorage.getItem('adminCollections');
     if (saved) {
-      const collections = JSON.parse(saved);
-      const collection = collections.find((c: any) => c.slug === collectionSlug);
-      return collection?.metadata || null;
+      try {
+        const collections = JSON.parse(saved);
+        const collection = collections.find((c: any) => c.slug === collectionSlug);
+        return collection?.metadata || null;
+      } catch (e) {
+        console.error('Failed to parse localStorage collections:', e);
+      }
     }
     return null;
-  }
-
-  private getDefaultPageMetadata(pageId: string): PageMetadata {
-    const defaults: { [key: string]: PageMetadata } = {
-      home: {
-        metaTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
-        metaDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder. Shop trending products, best sellers, and authentic gear with fast India-wide shipping.',
-        metaKeywords: 'mechanical keyboards, gaming mice, keycaps, custom cables, gaming peripherals, India keyboard store',
-        ogTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
-        ogDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping and authentic products.',
-        ogImage: '',
-        canonicalUrl: '/',
-      },
-      about: {
-        metaTitle: 'About Us - JioCoder',
-        metaDescription:
-          "Learn about JioCoder - India's premier destination for high-end electronics. Our journey from startup vision to India's tech hub, serving 500k+ customers with genuine gear and 24/7 support.",
-        metaKeywords: 'about jiocoder, tech company india, electronics retailer, about us',
-        ogTitle: 'About Us - JioCoder',
-        ogDescription:
-          "Learn about JioCoder - India's premier destination for high-end electronics. Our journey from startup vision to India's tech hub.",
-        ogImage: '',
-        canonicalUrl: '/about',
-      },
-      products: {
-        metaTitle: 'Products - JioCoder',
-        metaDescription: 'Browse our collection of premium mechanical keyboards, gaming mice, and accessories.',
-        metaKeywords: 'products, keyboards, gaming mice, accessories',
-        ogTitle: 'Products - JioCoder',
-        ogDescription: 'Browse our collection of premium mechanical keyboards, gaming mice, and accessories.',
-        ogImage: '',
-        canonicalUrl: '/products',
-      },
-      collections: {
-        metaTitle: 'Collections - JioCoder',
-        metaDescription: 'Explore our curated collections of premium tech products.',
-        metaKeywords: 'collections, tech products, curated',
-        ogTitle: 'Collections - JioCoder',
-        ogDescription: 'Explore our curated collections of premium tech products.',
-        ogImage: '',
-        canonicalUrl: '/collections',
-      },
-    };
-    return defaults[pageId] || defaults.home;
   }
 }
 

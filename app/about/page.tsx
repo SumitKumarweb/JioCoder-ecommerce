@@ -3,26 +3,27 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import type { Metadata } from 'next';
+import { MetadataManager } from '@/lib/metadata-manager';
 
 export async function generateMetadata(): Promise<Metadata> {
-  // In a real app, this would fetch from API/database
-  // For now, we'll use defaults that can be overridden via admin panel
-  // The admin panel stores metadata in localStorage, which is client-side only
-  // In production, this should fetch from a server-side API
-  
+  const metadataManager = new MetadataManager();
+  const pageMetadata = await metadataManager.getPageMetadata('about');
+
   return {
-    title: 'About Us - JioCoder',
-    description: 
+    title: pageMetadata.metaTitle || 'About Us - JioCoder',
+    description: pageMetadata.metaDescription || 
       'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub, serving 500k+ customers with genuine gear and 24/7 support.',
-    keywords: ['about jiocoder', 'tech company india', 'electronics retailer', 'about us'],
+    keywords: pageMetadata.metaKeywords?.split(',').map((k: string) => k.trim()) || 
+      ['about jiocoder', 'tech company india', 'electronics retailer', 'about us'],
     openGraph: {
-      title: 'About Us - JioCoder',
-      description: 
+      title: pageMetadata.ogTitle || pageMetadata.metaTitle || 'About Us - JioCoder',
+      description: pageMetadata.ogDescription || pageMetadata.metaDescription || 
         'Learn about JioCoder - India\'s premier destination for high-end electronics. Our journey from startup vision to India\'s tech hub.',
       type: 'website',
+      images: pageMetadata.ogImage ? [{ url: pageMetadata.ogImage }] : undefined,
     },
     alternates: {
-      canonical: '/about',
+      canonical: pageMetadata.canonicalUrl || '/about',
     },
   };
 }

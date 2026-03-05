@@ -16,7 +16,7 @@ import { MetadataManager } from "@/lib/metadata-manager";
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataManager = new MetadataManager();
-  const pageMetadata = metadataManager.getPageMetadata('home');
+  const pageMetadata = await metadataManager.getPageMetadata('home');
 
   return {
     title: pageMetadata.metaTitle || "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
