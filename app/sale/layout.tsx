@@ -5,13 +5,9 @@ export const metadata: Metadata = {
   robots: {
     index: false,
     follow: false,
-    noindex: true,
-    nofollow: true,
     googleBot: {
       index: false,
       follow: false,
-      noindex: true,
-      nofollow: true,
     },
   },
   title: 'Flash Sale - Limited Time Offer',
