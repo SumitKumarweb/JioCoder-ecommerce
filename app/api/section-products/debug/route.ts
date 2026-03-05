@@ -57,6 +57,35 @@ export async function GET() {
       };
     }
 
+    // Test TRENDING section specifically
+    const trendingItems = await SectionProduct.find({ sectionType: "TRENDING" })
+      .limit(5)
+      .select("_id sectionType order product")
+      .lean();
+    
+    diagnostics.trendingItems = trendingItems.map((item: any) => ({
+      _id: item._id,
+      sectionType: item.sectionType,
+      order: item.order,
+      hasProduct: !!item.product,
+      productId: item.product?.toString() || null,
+    }));
+
+    // Test populate on TRENDING items
+    if (trendingItems.length > 0) {
+      const trendingWithPopulate = await SectionProduct.find({ sectionType: "TRENDING" })
+        .limit(3)
+        .populate("product")
+        .lean();
+      
+      diagnostics.trendingPopulateTest = trendingWithPopulate.map((item: any) => ({
+        _id: item._id,
+        hasProduct: !!item.product,
+        productId: item.product?._id?.toString() || null,
+        productName: item.product?.name || null,
+      }));
+    }
+
     diagnostics.status = "ok";
   } catch (error: any) {
     diagnostics.status = "error";
