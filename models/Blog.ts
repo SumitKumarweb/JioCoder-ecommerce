@@ -3,13 +3,26 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IBlog extends Document {
   title: string;
   slug: string;
-  excerpt?: string;
-  content: string;
-  coverImage?: string;
+  description?: string;
+  summary?: string;
+  category?: string;
+  subCategory?: string;
+  featuredImage?: string;
+  images?: string[];
+  videos?: string[];
+  content?: string;
+  author?: {
+    name?: string;
+    role?: string;
+    avatar?: string;
+  };
+  date?: string;
+  readTime?: string;
   tags?: string[];
-  published: boolean;
+  isFeatured?: boolean;
+  relatedProducts?: mongoose.Types.ObjectId[];
+  published?: boolean;
   publishedAt?: Date;
-  authorName?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -28,21 +41,51 @@ const BlogSchema: Schema<IBlog> = new Schema(
       lowercase: true,
       trim: true,
     },
-    excerpt: {
+    description: {
       type: String,
       trim: true,
     },
+    summary: {
+      type: String,
+      trim: true,
+    },
+    category: {
+      type: String,
+      trim: true,
+    },
+    subCategory: {
+      type: String,
+      trim: true,
+    },
+    featuredImage: {
+      type: String,
+    },
+    images: [{ type: String }],
+    videos: [{ type: String }],
     content: {
       type: String,
-      required: true,
     },
-    coverImage: {
+    author: {
+      name: { type: String, trim: true },
+      role: { type: String, trim: true },
+      avatar: { type: String },
+    },
+    date: {
       type: String,
     },
-    tags: [
+    readTime: {
+      type: String,
+      trim: true,
+    },
+    tags: [{ type: String, trim: true }],
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    relatedProducts: [
       {
-        type: String,
-        trim: true,
+        type: Schema.Types.ObjectId,
+        ref: "Product",
       },
     ],
     published: {
@@ -52,19 +95,19 @@ const BlogSchema: Schema<IBlog> = new Schema(
     publishedAt: {
       type: Date,
     },
-    authorName: {
-      type: String,
-      trim: true,
-    },
   },
   {
     timestamps: true,
   }
 );
 
-const Blog: Model<IBlog> =
-  mongoose.models.Blog || mongoose.model<IBlog>("Blog", BlogSchema);
+// In development, delete the cached Mongoose model on every HMR reload so
+// schema changes (like adding relatedProducts) are picked up immediately
+// without needing a full server restart.
+if (process.env.NODE_ENV === "development" && mongoose.models.Blog) {
+  delete (mongoose.models as any).Blog;
+}
+
+const Blog: Model<IBlog> = mongoose.model<IBlog>("Blog", BlogSchema);
 
 export default Blog;
-
-

@@ -74,16 +74,47 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
     setSuccess(null);
     setIsLoading(true);
 
+    // Trim all fields before validation
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedPassword = formData.password.trim();
+    const trimmedConfirmPassword = formData.confirmPassword.trim();
+
     try {
       if (activeTab === 'signup') {
+        // Validate empty fields after trim
+        if (!trimmedName) {
+          setError('Full name is required');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!trimmedEmail) {
+          setError('Email address is required');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!trimmedPassword) {
+          setError('Password is required');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!trimmedConfirmPassword) {
+          setError('Please confirm your password');
+          setIsLoading(false);
+          return;
+        }
+
         // Validate signup
-        if (formData.password !== formData.confirmPassword) {
+        if (trimmedPassword !== trimmedConfirmPassword) {
           setError('Passwords do not match');
           setIsLoading(false);
           return;
         }
 
-        if (formData.password.length < 8) {
+        if (trimmedPassword.length < 8) {
           setError('Password must be at least 8 characters long');
           setIsLoading(false);
           return;
@@ -96,9 +127,9 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            name: formData.name,
+            email: trimmedEmail,
+            password: trimmedPassword,
+            name: trimmedName,
           }),
         });
 
@@ -116,6 +147,19 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
           setSuccess(null);
         }, 2000);
       } else {
+        // Validate empty fields after trim (login)
+        if (!trimmedEmail) {
+          setError('Email address is required');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!trimmedPassword) {
+          setError('Password is required');
+          setIsLoading(false);
+          return;
+        }
+
         // Call login API
         const response = await fetch('/api/auth/login', {
           method: 'POST',
@@ -123,8 +167,8 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
+            email: trimmedEmail,
+            password: trimmedPassword,
           }),
         });
 

@@ -4,12 +4,30 @@ import User from "@/models/User";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+
+    // Trim inputs to remove leading/trailing spaces
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const password = typeof body.password === 'string' ? body.password.trim() : '';
 
     // Validation
-    if (!email || !password) {
+    if (!email && !password) {
       return NextResponse.json(
         { message: "Email and password are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!email) {
+      return NextResponse.json(
+        { message: "Email address is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { message: "Password is required" },
         { status: 400 }
       );
     }

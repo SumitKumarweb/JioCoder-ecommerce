@@ -25,14 +25,29 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Trim inputs before validation
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
+      setError('Email address is required');
+      return;
+    }
+
+    if (!trimmedPassword) {
+      setError('Password is required');
+      return;
+    }
+
     setLoading(true);
 
     // Mock authentication - replace with actual API call
     // Default credentials: admin@jiocoder.com / admin123
-    if (email === 'admin@jiocoder.com' && password === 'admin123') {
+    if (trimmedEmail === 'admin@jiocoder.com' && trimmedPassword === 'admin123') {
       // Set admin token
       localStorage.setItem('adminToken', 'admin-auth-token-' + Date.now());
-      localStorage.setItem('adminEmail', email);
+      localStorage.setItem('adminEmail', trimmedEmail);
       
       // Redirect to dashboard
       router.push('/nimda-pro-sumit/dashboard');

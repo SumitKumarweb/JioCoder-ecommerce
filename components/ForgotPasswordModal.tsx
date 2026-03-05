@@ -13,6 +13,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }: 
   const [shouldRender, setShouldRender] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -22,6 +23,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }: 
       // Reset state when modal opens
       setEmailSent(false);
       setEmail('');
+      setEmailError('');
     } else {
       setIsAnimating(false);
       const timer = setTimeout(() => {
@@ -49,8 +51,17 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError('');
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmailError('Email address is required');
+      return;
+    }
+
     // Handle form submission here
-    console.log('Password reset link sent to:', email);
+    console.log('Password reset link sent to:', trimmedEmail);
     setEmailSent(true);
   };
 
@@ -119,15 +130,17 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }: 
                       </span>
                     </div>
                     <input
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl block pl-12 p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      className={`w-full bg-slate-50 border text-slate-900 text-sm rounded-xl block pl-12 p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${emailError ? 'border-red-400 focus:ring-red-200' : 'border-slate-200'}`}
                       id="email"
                       placeholder="e.g. name@example.com"
-                      required
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
                     />
                   </div>
+                  {emailError && (
+                    <p className="text-xs text-red-500 font-medium mt-1 ml-1">{emailError}</p>
+                  )}
                 </div>
                 <button
                   className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"

@@ -37,7 +37,7 @@ async function connectDB() {
   if (!cached.promise) {
     // Configure Mongoose with project-specific settings
     mongoose.set('strictQuery', true);
-    
+
     const opts = {
       bufferCommands: false,
       maxPoolSize: databaseConfig.connectionOptions.maxPoolSize,
@@ -47,16 +47,21 @@ async function connectDB() {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts)
-    .then((mongoose) => {
-      console.log(`✅ MongoDB connected to ${databaseConfig.projectName} (${databaseConfig.projectId})`);
-      console.log(`📍 Timezone: ${databaseConfig.timezone} (${databaseConfig.connectionOptions.tz})`);
-      return mongoose;
-    })
-    .catch((err) => {
-      console.error('❌ MongoDB connection error:', err);
-      throw err;
-    });
+      .then((mongooseInstance) => {
+        console.log(`✅ MongoDB connected to ${databaseConfig.projectName} (${databaseConfig.projectId})`);
+        console.log(`📍 Timezone: ${databaseConfig.timezone} (${databaseConfig.connectionOptions.tz})`);
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        // Reset promise so the next call will retry the connection
+        cached.promise = null;
+        console.error('❌ MongoDB connection error:', err);
+        throw err;
+      });
   }
+
+  // Wait for the connection to complete, then cache and return it
+  cached.conn = await cached.promise;
   return cached.conn;
 }
 
