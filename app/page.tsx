@@ -43,8 +43,8 @@ export default function Home() {
     "@type": "Store",
     name: "JioCoder",
     description: "Premium mechanical keyboards, gaming mice, keycaps, and custom cables",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/logo.png`,
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com",
+    logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/logo.png`,
     address: {
       "@type": "PostalAddress",
       addressCountry: "IN",

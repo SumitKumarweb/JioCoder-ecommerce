@@ -2,9 +2,15 @@ import { MetadataRoute } from 'next';
 import connectDB from '@/lib/db';
 import Collection from '@/models/Collection';
 import Product from '@/models/Product';
+import Blog from '@/models/Blog';
+
+// Revalidate sitemap every hour (3600 seconds)
+// This ensures new products, collections, and blogs are included within 1 hour
+// Balance between freshness and performance
+export const revalidate = 3600; // 1 hour in seconds
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com';
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   try {
@@ -47,6 +53,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.8,
+      },
+      {
+        url: `${baseUrl}/about`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.7,
+      },
+      {
+        url: `${baseUrl}/support`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.7,
       }
     );
 
@@ -156,11 +174,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
     }
+
+    // Fetch all published blog posts
+    try {
+      const blogPosts = await Blog.find({ published: true })
+        .select('slug updatedAt publishedAt')
+        .sort({ publishedAt: -1, updatedAt: -1 })
+        .lean();
+
+      // Add blog post pages
+      blogPosts.forEach((post) => {
+        sitemapEntries.push({
+          url: `${baseUrl}/blog/${post.slug}`,
+          lastModified: post.updatedAt 
+            ? new Date(post.updatedAt) 
+            : (post.publishedAt ? new Date(post.publishedAt) : new Date()),
+          changeFrequency: 'weekly',
+          priority: 0.6,
+        });
+      });
+
+      console.log(`[Sitemap] Added ${blogPosts.length} blog posts to sitemap`);
+    } catch (blogError) {
+      console.error('[Sitemap] Error fetching blog posts:', blogError);
+      // Continue even if blog posts fail
+    }
+
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    console.error('[Sitemap] Error generating sitemap:', error);
     // Return at least static pages if database fails
   }
 
+  console.log(`[Sitemap] Generated sitemap with ${sitemapEntries.length} URLs`);
   return sitemapEntries;
 }
 

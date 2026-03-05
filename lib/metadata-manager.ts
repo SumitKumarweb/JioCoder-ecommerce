@@ -59,7 +59,7 @@ export class MetadataManager {
       if (typeof window === 'undefined') {
         // Server-side: need absolute URL
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.jiocoder.com');
         apiUrl = `${baseUrl}/api/page-metadata?path=${encodeURIComponent(path)}`;
         
         // Skip fetch if trying to reach external URL during build (API won't be available)

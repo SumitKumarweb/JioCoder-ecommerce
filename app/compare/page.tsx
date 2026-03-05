@@ -32,7 +32,7 @@ export default function ComparePage() {
     "@type": "WebPage",
     name: "Compare Products - JioCoder",
     description: "Compare mechanical keyboards, gaming mice, and peripherals side-by-side",
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/compare`,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/compare`,
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -40,13 +40,13 @@ export default function ComparePage() {
           "@type": "ListItem",
           position: 1,
           name: "Home",
-          item: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+          item: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com",
         },
         {
           "@type": "ListItem",
           position: 2,
           name: "Products",
-          item: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/products`,
+          item: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/products`,
         },
         {
           "@type": "ListItem",
