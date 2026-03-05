@@ -6,6 +6,7 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import { CartProvider } from "@/contexts/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import ResetPasswordHandler from "@/components/ResetPasswordHandler";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,6 +98,7 @@ export default function RootLayout({
             </Suspense>
           </CartProvider>
         </CompareProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
