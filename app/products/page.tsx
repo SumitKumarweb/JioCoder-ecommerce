@@ -60,42 +60,80 @@ function ProductsPageContent() {
     
     const loadProducts = async () => {
       loadingRef.current = true;
+      setLoading(true);
       try {
-        // Check cache first
-        const cacheKey = 'products:all';
-        const cachedData = getCachedData<Product[]>(cacheKey);
-        
-        if (cachedData) {
-          setProducts(cachedData);
-          setLoading(false);
-          loadingRef.current = false;
-          return;
-        }
+        // If there's a search query, use vector search
+        if (searchQuery.trim()) {
+          const cacheKey = `products:search:${searchQuery}`;
+          const cachedData = getCachedData<Product[]>(cacheKey);
+          
+          if (cachedData) {
+            setProducts(cachedData);
+            setLoading(false);
+            loadingRef.current = false;
+            return;
+          }
 
-        const res = await fetch('/api/products');
-        if (!res.ok) {
-          throw new Error(`Failed to fetch products: ${res.status}`);
+          // Use vector search API
+          const res = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery)}&limit=100`);
+          if (!res.ok) {
+            throw new Error(`Failed to search products: ${res.status}`);
+          }
+          const searchData: { results: any[] } = await res.json();
+          
+          const mapped: Product[] =
+            searchData.results?.map((p) => ({
+              id: p.slug || p._id,
+              name: p.name,
+              image: p.image || '/placeholder-product.png',
+              price: p.price,
+              originalPrice: undefined,
+              rating: 4.5,
+              reviewCount: 0,
+              brand: p.category || 'JioCoder',
+              inStock: p.inStock ?? true,
+            })) || [];
+          
+          // Cache search results for 2 minutes
+          setCachedData(cacheKey, mapped, 2 * 60 * 1000);
+          setProducts(mapped);
+        } else {
+          // No search query, load all products
+          const cacheKey = 'products:all';
+          const cachedData = getCachedData<Product[]>(cacheKey);
+          
+          if (cachedData) {
+            setProducts(cachedData);
+            setLoading(false);
+            loadingRef.current = false;
+            return;
+          }
+
+          const res = await fetch('/api/products');
+          if (!res.ok) {
+            throw new Error(`Failed to fetch products: ${res.status}`);
+          }
+          const data: any[] = await res.json();
+          const mapped: Product[] =
+            data?.map((p) => ({
+              id: p.slug || p._id,
+              name: p.name,
+              image: p.image || '/placeholder-product.png',
+              price: p.price,
+              originalPrice: undefined,
+              rating: 4.5,
+              reviewCount: 0,
+              brand: p.category || 'JioCoder',
+              inStock: p.inStock,
+            })) || [];
+          
+          // Cache the response
+          setCachedData(cacheKey, mapped, 5 * 60 * 1000); // 5 minutes cache
+          setProducts(mapped);
         }
-        const data: any[] = await res.json();
-        const mapped: Product[] =
-          data?.map((p) => ({
-            id: p.slug || p._id,   // prefer slug for clean URLs, fall back to _id
-            name: p.name,
-            image: p.image,
-            price: p.price,
-            originalPrice: undefined,
-            rating: 4.5,
-            reviewCount: 0,
-            brand: p.category || 'JioCoder',
-            inStock: p.inStock,
-          })) || [];
-        
-        // Cache the response
-        setCachedData(cacheKey, mapped, 5 * 60 * 1000); // 5 minutes cache
-        
-        setProducts(mapped);
       } catch (error) {
         console.error('Failed to load products from API', error);
+        setProducts([]);
       } finally {
         setLoading(false);
         loadingRef.current = false;
@@ -103,37 +141,14 @@ function ProductsPageContent() {
     };
 
     loadProducts();
-  }, []);
+  }, [searchQuery]);
 
-  // Filter products
+  // Filter products (vector search already handles search, so we only apply other filters)
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // Search filter with simple "similar word" support (handles plurals / partial matches)
-    if (searchQuery) {
-      const haystackForProduct = (product: Product) =>
-        `${product.name} ${product.brand}`.toLowerCase();
-
-      const tokens = searchQuery
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(Boolean);
-
-      result = result.filter((product) => {
-        const haystack = haystackForProduct(product);
-
-        // Every token must loosely match (substring, with basic plural handling)
-        return tokens.every((token) => {
-          if (haystack.includes(token)) return true;
-
-          // Basic plural/singular normalization (keyboard <-> keyboards)
-          const singular = token.endsWith('s') ? token.slice(0, -1) : token;
-          const plural = token.endsWith('s') ? token : `${token}s`;
-
-          return haystack.includes(singular) || haystack.includes(plural);
-        });
-      });
-    }
+    // Note: Search filtering is handled by the vector search API
+    // We only apply client-side filters here (price, brand, rating, stock)
 
     // Price filter
     result = result.filter(

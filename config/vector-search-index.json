@@ -1,0 +1,22 @@
+{
+  "fields": [
+    {
+      "numDimensions": 1536,
+      "path": "embedding",
+      "similarity": "cosine",
+      "type": "vector"
+    },
+    {
+      "type": "filter",
+      "path": "type"
+    },
+    {
+      "type": "filter",
+      "path": "metadata.published"
+    },
+    {
+      "type": "filter",
+      "path": "metadata.inStock"
+    }
+  ]
+}

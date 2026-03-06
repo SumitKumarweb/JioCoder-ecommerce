@@ -1,0 +1,24 @@
+{
+  "fields": [
+    {
+      "numDimensions": 0,
+      "path": "<field-name>",
+      "similarity": "<similarity-function>",
+      "type": "vector"
+    }
+  ],
+  "_comment": "Template with placeholders - replace values:",
+  "_instructions": {
+    "numDimensions": "Set to your embedding dimension (e.g., 1536 for OpenAI text-embedding-3-small, 768 for text-embedding-ada-002)",
+    "path": "Field path in your document where embeddings are stored (e.g., 'embedding', 'vector', 'embeddings')",
+    "similarity": "Similarity function: 'cosine' (recommended), 'euclidean', or 'dotProduct'",
+    "type": "Must be 'vector' for vector search fields"
+  },
+  "_example": {
+    "numDimensions": 1536,
+    "path": "embedding",
+    "similarity": "cosine",
+    "type": "vector"
+  }
+}
+

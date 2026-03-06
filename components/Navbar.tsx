@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import MobileMenu from './MobileMenu';
 import LoginModal from './LoginModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import SearchAutocomplete from './SearchAutocomplete';
 import { getCachedData, setCachedData } from '@/utils/apiCache';
 
 type AdminNavItem = {
@@ -34,7 +35,10 @@ export default function Navbar() {
   const [logoError, setLogoError] = useState(false);
   const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>([]);
   const [collectionNavItems, setCollectionNavItems] = useState<AdminCollectionNavItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const loadingRef = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const check = () => {
@@ -158,15 +162,29 @@ export default function Navbar() {
           <div className="flex-1 max-w-3xl hidden md:flex items-center relative z-[60] search-container">
             <form
               className="flex w-full bg-white rounded-lg overflow-hidden border-2 border-transparent focus-within:border-accent-green transition-all"
-              action="/products"
+              action="/search"
               method="GET"
+              onSubmit={(e) => {
+                if (!searchQuery.trim()) {
+                  e.preventDefault();
+                }
+              }}
             >
               <div className="relative flex-1">
                 <input
+                  ref={searchInputRef}
                   name="q"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => {
+                    // Delay hiding to allow click on results
+                    setTimeout(() => setIsSearchFocused(false), 200);
+                  }}
                   className="w-full border-none focus:ring-0 py-2.5 pl-4 pr-12 text-sm text-slate-900 placeholder-slate-400"
                   placeholder="Search products..."
                   type="text"
+                  autoComplete="off"
                 />
                 <button
                   type="submit"
@@ -176,6 +194,16 @@ export default function Navbar() {
                 </button>
               </div>
             </form>
+            {/* Search Autocomplete */}
+            {isSearchFocused && searchQuery.trim().length >= 2 && (
+              <SearchAutocomplete
+                query={searchQuery}
+                onSelect={() => {
+                  setIsSearchFocused(false);
+                  setSearchQuery('');
+                }}
+              />
+            )}
             <div className="search-overlay hidden absolute top-full left-0 w-full mt-2 bg-white text-slate-900 shadow-2xl rounded-xl border border-slate-100 overflow-hidden">
               <div className="grid grid-cols-12">
                 <div className="col-span-8 p-6 space-y-8">

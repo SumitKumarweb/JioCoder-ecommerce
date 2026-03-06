@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   description?: string;
   image?: string;
   category?: string;
+  embedding?: number[]; // Vector embedding for search
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -50,6 +51,11 @@ const ProductSchema: Schema = new Schema(
     category: {
       type: String,
       trim: true,
+    },
+    embedding: {
+      type: [Number],
+      default: undefined,
+      select: false, // Don't include in default queries for performance
     },
   },
   {
