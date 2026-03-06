@@ -16,7 +16,7 @@ export default function Footer() {
         {/* Brand Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-2 text-white">
-            <span className="material-symbols-outlined text-3xl">keyboard</span>
+            <img src="/logo.svg" alt="JioCoder" className="h-8 w-8 object-contain" />
             <h2 className="text-xl font-bold tracking-tight">JioCoder</h2>
           </div>
           <p className="text-sm leading-relaxed">

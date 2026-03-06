@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProfileSection from '@/components/ProfileSection';
 import AccountSidebar from '@/components/AccountSidebar';
+import ProfileStats from './ProfileStats';
 
 export const metadata: Metadata = {
   title: 'Account Dashboard',
@@ -53,16 +54,7 @@ export default function ProfilePage() {
                     <p className="text-xs text-emerald-500 font-medium mt-1">+2 this month</p>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 rounded-xl hover:border-primary/50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Wishlist Items</span>
-                      <div className="size-8 rounded-lg bg-pink-500/10 text-pink-500 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-xl">favorite</span>
-                      </div>
-                    </div>
-                    <p className="text-3xl font-black text-slate-900 dark:text-white">08</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">3 recently added</p>
-                  </div>
+                  <ProfileStats />
 
                   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 rounded-xl hover:border-primary/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">

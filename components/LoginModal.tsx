@@ -25,6 +25,16 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // If user is already logged in, never show login modal.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (typeof window === 'undefined') return;
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      onClose();
+    }
+  }, [isOpen, onClose]);
+
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -179,12 +189,27 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
         }
 
         setSuccess('Login successful!');
+        
+        // Store user data in localStorage
+        if (data.user && data.user.id) {
+          localStorage.setItem('userToken', data.user.id); // Using user.id as token for now
+          localStorage.setItem('userId', data.user.id);
+          localStorage.setItem('userEmail', data.user.email || trimmedEmail);
+          if (data.user.name) {
+            localStorage.setItem('userName', data.user.name);
+          }
+          
+          // Trigger wishlist sync by dispatching custom event
+          window.dispatchEvent(new CustomEvent('userLoggedIn'));
+        }
+        
         // Close modal after 1 second
         setTimeout(() => {
           onClose();
           setFormData({ name: '', email: '', password: '', confirmPassword: '' });
           setSuccess(null);
-          // TODO: Store user data in context/localStorage and redirect
+          // Reload page to sync wishlist and update UI
+          window.location.reload();
         }, 1000);
       }
     } catch (err) {
@@ -224,9 +249,7 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-12">
               <div className="bg-primary p-1.5 rounded-lg">
-                <span className="material-symbols-outlined text-slate-900 text-2xl font-bold">
-                  bolt
-                </span>
+                <img src="/logo.svg" alt="JioCoder" className="h-7 w-7 object-contain" />
               </div>
               <h1 className="text-white text-2xl font-bold tracking-tight">JioCoder</h1>
             </div>

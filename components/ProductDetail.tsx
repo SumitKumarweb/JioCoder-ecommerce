@@ -6,6 +6,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import LoginModal from './LoginModal';
 import Breadcrumb from '@/components/Breadcrumb';
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
 import LazySection from '@/components/LazySection';
@@ -42,9 +44,11 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
   const swiperRef = useRef<SwiperType | null>(null);
   const router = useRouter();
   const { addToCart, buyNow } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const loadingRef = useRef<string | null>(null);
   const redirectingRef = useRef(false);
 
@@ -224,6 +228,26 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
   const increaseQuantity = () => setQuantity((q) => q + 1);
   const decreaseQuantity = () => setQuantity((q) => Math.max(1, q - 1));
 
+  const handleWishlistToggle = async () => {
+    if (!product) return;
+    
+    // Check if user is logged in
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    
+    if (!userId) {
+      // Open login modal if not logged in
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    // Toggle wishlist
+    if (isInWishlist(product.id)) {
+      await removeFromWishlist(product.id);
+    } else {
+      await addToWishlist(product.id);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -393,37 +417,52 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="space-y-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => {
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    image: product.image || '',
+                    price: product.price,
+                    variant: `${selectedSwitch} Switch`,
+                  });
+                }}
+                className="flex-1 bg-white border-2 border-primary text-primary font-bold py-4 rounded-xl hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined">shopping_cart</span>
+                Add to Cart
+              </button>
+              <button
+                onClick={() => {
+                  buyNow({
+                    id: product.id,
+                    name: product.name,
+                    image: product.image || '',
+                    price: product.price,
+                    variant: `${selectedSwitch} Switch`,
+                  }, quantity);
+                  router.push('/checkout');
+                }}
+                className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined">flash_on</span>
+                Buy Now
+              </button>
+            </div>
             <button
-              onClick={() => {
-                addToCart({
-                  id: product.id,
-                  name: product.name,
-                  image: product.image || '',
-                  price: product.price,
-                  variant: `${selectedSwitch} Switch`,
-                });
-              }}
-              className="flex-1 bg-white border-2 border-primary text-primary font-bold py-4 rounded-xl hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+              onClick={handleWishlistToggle}
+              className={`w-full border-2 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                isInWishlist(product.id)
+                  ? 'border-red-500 text-red-500 bg-red-50 hover:bg-red-100'
+                  : 'border-slate-300 text-slate-700 hover:border-red-500 hover:text-red-500 hover:bg-red-50'
+              }`}
             >
-              <span className="material-symbols-outlined">shopping_cart</span>
-              Add to Cart
-            </button>
-            <button
-              onClick={() => {
-                buyNow({
-                  id: product.id,
-                  name: product.name,
-                  image: product.image || '',
-                  price: product.price,
-                  variant: `${selectedSwitch} Switch`,
-                }, quantity);
-                router.push('/checkout');
-              }}
-              className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined">flash_on</span>
-              Buy Now
+              <span className={`material-symbols-outlined ${isInWishlist(product.id) ? 'fill-1' : ''}`}>
+                favorite
+              </span>
+              {isInWishlist(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
             </button>
           </div>
 
@@ -971,6 +1010,10 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
         </Swiper>
       </section>
       </LazySection>
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </>
   );
 }

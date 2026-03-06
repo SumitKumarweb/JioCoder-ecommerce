@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import MobileMenu from './MobileMenu';
 import LoginModal from './LoginModal';
@@ -24,14 +25,38 @@ type AdminCollectionNavItem = {
 };
 
 export default function Navbar() {
+  const router = useRouter();
   const { openCart, getItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>([]);
   const [collectionNavItems, setCollectionNavItems] = useState<AdminCollectionNavItem[]>([]);
   const loadingRef = useRef(false);
+
+  useEffect(() => {
+    const check = () => {
+      if (typeof window === 'undefined') return;
+      setIsLoggedIn(Boolean(localStorage.getItem('userId')));
+    };
+    check();
+    window.addEventListener('storage', check);
+    window.addEventListener('userLoggedIn', check as any);
+    return () => {
+      window.removeEventListener('storage', check);
+      window.removeEventListener('userLoggedIn', check as any);
+    };
+  }, []);
+
+  const handleAccountClick = () => {
+    if (typeof window !== 'undefined' && localStorage.getItem('userId')) {
+      router.push('/profile');
+      return;
+    }
+    setIsLoginModalOpen(true);
+  };
 
   useEffect(() => {
     // Prevent concurrent duplicate calls
@@ -118,7 +143,12 @@ export default function Navbar() {
             <a href="/" className="flex items-center gap-2 shrink-0" aria-label="JioCoder Home">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 shrink-0 overflow-hidden">
                 {!logoError ? (
-                  <img src="/logo.png" alt="" className="h-8 w-8 object-contain" onError={() => setLogoError(true)} />
+                  <img
+                    src="/logo.svg"
+                    alt="JioCoder"
+                    className="h-8 w-8 object-contain"
+                    onError={() => setLogoError(true)}
+                  />
                 ) : (
                   <span className="material-symbols-outlined text-white text-xl">code</span>
                 )}
@@ -482,23 +512,23 @@ export default function Navbar() {
 
             {/* User Actions */}
             <div className="flex items-center gap-2 sm:gap-4 md:gap-5 shrink-0">
-              <a className="flex flex-col items-center group" href="#">
+              <Link className="flex flex-col items-center group" href="/profile/wishlist">
                 <span className="material-symbols-outlined group-hover:text-accent-green transition-colors">
                   favorite
                 </span>
                 <span className="text-[10px] font-bold uppercase mt-0.5 tracking-tighter text-slate-300">
                   Wishlist
                 </span>
-              </a>
+              </Link>
               <button
-                onClick={() => setIsLoginModalOpen(true)}
+                onClick={handleAccountClick}
                 className="flex flex-col items-center group"
               >
                 <span className="material-symbols-outlined group-hover:text-accent-green transition-colors">
                   person
                 </span>
                 <span className="text-[10px] font-bold uppercase mt-0.5 tracking-tighter text-slate-300">
-                  Account
+                  {isLoggedIn ? 'Profile' : 'Account'}
                 </span>
               </button>
               <Link
@@ -565,7 +595,7 @@ export default function Navbar() {
       onClose={() => setIsMobileMenuOpen(false)}
       onLoginClick={() => {
         setIsMobileMenuOpen(false);
-        setIsLoginModalOpen(true);
+        handleAccountClick();
       }}
     />
 

@@ -44,7 +44,7 @@ export default function Home() {
     name: "JioCoder",
     description: "Premium mechanical keyboards, gaming mice, keycaps, and custom cables",
     url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com",
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/logo.png`,
+    logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/logo.svg`,
     address: {
       "@type": "PostalAddress",
       addressCountry: "IN",

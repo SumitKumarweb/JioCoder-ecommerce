@@ -56,7 +56,7 @@ export default function MobileMenu({ isOpen, onClose, onLoginClick }: MobileMenu
         <header className="bg-primary px-6 py-5 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-3xl font-bold">bolt</span>
+              <img src="/logo.svg" alt="JioCoder" className="h-7 w-7 object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">JioCoder</h1>

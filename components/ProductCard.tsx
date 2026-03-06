@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import LoginModal from './LoginModal';
 
 interface ProductCardProps {
   id: string;
@@ -32,6 +35,8 @@ export default function ProductCard({
   collectionSlug,
 }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -82,6 +87,27 @@ export default function ProductCard({
     });
   };
 
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if user is logged in
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    
+    if (!userId) {
+      // Open login modal if not logged in
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    // Toggle wishlist
+    if (isInWishlist(id)) {
+      await removeFromWishlist(id);
+    } else {
+      await addToWishlist(id);
+    }
+  };
+
   return (
     <div className="product-card bg-white rounded-xl border border-slate-200 p-4 hover:shadow-2xl hover:shadow-primary/5 transition-all group relative">
       {badge && (
@@ -99,6 +125,18 @@ export default function ProductCard({
             src={image}
           />
         </Link>
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistToggle}
+          className={`absolute top-3 right-3 z-10 size-9 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm flex items-center justify-center transition-all shadow-sm hover:scale-110 ${
+            isInWishlist(id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'
+          }`}
+          aria-label={isInWishlist(id) ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <span className={`material-symbols-outlined text-xl ${isInWishlist(id) ? 'fill-1' : ''}`}>
+            favorite
+          </span>
+        </button>
         {/* Quick Action Overlay */}
         <div className="absolute inset-x-0 bottom-4 px-4 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
@@ -131,6 +169,10 @@ export default function ProductCard({
           )}
         </div>
       </div>
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </div>
   );
 }

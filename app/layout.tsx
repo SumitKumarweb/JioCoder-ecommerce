@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import { CompareProvider } from "@/contexts/CompareContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import CartDrawer from "@/components/CartDrawer";
 import ResetPasswordHandler from "@/components/ResetPasswordHandler";
 
@@ -58,6 +59,10 @@ export const metadata: Metadata = {
     title: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
     description: "Shop premium mechanical keyboards, gaming mice, keycaps, and custom cables.",
     images: ["/og-image.jpg"],
+  },
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
   },
   robots: {
     index: true,
@@ -114,11 +119,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         {/* End Google Tag Manager (noscript) */}
         <CompareProvider>
           <CartProvider>
+            <WishlistProvider>
         {children}
-            <CartDrawer />
-            <Suspense fallback={null}>
-              <ResetPasswordHandler />
-            </Suspense>
+                <CartDrawer />
+                <Suspense fallback={null}>
+                  <ResetPasswordHandler />
+                </Suspense>
+            </WishlistProvider>
           </CartProvider>
         </CompareProvider>
       </body>
