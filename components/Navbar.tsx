@@ -140,20 +140,18 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2 shrink-0" aria-label="JioCoder Home">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 shrink-0 overflow-hidden">
+            <a href="/" className="flex items-center gap-2 shrink-0" aria-label="JioCoder Home" style={{ backgroundColor: '#0F172A' }}>
                 {!logoError ? (
                   <img
-                    src="/logo.svg"
+                    src="/logo.png"
                     alt="JioCoder"
-                    className="h-8 w-8 object-contain"
+                    style={{ width: '100%', height: '35px' }}
+                    className="object-contain"
                     onError={() => setLogoError(true)}
                   />
                 ) : (
                   <span className="material-symbols-outlined text-white text-xl">code</span>
                 )}
-              </span>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight truncate max-w-[140px] sm:max-w-none">JioCoder</h1>
             </a>
 
           {/* Search Bar */}

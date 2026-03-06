@@ -15,9 +15,13 @@ export default function Footer() {
       <div className="max-w-[1440px] mx-auto w-full min-w-0 px-4 md:px-10 lg:px-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 md:gap-12 mb-8 sm:mb-12">
         {/* Brand Section */}
         <div className="space-y-6">
-          <div className="flex items-center gap-2 text-white">
-            <img src="/logo.svg" alt="JioCoder" className="h-8 w-8 object-contain" />
-            <h2 className="text-xl font-bold tracking-tight">JioCoder</h2>
+          <div className="flex items-center gap-2 text-white" style={{ backgroundColor: '#0F172A' }}>
+            <img 
+              src="/logo.png" 
+              alt="JioCoder" 
+              style={{ width: '100%', height: '35px' }}
+              className="object-contain"
+            />
           </div>
           <p className="text-sm leading-relaxed">
             The ultimate destination for mechanical keyboard enthusiasts in India. We bring global craftsmanship to your desktop.

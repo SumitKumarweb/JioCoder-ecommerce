@@ -247,11 +247,13 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
             </svg>
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-12">
-              <div className="bg-primary p-1.5 rounded-lg">
-                <img src="/logo.svg" alt="JioCoder" className="h-7 w-7 object-contain" />
-              </div>
-              <h1 className="text-white text-2xl font-bold tracking-tight">JioCoder</h1>
+            <div className="flex items-center gap-2 mb-12" style={{ backgroundColor: '#0F172A' }}>
+              <img 
+                src="/logo.png" 
+                alt="JioCoder" 
+                style={{ width: '100%', height: '35px' }}
+                className="object-contain"
+              />
             </div>
             <h2 className="text-white text-4xl font-bold leading-tight mb-4">
               Join the Community

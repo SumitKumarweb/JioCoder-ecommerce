@@ -54,16 +54,13 @@ export default function MobileMenu({ isOpen, onClose, onLoginClick }: MobileMenu
       >
         {/* Header: Dark Navy */}
         <header className="bg-primary px-6 py-5 flex items-center justify-between text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="size-10 bg-white rounded-lg flex items-center justify-center text-primary">
-              <img src="/logo.svg" alt="JioCoder" className="h-7 w-7 object-contain" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">JioCoder</h1>
-              <p className="text-[10px] uppercase tracking-widest opacity-80">
-                Premium Electronics
-              </p>
-            </div>
+          <div className="flex items-center gap-3" style={{ backgroundColor: '#0F172A' }}>
+            <img 
+              src="/logo.png" 
+              alt="JioCoder" 
+              style={{ width: '100%', height: '35px' }}
+              className="object-contain"
+            />
           </div>
           <button
             onClick={onClose}
