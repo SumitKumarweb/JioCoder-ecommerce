@@ -339,7 +339,7 @@ export default function OrderSuccessPage() {
               FAQ
             </Link>
           </div>
-          <p>© 2024 JioCoder India. All rights reserved.</p>
+          <p>© 2026 JioCoder India. All rights reserved.</p>
         </div>
       </main>
       <Footer />

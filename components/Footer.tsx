@@ -117,7 +117,7 @@ export default function Footer() {
 
       {/* Bottom Section */}
       <div className="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-20 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p className="text-xs">© 2024 JioCoder India. All rights reserved.</p>
+        <p className="text-xs">© 2026 JioCoder India. All rights reserved.</p>
         <div className="flex items-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all">
           <img
             className="h-6"
