@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import CartDrawer from "@/components/CartDrawer";
 import ResetPasswordHandler from "@/components/ResetPasswordHandler";
+import { OrganizationSchema, WebSiteSchema } from "@/components/schemas";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -102,6 +103,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         />
+        <OrganizationSchema />
+        <WebSiteSchema />
       </head>
       <body
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased min-w-0 overflow-x-hidden`}

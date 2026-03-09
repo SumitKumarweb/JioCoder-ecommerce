@@ -12,6 +12,7 @@ import Pagination from '@/components/Pagination';
 import NoSearchResults from '@/components/NoSearchResults';
 import ProductGridSkeleton from '@/components/ProductGridSkeleton';
 import { getCachedData, setCachedData } from '@/utils/apiCache';
+import { ProductListSchema, BreadcrumbSchema } from '@/components/schemas';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -231,6 +232,34 @@ function ProductsPageContent() {
 
   return (
     <>
+      {/* Schema Markup */}
+      {!loading && products.length > 0 && (
+        <>
+          <ProductListSchema
+            products={products.map(p => ({
+              id: p.id,
+              name: p.name,
+              image: p.image,
+              price: p.price,
+              currency: 'INR',
+              inStock: p.inStock,
+              category: p.brand,
+              brand: p.brand,
+              rating: p.rating,
+              reviewCount: p.reviewCount,
+            }))}
+            pageUrl="/products"
+            pageTitle={searchQuery ? `Search Results for "${searchQuery}"` : 'Mechanical & Wireless Keyboards'}
+            pageDescription="Browse our collection of premium mechanical keyboards, gaming mice, keycaps, and custom cables."
+          />
+          <BreadcrumbSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Products', href: '/products' },
+            ]}
+          />
+        </>
+      )}
       <Navbar />
       <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 py-4 sm:py-6 overflow-x-hidden">
         {/* Breadcrumbs */}

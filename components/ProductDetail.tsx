@@ -10,6 +10,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import LoginModal from './LoginModal';
 import Breadcrumb from '@/components/Breadcrumb';
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
+import { BreadcrumbSchema } from '@/components/schemas';
 import LazySection from '@/components/LazySection';
 import {
   TechnicalSpecsSkeleton,
@@ -20,6 +21,7 @@ import {
 } from '@/components/ProductDetailSectionSkeletons';
 import ProductCarouselSkeleton from '@/components/ProductCarouselSkeleton';
 import { getCachedData, setCachedData, getProductCacheKey } from '@/utils/apiCache';
+import { ProductSchema } from '@/components/schemas';
 
 interface ProductDetailProps {
   productId: string;
@@ -283,7 +285,43 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
 
   return (
     <>
+      {/* Product Schema for SEO */}
+      {product && (
+        <ProductSchema
+          product={{
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            image: product.image,
+            price: product.price,
+            currency: 'INR',
+            inStock: product.inStock,
+            category: product.category,
+            rating: 4.8,
+            reviewCount: 1240,
+          }}
+          url={product.slug ? `/product/${product.slug}` : `/product/${product.id}`}
+        />
+      )}
       {/* Breadcrumb: Home > Collections > Collection Name > Product Name */}
+      {product && (
+        <BreadcrumbSchema
+          items={
+            collectionSlug
+              ? [
+                  { label: 'Home', href: '/' },
+                  { label: 'Collections', href: '/collections' },
+                  { label: collectionSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), href: `/collections/${collectionSlug}` },
+                  { label: product.name },
+                ]
+              : [
+                  { label: 'Home', href: '/' },
+                  { label: 'Products', href: '/products' },
+                  { label: product.name },
+                ]
+          }
+        />
+      )}
       <Breadcrumb
         items={
           collectionSlug

@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import CompareNotification from "@/components/CompareNotification";
 import SaleModal from "@/components/SaleModal";
 import { MetadataManager } from "@/lib/metadata-manager";
+import { BreadcrumbSchema } from "@/components/schemas";
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataManager = new MetadataManager();
@@ -60,6 +61,11 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <BreadcrumbSchema
+        items={[
+          { label: 'Home', href: '/' },
+        ]}
       />
       <Navbar />
       <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-20 py-4 sm:py-6 space-y-8 sm:space-y-10 md:space-y-12 overflow-x-hidden">

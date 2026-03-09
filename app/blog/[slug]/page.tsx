@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
+import { BreadcrumbSchema } from '@/components/schemas';
 
 interface BlogPost {
   id: string;
@@ -272,12 +273,21 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   return (
     <>
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+        <main className="max-w-7xl mx-auto px-4 py-8">
+        {blogPost && (
+          <BreadcrumbSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Blog', href: '/blog' },
+              { label: blogPost.title },
+            ]}
+          />
+        )}
         <Breadcrumb
           items={[
             { label: 'Home', href: '/' },
             { label: 'Blog', href: '/blog' },
-            { label: blogPost.title },
+            { label: blogPost?.title || 'Post' },
           ]}
         />
 

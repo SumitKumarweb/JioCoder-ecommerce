@@ -13,6 +13,7 @@ import 'swiper/css/effect-fade';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
+import { BreadcrumbSchema } from '@/components/schemas';
 
 interface BlogPost {
   id: string;
@@ -63,6 +64,12 @@ export default function BlogPage() {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Blog', href: '/blog' },
+        ]}
+      />
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumb

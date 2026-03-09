@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import CollectionCardSkeleton from '@/components/CollectionCardSkeleton';
+import { BreadcrumbSchema } from '@/components/schemas';
 
 interface Collection {
   id: string;
@@ -77,6 +78,12 @@ export default function CollectionsPage() {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Collections', href: '/collections' },
+        ]}
+      />
       <Navbar />
       <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-20 py-4 sm:py-6 space-y-8">
         <Breadcrumb
