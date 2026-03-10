@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -70,14 +71,18 @@ export default function Hero() {
         loop={visibleSlides.length > 1}
         className="h-full"
       >
-        {visibleSlides.map((slide) => (
+        {visibleSlides.map((slide, index) => (
           <SwiperSlide key={slide.id}>
             <div className="relative min-h-[280px] h-[320px] sm:min-h-[380px] sm:h-[420px] md:h-[460px] lg:h-[480px] flex items-center group">
               <div className="absolute inset-0 z-0">
-                <img
-                  alt={slide.title}
-                  className="w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
+                <Image
                   src={slide.image}
+                  alt={slide.title}
+                  fill
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  sizes="(min-width: 1024px) 1024px, 100vw"
+                  className="object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
               <div className="relative z-10 px-4 sm:px-6 md:px-10 lg:px-24 max-w-2xl text-white space-y-3 sm:space-y-4 md:space-y-6">

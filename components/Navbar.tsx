@@ -1,7 +1,8 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import MobileMenu from './MobileMenu';
@@ -144,18 +145,27 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2 shrink-0" aria-label="JioCoder Home" style={{ backgroundColor: '#0F172A' }}>
-                {!logoError ? (
-                  <img
+            <a
+              href="/"
+              className="flex items-center gap-2 shrink-0"
+              aria-label="JioCoder Home"
+              style={{ backgroundColor: '#0F172A' }}
+            >
+              {!logoError ? (
+                <div className="relative w-[177px] h-[35px]">
+                  <Image
                     src="/logo.png"
                     alt="JioCoder"
-                    style={{ width: '100%', height: '35px' }}
+                    fill
+                    priority
+                    sizes="177px"
                     className="object-contain"
                     onError={() => setLogoError(true)}
                   />
-                ) : (
-                  <span className="material-symbols-outlined text-white text-xl">code</span>
-                )}
+                </div>
+              ) : (
+                <span className="material-symbols-outlined text-white text-xl">code</span>
+              )}
             </a>
 
           {/* Search Bar */}

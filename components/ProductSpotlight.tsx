@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Product {
   _id: string;
@@ -109,10 +110,12 @@ export default function ProductSpotlight() {
         </Link>
       </div>
       <div className="relative group md:w-[30vh] lg:w-[34vw] lg:h-[75vh]">
-        <img
-          alt={product.name}
-          className="w-full h-full object-cover rounded-2xl shadow-2xl transition-all duration-500"
+        <Image
           src={product.image}
+          alt={product.name}
+          fill
+          sizes="(min-width: 1024px) 40vw, 100vw"
+          className="object-cover rounded-2xl shadow-2xl transition-all duration-500"
         />
         {/* Dynamic Hotspots */}
         {hotspots.map((hotspot, index) => {
