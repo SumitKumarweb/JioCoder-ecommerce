@@ -65,7 +65,7 @@ export default function Hero() {
         pagination={{
           clickable: true,
           bulletClass: 'swiper-pagination-bullet !bg-white/50 !opacity-100',
-          bulletActiveClass: 'swiper-pagination-bullet-active !bg-accent-green',
+          bulletActiveClass:'swiper-pagination-bullet-active !bg-accent-green',
         }}
         loop={visibleSlides.length > 1}
         className="h-full"
