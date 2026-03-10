@@ -83,7 +83,7 @@ export default function ProductSpotlight() {
   const { product, description, features = [], hotspots = [], buttonText = 'Pre-order Now' } = spotlightData;
 
   return (
-    <section className="bg-primary/50 border border-white/10 rounded-3xl p-8 lg:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <section className="bg-[#090F20] border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-around md:flex-row md:px-12 lg:flex-row lg:px-2 gap-24 lg:py-12">
       <div className="space-y-6">
         <h3 className="text-4xl font-bold text-accent-green">{product.name}</h3>
         {description && (
@@ -108,10 +108,10 @@ export default function ProductSpotlight() {
           {buttonText}
         </Link>
       </div>
-      <div className="relative group">
+      <div className="relative group md:w-[30vh] lg:w-[34vw] lg:h-[75vh]">
         <img
           alt={product.name}
-          className="w-full h-auto rounded-2xl shadow-2xl transition-all duration-500"
+          className="w-full h-full object-cover rounded-2xl shadow-2xl transition-all duration-500"
           src={product.image}
         />
         {/* Dynamic Hotspots */}

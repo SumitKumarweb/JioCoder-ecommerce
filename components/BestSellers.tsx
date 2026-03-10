@@ -164,7 +164,7 @@ export default function BestSellers() {
                   />
                   <button
                     onClick={(e) => e.preventDefault()}
-                    className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-slate-900 hover:bg-white transition-colors z-10"
+                    className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-slate-900 hover:bg-white transition-colors z-10 flex items-center justify-center"
                   >
                     <span className="material-symbols-outlined text-xl">favorite</span>
                   </button>
@@ -192,7 +192,7 @@ export default function BestSellers() {
                   <div className="mt-auto pt-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <input
-                        className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4"
+                        className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
                         id={`compare-${product.id}`}
                         type="checkbox"
                         checked={isInCompare(product.id)}

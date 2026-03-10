@@ -141,7 +141,7 @@ export default function TrendingProducts() {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 src={product.image}
               />
-              <button className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-slate-900 hover:bg-white transition-colors z-10">
+              <button className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-slate-900 hover:bg-white transition-colors z-10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-xl">favorite</span>
               </button>
             </a>
@@ -152,7 +152,7 @@ export default function TrendingProducts() {
               <p className="text-xl font-bold">₹{product.price.toLocaleString()}</p>
               <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
                 <input
-                  className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4"
+                  className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
                   id={product.compareId}
                   type="checkbox"
                   checked={isInCompare(product.id)}
