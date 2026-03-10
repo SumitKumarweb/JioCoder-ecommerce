@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const type = searchParams.get('type') as 'product' | 'blog' | 'collection' | null;
     const force = searchParams.get('force') === 'true';
 
-    const typesToSync = type ? [type] : ['product', 'blog', 'collection'];
+    const typesToSync: ('product' | 'blog' | 'collection')[] = type ? [type] : ['product', 'blog', 'collection'];
     const results: Record<string, { synced: number; errors: number }> = {};
 
     for (const syncType of typesToSync) {

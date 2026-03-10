@@ -21,7 +21,7 @@ export default function SearchAutocomplete({ query, onSelect }: SearchAutocomple
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
