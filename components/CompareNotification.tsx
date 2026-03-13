@@ -12,7 +12,7 @@ export default function CompareNotification() {
   }
 
   const handleCompareNow = () => {
-    router.push('/compare');
+    router.push('/compare/');
   };
 
   return (

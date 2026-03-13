@@ -218,7 +218,7 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
       setIsLoading(false);
     }
   };
-
+  if (!isOpen) return null;
   return (
     <div
       className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 md:p-6 transition-opacity duration-300 ${

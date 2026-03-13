@@ -1,12 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-
+import { useRouter } from "next/navigation";
 type AccountSidebarProps = {
   activeKey: 'dashboard' | 'orders' | 'wishlist' | 'addresses' | 'electropay' | 'profile';
 };
 
 export default function AccountSidebar({ activeKey }: AccountSidebarProps) {
+  const router = useRouter();
+const handleLogout = () => {
+  localStorage.removeItem("userToken");
+  localStorage.removeItem("userId");
+
+  router.push("/login");
+};
   const linkClass = (key: AccountSidebarProps['activeKey']) =>
     key === activeKey
       ? 'flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg transition-all'
@@ -14,6 +21,7 @@ export default function AccountSidebar({ activeKey }: AccountSidebarProps) {
 
   const iconClass = (key: AccountSidebarProps['activeKey']) =>
     key === activeKey ? 'material-symbols-outlined fill-1' : 'material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors';
+
 
   return (
     <aside className="w-full lg:w-72 flex-shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
@@ -50,13 +58,13 @@ export default function AccountSidebar({ activeKey }: AccountSidebarProps) {
           <span className={iconClass('profile')}>person</span>
           <span className="text-sm font-semibold">Profile Info</span>
         </Link>
-        <Link
+        <button 
+        onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all group"
-          href="#"
         >
           <span className="material-symbols-outlined">logout</span>
           <span className="text-sm font-semibold">Logout</span>
-        </Link>
+        </button>
       </nav>
     </aside>
   );

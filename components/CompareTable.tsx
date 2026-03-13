@@ -64,7 +64,7 @@ export default function CompareTable() {
     const loadDetails = async () => {
       if (compareProducts.length === 0) return;
       try {
-        const res = await fetch('/api/products');
+        const res = await fetch('/api/products/id/route.ts');
         if (!res.ok) return;
         const data: any[] = await res.json();
 

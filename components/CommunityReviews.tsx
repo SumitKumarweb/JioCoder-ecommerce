@@ -17,8 +17,28 @@ interface CommunityReview {
 }
 
 export default function CommunityReviews() {
+const getYoutubeEmbed = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+
+    let videoId = "";
+
+    if (parsedUrl.hostname === "youtu.be") {
+      videoId = parsedUrl.pathname.slice(1);
+    } else if (parsedUrl.pathname.includes("/shorts/")) {
+      videoId = parsedUrl.pathname.split("/shorts/")[1];
+    } else {
+      videoId = parsedUrl.searchParams.get("v") || "";
+    }
+
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+  } catch {
+    return "";
+  }
+};
   const [reviews, setReviews] = useState<CommunityReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openVideo, setOpenVideo] = useState<string | null>(null);
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -67,12 +87,10 @@ export default function CommunityReviews() {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {reviews.map((review) => (
-          <a
-            key={review._id}
-            href={review.videoUrl || review.image || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer shadow-sm block"
+          <div
+          key={review._id}
+  onClick={() => review.videoUrl && setOpenVideo(review.videoUrl)}
+  className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer shadow-sm"
           >
             {review.image ? (
               <img
@@ -80,7 +98,7 @@ export default function CommunityReviews() {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 src={review.image}
                 onError={(e) => {
-                  // Fallback to placeholder if image fails to load
+                 
                   (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Video';
                 }}
               />
@@ -114,10 +132,38 @@ export default function CommunityReviews() {
                 </div>
               </div>
             </div>
-          </a>
+          </div>
         ))}
       </div>
+      {openVideo && (
+  <div
+  onClick={() => setOpenVideo(null)}
+  className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4"
+>
+    
+    <button
+      onClick={() => setOpenVideo(null)}
+      className="absolute top-6 right-6 text-white text-3xl z-50"
+    >
+      ✕
+    </button>
+
+    <div className="w-full max-w-5xl aspect-video">
+ 
+      <iframe
+        className="w-full h-full rounded-xl"
+        src={getYoutubeEmbed(openVideo)}
+        title="YouTube video"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        
+      />
+    </div>
+
+  </div>
+)}
     </section>
   );
 }
+
 
