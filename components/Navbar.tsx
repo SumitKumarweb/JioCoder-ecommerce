@@ -62,6 +62,15 @@ export default function Navbar() {
     }
     setIsLoginModalOpen(true);
   };
+  const handleWishlistClick = () => {
+
+  if (typeof window !== "undefined" && localStorage.getItem("userId")) {
+    router.push("/profile/wishlist"); // user logged in
+  } else {
+    setIsLoginModalOpen(true); // open login modal
+  }
+
+};
 
   useEffect(() => {
     // Prevent concurrent duplicate calls
@@ -548,14 +557,14 @@ export default function Navbar() {
 
             {/* User Actions */}
             <div className="flex items-center gap-2 sm:gap-4 md:gap-5 shrink-0">
-              <Link className="flex flex-col items-center group" href="/profile/wishlist">
+              <button onClick={handleWishlistClick} className="flex flex-col items-center group" >
                 <span className="material-symbols-outlined group-hover:text-accent-green transition-colors">
                   favorite
                 </span>
                 <span className="text-[10px] font-bold uppercase mt-0.5 tracking-tighter text-slate-300">
                   Wishlist
                 </span>
-              </Link>
+              </button>
               <button
                 onClick={handleAccountClick}
                 className="flex flex-col items-center group"

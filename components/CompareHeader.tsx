@@ -38,7 +38,7 @@ export default function CompareHeader({
           <button
             onClick={() => setHighlightDifferences(!highlightDifferences)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              highlightDifferences ? 'bg-accent-green' : 'bg-primary'
+              highlightDifferences ? 'bg-primary' : 'bg-zinc-500'
             }`}
           >
             <span

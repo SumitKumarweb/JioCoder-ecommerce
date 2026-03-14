@@ -12,6 +12,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
 import { BreadcrumbSchema } from '@/components/schemas';
 import LazySection from '@/components/LazySection';
+
 import {
   TechnicalSpecsSkeleton,
   FAQSkeleton,
@@ -53,6 +54,34 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const loadingRef = useRef<string | null>(null);
   const redirectingRef = useRef(false);
+  const [pincode, setPincode] = useState<string>('');
+  const [deliveryMessage, setDeliveryMessage] = useState<string>('');
+  const serviceablePincodes: number[] = [
+  201001,
+  110001,
+  110002,
+  201002,
+  201003,
+  786174,
+  473331,
+  244001,
+  244002,
+  244003
+];
+const checkDelivery = () => {
+  const pin = Number(pincode);
+
+  if (pincode.length !== 6) {
+    setDeliveryMessage("Enter valid pincode");
+    return;
+  }
+
+  if (serviceablePincodes.includes(pin)) {
+    setDeliveryMessage("Delivery Available 🚚");
+  } else {
+    setDeliveryMessage("Delivery Not Available ❌");
+  }
+};
 
   useEffect(() => {
     // Skip if already loading the same productId (prevents duplicate calls)
@@ -397,15 +426,25 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
                 <span className="text-sm font-semibold">Delivery Estimate</span>
               </div>
               <div className="flex gap-2">
-                <input
-                  className="flex-1 px-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-primary focus:border-primary"
-                  placeholder="Enter Pincode"
-                  type="text"
-                />
-                <button className="px-4 py-2 text-sm font-bold text-primary border border-primary rounded-lg hover:bg-primary/5">
+               <input
+  className="flex-1 px-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-primary focus:border-primary"
+  placeholder="Enter Pincode"
+  type="text"
+  value={pincode}
+  onChange={(e) => setPincode(e.target.value)}
+/>
+                <button 
+                onClick={checkDelivery}
+                className="px-4 py-2 text-sm font-bold text-primary border border-primary rounded-lg hover:bg-primary/5">
                   Check
                 </button>
+              
               </div>
+                {deliveryMessage && (
+  <p className="text-sm mt-2 font-semibold text-slate-600">
+    {deliveryMessage}
+  </p>
+)}
             </div>
           </div>
 

@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import LoginModal from "@/components/LoginModal";
 
 const WISHLIST_STORAGE_KEY = 'wishlist_product_ids';
-const USER_TOKEN_KEY = 'userToken';
 const USER_ID_KEY = 'userId';
 
 interface WishlistContextType {
@@ -18,84 +18,61 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
+
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
 
   // Load wishlist on mount
   useEffect(() => {
+const userId = localStorage.getItem("userId");
+  if (userId) {
+    setIsLoggedIn(true);
+  }
     const loadWishlist = async () => {
+
+      if (typeof window === "undefined") return;
+
+      const userId = localStorage.getItem(USER_ID_KEY);
+
       try {
-        const userId = typeof window !== 'undefined' ? localStorage.getItem(USER_ID_KEY) : null;
-        
+
         if (userId) {
-          // User is logged in - fetch from server
+
           const res = await fetch(`/api/wishlist?userId=${userId}`);
+
           if (res.ok) {
             const data = await res.json();
             setWishlistIds(data.productIds || []);
-            // Also sync localStorage
-            if (typeof window !== 'undefined') {
-              localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(data.productIds || []));
-            }
-          } else {
-            // Fallback to localStorage if server fails
-            const stored = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
-            if (stored) {
-              setWishlistIds(JSON.parse(stored));
-            }
+
+            localStorage.setItem(
+              WISHLIST_STORAGE_KEY,
+              JSON.stringify(data.productIds || [])
+            );
           }
+
         } else {
-          // User not logged in - use localStorage
-          const stored = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
+
+          const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
+
           if (stored) {
             setWishlistIds(JSON.parse(stored));
           }
+
         }
+
       } catch (error) {
-        console.error('Failed to load wishlist:', error);
-        // Fallback to localStorage
-        const stored = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
-        if (stored) {
-          setWishlistIds(JSON.parse(stored));
-        }
+        console.error("Failed to load wishlist:", error);
       } finally {
         setIsLoading(false);
       }
+
     };
 
     loadWishlist();
-
-    // Listen for login event to sync wishlist
-    const handleLogin = async () => {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem(USER_ID_KEY) : null;
-      if (!userId) return;
-
-      try {
-        // Get localStorage wishlist
-        const stored = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
-        const localIds = stored ? JSON.parse(stored) : [];
-
-        // Sync with server
-        const res = await fetch('/api/wishlist', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, productIds: localIds }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setWishlistIds(data.productIds || []);
-          // Update localStorage with merged result
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(data.productIds || []));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to sync wishlist:', error);
-      }
-    };
-    window.addEventListener('userLoggedIn', handleLogin);
-    return () => window.removeEventListener('userLoggedIn', handleLogin);
   }, []);
 
   const isInWishlist = (productId: string) => {
@@ -103,68 +80,78 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   };
 
   const addToWishlist = async (productId: string) => {
+
+    const userId = typeof window !== "undefined"
+      ? localStorage.getItem(USER_ID_KEY)
+      : null;
+
+    if (!userId) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (isInWishlist(productId)) return;
 
-    const userId = typeof window !== 'undefined' ? localStorage.getItem(USER_ID_KEY) : null;
     const newIds = [...wishlistIds, productId];
+
     setWishlistIds(newIds);
 
-    // Update localStorage immediately
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(newIds));
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(newIds));
+
+    try {
+
+      await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, userId }),
+      });
+
+    } catch (error) {
+      console.error("Wishlist sync failed:", error);
     }
 
-    // If logged in, sync with server
-    if (userId) {
-      try {
-        await fetch('/api/wishlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId, userId }),
-        });
-      } catch (error) {
-        console.error('Failed to sync wishlist to server:', error);
-        // Keep local state even if server fails
-      }
-    }
   };
 
   const removeFromWishlist = async (productId: string) => {
-    if (!isInWishlist(productId)) return;
 
-    const userId = typeof window !== 'undefined' ? localStorage.getItem(USER_ID_KEY) : null;
+    const userId = typeof window !== "undefined"
+      ? localStorage.getItem(USER_ID_KEY)
+      : null;
+
     const newIds = wishlistIds.filter((id) => id !== productId);
+
     setWishlistIds(newIds);
 
-    // Update localStorage immediately
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(newIds));
-    }
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(newIds));
 
-    // If logged in, sync with server
-    if (userId) {
-      try {
-        await fetch(`/api/wishlist?productId=${productId}&userId=${userId}`, {
-          method: 'DELETE',
-        });
-      } catch (error) {
-        console.error('Failed to sync wishlist to server:', error);
-        // Keep local state even if server fails
-      }
-    }
-  };
-
-  const syncWishlist = async () => {
-    const userId = typeof window !== 'undefined' ? localStorage.getItem(USER_ID_KEY) : null;
     if (!userId) return;
 
     try {
-      // Get localStorage wishlist
-      const stored = typeof window !== 'undefined' ? localStorage.getItem(WISHLIST_STORAGE_KEY) : null;
+
+      await fetch(`/api/wishlist?productId=${productId}&userId=${userId}`, {
+        method: 'DELETE',
+      });
+
+    } catch (error) {
+      console.error("Remove wishlist failed:", error);
+    }
+
+  };
+
+  const syncWishlist = async () => {
+
+    const userId = typeof window !== "undefined"
+      ? localStorage.getItem(USER_ID_KEY)
+      : null;
+
+    if (!userId) return;
+
+    try {
+
+      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
       const localIds = stored ? JSON.parse(stored) : [];
 
-      // Sync with server
-      const res = await fetch('/api/wishlist', {
+    const res = await fetch('/api/wishlist', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, productIds: localIds }),
@@ -172,18 +159,24 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
       if (res.ok) {
         const data = await res.json();
+
         setWishlistIds(data.productIds || []);
-        // Update localStorage with merged result
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(data.productIds || []));
-        }
+
+        localStorage.setItem(
+          WISHLIST_STORAGE_KEY,
+          JSON.stringify(data.productIds || [])
+        );
       }
+
     } catch (error) {
-      console.error('Failed to sync wishlist:', error);
+      console.error("Wishlist sync failed:", error);
     }
+
   };
 
-  return (
+  if (isLoading) return null;
+
+    return (
     <WishlistContext.Provider
       value={{
         wishlistIds,
@@ -194,16 +187,26 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         isLoading,
       }}
     >
+
       {children}
+
+      <LoginModal 
+  isOpen={showLoginModal}
+  onClose={() => setShowLoginModal(false)}
+/>
+
     </WishlistContext.Provider>
   );
+
 }
 
 export function useWishlist() {
+
   const context = useContext(WishlistContext);
-  if (context === undefined) {
-    throw new Error('useWishlist must be used within a WishlistProvider');
+
+  if (!context) {
+    throw new Error('useWishlist must be used within WishlistProvider');
   }
+
   return context;
 }
-
