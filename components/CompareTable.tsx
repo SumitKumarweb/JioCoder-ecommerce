@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCart } from '@/contexts/CartContext';
 
@@ -59,12 +59,16 @@ export default function CompareTable() {
   const { compareProducts, removeFromCompare } = useCompare();
   const { buyNow } = useCart();
   const [detailsMap, setDetailsMap] = React.useState<Record<string, ProductDetails>>({});
+  const searchParams = useSearchParams();
+  const products = searchParams.get('products');
+  const productsId = products?.split(',');
+  const [compareProductsData, setCompareProductsData] = useState<any[]>([...productsId || []]);
 
   React.useEffect(() => {
     const loadDetails = async () => {
-      if (compareProducts.length === 0) return;
+      if (compareProducts.length === 0 || compareProductsData?.length === 0) return;
       try {
-        const res = await fetch('/api/products/id/route.ts');
+        const res = await fetch('/api/products');
         if (!res.ok) return;
         const data: any[] = await res.json();
 
@@ -96,7 +100,7 @@ export default function CompareTable() {
     };
 
     void loadDetails();
-  }, [compareProducts]);
+  }, [compareProducts , compareProductsData]);
 
   if (compareProducts.length === 0) {
     return (

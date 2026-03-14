@@ -68,4 +68,3 @@ export function useCompare() {
   }
   return context;
 }
-

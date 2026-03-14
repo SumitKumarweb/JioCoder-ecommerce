@@ -10,9 +10,10 @@ export default function CompareNotification() {
   if (compareProducts.length < 2) {
     return null;
   }
-
-  const handleCompareNow = () => {
-    router.push('/compare/');
+  
+  let products = compareProducts.map((e)=> e.id).join(',');
+  const handleCompareNow = () => {  
+    router.push(`/compare?products=${products}`);
   };
 
   return (
