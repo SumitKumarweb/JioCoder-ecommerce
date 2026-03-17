@@ -30,7 +30,7 @@ const AnalyticsEventSchema: Schema<IAnalyticsEvent> = new Schema(
 AnalyticsEventSchema.index({ eventType: 1, createdAt: -1 });
 
 const AnalyticsEvent: Model<IAnalyticsEvent> =
-  mongoose.models.AnalyticsEvent ||
+  mongoose.models.Event ||
   mongoose.model<IAnalyticsEvent>("AnalyticsEvent", AnalyticsEventSchema);
 
 export default AnalyticsEvent;

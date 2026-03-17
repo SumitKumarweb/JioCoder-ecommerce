@@ -10,7 +10,10 @@ import Blog from '@/models/Blog';
 export const revalidate = 3600; // 1 hour in seconds
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com").replace(
+    /\/$/,
+    ""
+  );
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   try {
@@ -184,8 +187,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       // Add blog post pages
       blogPosts.forEach((post) => {
+        const slug = post.slug ? encodeURIComponent(String(post.slug)) : "";
+        if (!slug) return;
         sitemapEntries.push({
-          url: `${baseUrl}/blog/${post.slug}`,
+          url: `${baseUrl}/blog/${slug}`,
           lastModified: post.updatedAt 
             ? new Date(post.updatedAt) 
             : (post.publishedAt ? new Date(post.publishedAt) : new Date()),

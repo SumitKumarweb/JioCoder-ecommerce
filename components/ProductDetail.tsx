@@ -56,18 +56,28 @@ export default function ProductDetail({ productId, collectionSlug }: ProductDeta
   const redirectingRef = useRef(false);
   const [pincode, setPincode] = useState<string>('');
   const [deliveryMessage, setDeliveryMessage] = useState<string>('');
-  const serviceablePincodes: number[] = [
-  201001,
-  110001,
-  110002,
-  201002,
-  201003,
-  786174,
-  473331,
-  244001,
-  244002,
-  244003
-];
+  const [serviceablePincodes, setServiceablePincodes] = useState<number[]>([
+    201001, 110001, 110002, 201002, 201003, 786174, 473331, 244001, 244002,
+    244003,
+  ]);
+
+  useEffect(() => {
+    const loadPincodes = async () => {
+      try {
+        const res = await fetch("/api/pincodes", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const codes = (Array.isArray(data) ? data : [])
+          .map((p: any) => Number(String(p?.code ?? "").trim()))
+          .filter((n: number) => Number.isFinite(n) && n >= 100000 && n <= 999999);
+        if (codes.length > 0) setServiceablePincodes(codes);
+      } catch {
+        // Keep fallback list
+      }
+    };
+
+    loadPincodes();
+  }, []);
 const checkDelivery = () => {
   const pin = Number(pincode);
 
