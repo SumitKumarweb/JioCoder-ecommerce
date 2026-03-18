@@ -101,13 +101,7 @@ const BlogSchema: Schema<IBlog> = new Schema(
   }
 );
 
-// In development, delete the cached Mongoose model on every HMR reload so
-// schema changes (like adding relatedProducts) are picked up immediately
-// without needing a full server restart.
-if (process.env.NODE_ENV === "development" && mongoose.models.Blog) {
-  delete (mongoose.models as any).Blog;
-}
-
-const Blog: Model<IBlog> = mongoose.model<IBlog>("Blog", BlogSchema);
+const Blog: Model<IBlog> =
+  (mongoose.models.Blog as Model<IBlog>) || mongoose.model<IBlog>("Blog", BlogSchema);
 
 export default Blog;
