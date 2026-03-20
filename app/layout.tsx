@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { CompareProvider } from "@/contexts/CompareContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -25,7 +26,7 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: {
     default: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
     template: "%s | JioCoder",
@@ -36,13 +37,9 @@ export const metadata: Metadata = {
   creator: "JioCoder",
   publisher: "JioCoder",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"),
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
     siteName: "JioCoder",
     title: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
     description: "Shop premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping, authentic products, and expert support.",
@@ -77,6 +74,20 @@ export const metadata: Metadata = {
     },
   },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const canonicalPath = h.get("x-canonical-path") || "/";
+
+  return {
+    ...baseMetadata,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      ...(baseMetadata.openGraph || {}),
+      url: canonicalPath,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
