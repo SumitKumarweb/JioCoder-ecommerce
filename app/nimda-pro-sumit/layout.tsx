@@ -17,6 +17,40 @@ export default function AdminLayout({
   const [adminEmail, setAdminEmail] = useState('');
 
   useEffect(() => {
+    // Attach admin secret header to all /api/admin requests from the admin area.
+    // This keeps the existing admin pages working after enabling middleware protection.
+    const adminSecret = process.env.NEXT_PUBLIC_ADMIN_SECRET;
+    if (!adminSecret || typeof window === 'undefined' || typeof window.fetch !== 'function') return;
+
+    const originalFetch = window.fetch.bind(window);
+
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const isAdminApiCall = typeof url === 'string' && url.startsWith('/api/admin');
+
+      if (!isAdminApiCall) {
+        return originalFetch(input, init);
+      }
+
+      const existingHeaders = (init && init.headers ? init.headers : {}) as Record<string, string>;
+      // Merge headers while preserving existing ones (e.g. Content-Type)
+      const mergedHeaders = {
+        ...existingHeaders,
+        'x-admin-secret': adminSecret,
+      };
+
+      return originalFetch(input, {
+        ...init,
+        headers: mergedHeaders,
+      });
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  useEffect(() => {
     // Check authentication
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('adminToken');

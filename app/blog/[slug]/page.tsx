@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import connectDB from '@/lib/db';
 import Blog from '@/models/Blog';
 import Navbar from '@/components/Navbar';
@@ -211,6 +210,9 @@ export default async function BlogPostPage({
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
+                      sandbox="allow-scripts allow-same-origin allow-presentation"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
                       title={`${mappedBlogPost.title} video ${index + 1}`}
                     />
                   </div>
@@ -234,7 +236,6 @@ export default async function BlogPostPage({
               {mappedBlogPost.content ? (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
                   components={{
                     a: ({ href, children }) => (
                       <a

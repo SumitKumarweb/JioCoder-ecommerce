@@ -23,7 +23,6 @@ const PincodeSchema: Schema<IPincode> = new Schema(
   { timestamps: true }
 );
 
-PincodeSchema.index({ code: 1 }, { unique: true });
 PincodeSchema.index({ enabled: 1, updatedAt: -1 });
 
 const Pincode: Model<IPincode> =
