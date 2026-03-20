@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 
+function toSlug(input: string) {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export async function GET() {
   try {
     await connectDB();
@@ -27,6 +37,10 @@ export async function POST(req: NextRequest) {
     }
 
     const description = typeof body.description === "string" ? body.description : undefined;
+    const problemSolvingRequirement =
+      typeof body.problemSolvingRequirement === "string"
+        ? body.problemSolvingRequirement
+        : undefined;
     const companyEmail = typeof body.companyEmail === "string" ? body.companyEmail.trim() : undefined;
     const location = typeof body.location === "string" ? body.location.trim() : undefined;
     const minCTC = typeof body.minCTC === "number" ? body.minCTC : undefined;
@@ -37,12 +51,26 @@ export async function POST(req: NextRequest) {
         : undefined;
 
     const published = body.published === false ? false : true;
+    const slug = toSlug(title);
+    if (!slug) {
+      return NextResponse.json({ message: "Invalid title for slug generation" }, { status: 400 });
+    }
+
+    const existing = await CareerJob.findOne({ slug }).select("_id").lean();
+    if (existing) {
+      return NextResponse.json(
+        { message: "A job with this title already exists. Please use a unique title." },
+        { status: 409 }
+      );
+    }
 
     const created = await CareerJob.create({
       title,
+      slug,
       domain,
       companyName,
       description,
+      problemSolvingRequirement,
       companyEmail,
       location,
       minCTC,

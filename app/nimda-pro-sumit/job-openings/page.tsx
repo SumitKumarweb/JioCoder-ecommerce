@@ -6,11 +6,13 @@ type CareerJob = {
   _id?: string;
   id: string;
   title: string;
+  slug?: string;
   domain: string;
   companyName: string;
   companyEmail?: string;
   location?: string;
   description?: string;
+  problemSolvingRequirement?: string;
   minCTC?: number | null;
   maxCTC?: number | null;
   expirationDateTime?: string | null; // ISO
@@ -54,6 +56,7 @@ export default function JobOpeningsAdminPage() {
     companyEmail: '',
     location: '',
     description: '',
+    problemSolvingRequirement: '',
     minCTC: '',
     maxCTC: '',
     expirationDateTime: '',
@@ -76,11 +79,13 @@ export default function JobOpeningsAdminPage() {
       const mapped: CareerJob[] = (Array.isArray(data) ? data : []).map((j: any) => ({
         id: j._id?.toString?.() || j.id || '',
         title: j.title,
+        slug: j.slug,
         domain: j.domain,
         companyName: j.companyName,
         companyEmail: j.companyEmail || undefined,
         location: j.location || undefined,
         description: j.description || undefined,
+        problemSolvingRequirement: j.problemSolvingRequirement || undefined,
         minCTC: j.minCTC ?? null,
         maxCTC: j.maxCTC ?? null,
         expirationDateTime: j.expirationDateTime ? new Date(j.expirationDateTime).toISOString() : null,
@@ -123,6 +128,7 @@ export default function JobOpeningsAdminPage() {
           companyEmail: form.companyEmail.trim() || undefined,
           location: form.location.trim() || undefined,
           description: form.description.trim() || undefined,
+          problemSolvingRequirement: form.problemSolvingRequirement.trim() || undefined,
           minCTC: typeof minCTC === 'number' && !Number.isNaN(minCTC) ? minCTC : undefined,
           maxCTC: typeof maxCTC === 'number' && !Number.isNaN(maxCTC) ? maxCTC : undefined,
           expirationDateTime: exp && !Number.isNaN(exp.getTime()) ? exp : undefined,
@@ -142,6 +148,7 @@ export default function JobOpeningsAdminPage() {
         companyEmail: '',
         location: '',
         description: '',
+        problemSolvingRequirement: '',
         minCTC: '',
         maxCTC: '',
         expirationDateTime: '',
@@ -313,6 +320,17 @@ export default function JobOpeningsAdminPage() {
           />
         </label>
 
+        <label className="space-y-1 text-sm block">
+          <span className="block font-semibold text-slate-700">Problem-Solving Requirement (shown on job detail page)</span>
+          <textarea
+            value={form.problemSolvingRequirement}
+            onChange={(e) => setForm((p) => ({ ...p, problemSolvingRequirement: e.target.value }))}
+            rows={4}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Add challenge/question candidates must solve before applying..."
+          />
+        </label>
+
         <div className="flex items-center gap-3">
           <button
             onClick={createJob}
@@ -347,6 +365,7 @@ export default function JobOpeningsAdminPage() {
                     )}
                   </div>
                   <div className="mt-2 font-extrabold text-slate-900 truncate">{j.title}</div>
+                  {j.slug && <div className="text-xs text-slate-500 mt-1">URL: /careers/{j.slug}</div>}
                   <div className="text-sm text-slate-600">{j.companyName}</div>
                   <div className="text-xs text-slate-500 mt-1">
                     {j.location || '—'} • Exp: {j.expirationDateTime ? new Date(j.expirationDateTime).toLocaleDateString() : 'None'}

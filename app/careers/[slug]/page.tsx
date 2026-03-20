@@ -3,22 +3,49 @@ import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobApplyForm from "../CareerJobApplyForm";
 
+function toSlug(input: string) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default async function CareerJobDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   await connectDB();
-  const { id } = await params;
-  const job = await CareerJob.findById(id).lean();
+  const { slug } = await params;
+
+  let job = await CareerJob.findOne({ slug, published: true }).lean();
+
+  // Backward-compatible fallback for older rows without slug
+  if (!job) {
+    const candidates = await CareerJob.find({ published: true }).lean();
+    const byTitle = (candidates || []).find((j: any) => toSlug(j.title) === slug);
+    if (byTitle) {
+      job = byTitle;
+      if (!byTitle.slug) {
+        await CareerJob.findByIdAndUpdate(byTitle._id, { $set: { slug } });
+      }
+    }
+  }
 
   if (!job || !job.published) {
     notFound();
   }
 
+  const requirement =
+    job.problemSolvingRequirement?.trim() ||
+    "Share one real problem you solved in your domain, your approach, trade-offs, and result.";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-10">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8">
           <p className="inline-flex px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
             {job.domain}
@@ -58,15 +85,13 @@ export default async function CareerJobDetailPage({
 
           <div className="mt-6 rounded-xl bg-slate-900 text-white p-4">
             <h3 className="font-bold mb-1">Problem-Solving Requirement</h3>
-            <p className="text-sm text-slate-200">
-              Share one real problem you solved in your domain, your approach, trade-offs, and result.
-            </p>
+            <p className="text-sm text-slate-200">{requirement}</p>
           </div>
         </div>
 
         <div className="mt-6 bg-white border border-slate-200 rounded-2xl p-6 md:p-8">
           <h3 className="text-xl font-black text-slate-900 mb-4">Apply Now</h3>
-          <CareerJobApplyForm jobId={id} defaultDomain={job.domain} />
+          <CareerJobApplyForm jobId={String(job._id)} defaultDomain={job.domain} />
         </div>
       </div>
     </div>

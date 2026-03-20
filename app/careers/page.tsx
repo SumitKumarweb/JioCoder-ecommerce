@@ -2,6 +2,16 @@ import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobsClient from "./CareerJobsClient";
 
+function toSlug(input: string) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default async function CareersPage() {
   await connectDB();
 
@@ -11,11 +21,12 @@ export default async function CareersPage() {
     $or: [{ expirationDateTime: { $exists: false } }, { expirationDateTime: { $gt: now } }],
   })
     .sort({ createdAt: -1 })
-    .select("title domain companyName description location minCTC maxCTC expirationDateTime published")
+    .select("title slug domain companyName description location minCTC maxCTC expirationDateTime published")
     .lean();
 
   const mapped = (jobs || []).map((j: any) => ({
     id: j._id?.toString?.() || String(j._id),
+    slug: j.slug || toSlug(j.title),
     title: j.title,
     domain: j.domain,
     companyName: j.companyName,

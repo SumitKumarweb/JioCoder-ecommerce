@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 type Job = {
   id: string;
+  slug: string;
   title: string;
   domain: string;
   companyName: string;
@@ -39,7 +40,7 @@ export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
         <div className="rounded-3xl bg-slate-900 text-white p-8 md:p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-primary/30 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -100,34 +101,47 @@ export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
               filtered.map((job) => (
                 <Link
                   key={job.id}
-                  href={`/careers/${job.id}`}
-                  className={`rounded-2xl border p-5 transition-all cursor-pointer ${
-                    'border-slate-200 bg-white hover:shadow-md hover:border-primary/40'
-                  }`}
+                  href={`/careers/${job.slug}`}
+                  className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="inline-flex items-center gap-2 mb-2">
-                        <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                           {job.domain}
                         </span>
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                          {job.location || 'Remote / Flexible'}
+                        </span>
                       </div>
-                      <h2 className="text-xl font-extrabold text-slate-900">{job.title}</h2>
-                      <p className="text-sm text-slate-600 mt-1">{job.companyName}</p>
+
+                      <h2 className="text-xl font-extrabold text-slate-900 transition-colors group-hover:text-primary">
+                        {job.title}
+                      </h2>
+                      <p className="mt-1 text-sm font-medium text-slate-600">{job.companyName}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-sm font-bold text-slate-900">{formatCTC(job.minCTC, job.maxCTC)}</div>
-                      <div className="text-xs text-slate-500 mt-1">{job.location || 'Remote / Flexible'}</div>
+
+                    <div className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-right">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">CTC</p>
+                      <p className="text-sm font-extrabold text-slate-900">{formatCTC(job.minCTC, job.maxCTC)}</p>
                     </div>
                   </div>
-                  <p className="text-slate-600 text-sm mt-3 line-clamp-2">
+
+                  <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">
                     {job.description || 'No description provided yet.'}
                   </p>
-                  <p className="text-xs text-slate-500 mt-3">
-                    {job.expirationDateTime
-                      ? `Apply before ${new Date(job.expirationDateTime).toLocaleDateString()}`
-                      : 'No closing date specified'}
-                  </p>
+
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <p className="text-xs font-medium text-slate-500">
+                      {job.expirationDateTime
+                        ? `Apply before ${new Date(job.expirationDateTime).toLocaleDateString()}`
+                        : 'No closing date specified'}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                      View details
+                      <span aria-hidden>→</span>
+                    </span>
+                  </div>
                 </Link>
               ))
             )}

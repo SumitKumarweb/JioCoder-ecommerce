@@ -16,7 +16,7 @@ import Link from 'next/link';
 
 const ITEMS_PER_PAGE = 12;
 
-type SearchResultType = 'all' | 'products' | 'blogs' | 'collections';
+type SearchResultType = 'all' | 'products' | 'blogs' | 'collections' | 'jobs';
 
 interface BlogResult {
   id: string;
@@ -37,6 +37,19 @@ interface CollectionResult {
   description?: string;
   heroImage?: string;
   isFeatured?: boolean;
+  score?: number;
+}
+
+interface JobResult {
+  id: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  domain?: string;
+  companyName?: string;
+  location?: string;
+  minCTC?: number;
+  maxCTC?: number;
   score?: number;
 }
 
@@ -73,6 +86,7 @@ function SearchPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [blogs, setBlogs] = useState<BlogResult[]>([]);
   const [collections, setCollections] = useState<CollectionResult[]>([]);
+  const [jobs, setJobs] = useState<JobResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchQuery);
   const [filters, setFilters] = useState<FilterState>({
@@ -133,14 +147,15 @@ function SearchPageContent() {
           }
         }
 
-        // Search blogs and collections (using general search API)
-        if (activeTab === 'all' || activeTab === 'blogs' || activeTab === 'collections') {
+        // Search blogs, collections and jobs (using general search API)
+        if (activeTab === 'all' || activeTab === 'blogs' || activeTab === 'collections' || activeTab === 'jobs') {
           try {
             const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=20`);
             if (res.ok) {
               const data: { results: any[] } = await res.json();
               const blogResults: BlogResult[] = [];
               const collectionResults: CollectionResult[] = [];
+              const jobResults: JobResult[] = [];
 
               (data.results || []).forEach((result) => {
                 if (result.type === 'blog') {
@@ -165,14 +180,37 @@ function SearchPageContent() {
                     isFeatured: result.isFeatured,
                     score: result.score,
                   });
+                } else if (result.type === 'career') {
+                  const safeSlug = (result.slug || '')
+                    .toString()
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
+                  if (!safeSlug) return;
+                  jobResults.push({
+                    id: result.id,
+                    title: result.title,
+                    slug: safeSlug,
+                    description: result.description,
+                    domain: result.domain,
+                    companyName: result.companyName,
+                    location: result.location,
+                    minCTC: result.minCTC,
+                    maxCTC: result.maxCTC,
+                    score: result.score,
+                  });
                 }
               });
 
               setBlogs(blogResults);
               setCollections(collectionResults);
+              setJobs(jobResults);
             }
           } catch (error) {
-            console.error('Error searching blogs/collections:', error);
+            console.error('Error searching blogs/collections/jobs:', error);
           }
         }
       } catch (error) {
@@ -270,10 +308,11 @@ function SearchPageContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const totalResults = 
+  const totalResults =
     (activeTab === 'all' || activeTab === 'products' ? products.length : 0) +
     (activeTab === 'all' || activeTab === 'blogs' ? blogs.length : 0) +
-    (activeTab === 'all' || activeTab === 'collections' ? collections.length : 0);
+    (activeTab === 'all' || activeTab === 'collections' ? collections.length : 0) +
+    (activeTab === 'all' || activeTab === 'jobs' ? jobs.length : 0);
 
   // Show empty state if no query
   if (!searchQuery.trim()) {
@@ -293,7 +332,7 @@ function SearchPageContent() {
                 search
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-4">Search Products, Blogs & Collections</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-4">Search Products, Blogs, Collections & Jobs</h1>
             <p className="text-slate-600 mb-8">
               Enter a search term to find products, blog posts, and collections
             </p>
@@ -379,12 +418,13 @@ function SearchPageContent() {
         {/* Tabs */}
         <div className="border-b border-slate-200 mb-6">
           <div className="flex gap-4">
-            {(['all', 'products', 'blogs', 'collections'] as SearchResultType[]).map((tab) => {
+            {(['all', 'products', 'blogs', 'collections', 'jobs'] as SearchResultType[]).map((tab) => {
               const count =
                 tab === 'all' ? totalResults :
                 tab === 'products' ? products.length :
                 tab === 'blogs' ? blogs.length :
-                collections.length;
+                tab === 'collections' ? collections.length :
+                jobs.length;
 
               return (
                 <button
@@ -523,6 +563,46 @@ function SearchPageContent() {
                         {collection.description && (
                           <p className="text-slate-600 text-sm mt-2 line-clamp-2">
                             {collection.description}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Jobs Tab */}
+            {(activeTab === 'all' || activeTab === 'jobs') && jobs.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-bold text-slate-900 mb-4">Jobs</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {jobs.map((job) => (
+                    <Link
+                      key={job.id}
+                      href={`/careers/${encodeURIComponent(job.slug || '')}`}
+                      className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                      <div className="p-4">
+                        {job.domain && (
+                          <span className="text-xs font-semibold text-primary uppercase">
+                            {job.domain}
+                          </span>
+                        )}
+                        <h3 className="font-bold text-lg text-slate-900 mt-2 group-hover:text-primary transition-colors line-clamp-2">
+                          {job.title}
+                        </h3>
+                        {job.companyName && (
+                          <p className="text-slate-600 text-sm mt-1">{job.companyName}</p>
+                        )}
+                        {(job.description || job.location) && (
+                          <p className="text-slate-600 text-sm mt-2 line-clamp-2">
+                            {job.description || job.location}
+                          </p>
+                        )}
+                        {(job.minCTC != null || job.maxCTC != null) && (
+                          <p className="text-xs font-semibold text-slate-700 mt-2">
+                            CTC: {job.minCTC ?? '-'}L - {job.maxCTC ?? '-'}L
                           </p>
                         )}
                       </div>
