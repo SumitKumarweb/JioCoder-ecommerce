@@ -3,11 +3,36 @@
 export default function Footer() {
   const handleNewsletterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle newsletter subscription
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email');
-    console.log('Newsletter subscription:', email);
-    // Add your newsletter subscription logic here
+    const emailRaw = formData.get('email');
+    const email =
+      typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
+
+    if (!email) return;
+
+    // Save to admin "Sale Modal Leads" collection
+    fetch('/api/sale-modal/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        source: 'sale-modal',
+        tags: ['sale-modal'],
+        pagePath:
+          typeof window !== 'undefined'
+            ? `${window.location.pathname}${window.location.search}`
+            : undefined,
+        referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      }),
+    })
+      .then(async (res) => {
+        // keep it simple: we don't block UI on admin storage
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      })
+      .catch((err) => {
+        console.error('Footer newsletter save failed:', err);
+      });
   };
 
   return (

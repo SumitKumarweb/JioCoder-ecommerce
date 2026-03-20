@@ -27,9 +27,18 @@ type BlogPost = {
   isFeatured: boolean;
 };
 
-export default function BlogListingClient({ blogs }: { blogs: BlogPost[] }) {
+export default function BlogListingClient({
+  initialBlogs,
+  totalCount,
+}: {
+  initialBlogs: BlogPost[];
+  totalCount: number;
+}) {
   const [selectedCategory, setSelectedCategory] = useState('All Stories');
   const [email, setEmail] = useState('');
+  const [blogs, setBlogs] = useState<BlogPost[]>(initialBlogs);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -54,9 +63,59 @@ export default function BlogListingClient({ blogs }: { blogs: BlogPost[] }) {
       ? blogs
       : blogs.filter((post) => post.category === selectedCategory);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const hasMore = blogs.length < totalCount;
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmail('');
+    const cleaned = email.trim().toLowerCase();
+    if (!cleaned) return;
+
+    try {
+      await fetch('/api/sale-modal/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleaned,
+          source: 'sale-modal',
+          tags: ['sale-modal'],
+          pagePath:
+            typeof window !== 'undefined'
+              ? `${window.location.pathname}${window.location.search}`
+              : undefined,
+          referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        }),
+      });
+    } catch (err) {
+      console.error('Blog newsletter save failed:', err);
+    } finally {
+      setEmail('');
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/blogs?page=${nextPage}&limit=12`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const items = Array.isArray(data?.items) ? (data.items as BlogPost[]) : [];
+      setBlogs((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const merged = [...prev];
+        items.forEach((i) => {
+          if (!seen.has(i.id)) merged.push(i);
+        });
+        return merged;
+      });
+      setPage(nextPage);
+    } catch (err) {
+      console.error('Failed to load more blogs:', err);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -294,10 +353,19 @@ export default function BlogListingClient({ blogs }: { blogs: BlogPost[] }) {
 
         {/* Count */}
         {filteredPosts.length > 0 && (
-          <div className="flex justify-center mt-10 pb-8">
+          <div className="flex flex-col items-center gap-3 mt-10 pb-8">
             <p className="text-sm text-slate-400">
-              Showing <strong>{filteredPosts.length}</strong> of <strong>{blogs.length}</strong> articles
+              Showing <strong>{filteredPosts.length}</strong> of <strong>{totalCount}</strong> articles
             </p>
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {loadingMore ? 'Loading...' : 'Load more'}
+              </button>
+            )}
           </div>
         )}
 

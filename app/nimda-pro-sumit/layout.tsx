@@ -104,7 +104,7 @@ export default function AdminLayout({
     { href: '/nimda-pro-sumit/products', label: 'Products', icon: 'inventory_2' },
     { href: '/nimda-pro-sumit/collections', label: 'Collections', icon: 'collections' },
     { href: '/nimda-pro-sumit/pincode', label: 'Pincodes', icon: 'pin_drop' },
-    { href: '/nimda-pro-sumit/job-openings', label: 'Job Openings', icon: 'work' },
+    { href: '/nimda-pro-sumit/job-openings', label: 'Careers', icon: 'work' },
     { href: '/nimda-pro-sumit/homepage-hero', label: 'Homepage Hero', icon: 'slideshow' },
     { href: '/nimda-pro-sumit/sale-modal', label: 'Sale Modal', icon: 'campaign' },
     { href: '/nimda-pro-sumit/sale-modal-leads', label: 'Sale Leads', icon: 'mail' },

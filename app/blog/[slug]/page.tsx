@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { BreadcrumbSchema } from '@/components/schemas';
+import NewsletterSignup from '@/components/NewsletterSignup';
 
 type RelatedProduct = {
   id: string;
@@ -336,26 +337,7 @@ export default async function BlogPostPage({
                 </div>
               )}
 
-              <div className="bg-primary/10 rounded-xl p-6 border border-primary/20">
-                <h4 className="font-bold text-lg mb-2">Build Your Dream Setup</h4>
-                <p className="text-sm text-slate-600 mb-4">
-                  Get the latest hardware guides and exclusive discounts delivered to your inbox.
-                </p>
-                <form className="space-y-3">
-                  <input
-                    className="w-full bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-primary/50 outline-none"
-                    placeholder="email@example.com"
-                    type="email"
-                    aria-label="email"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity"
-                  >
-                    Subscribe
-                  </button>
-                </form>
-              </div>
+              <NewsletterSignup source="sale-modal" tags={['sale-modal']} />
             </div>
           </aside>
         </div>

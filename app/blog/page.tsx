@@ -5,10 +5,15 @@ import BlogListingClient from './BlogListingClient';
 export default async function BlogPage() {
   await connectDB();
 
-  const blogs = await Blog.find({ published: true })
+  const query = { published: true };
+  const [blogs, totalCount] = await Promise.all([
+    Blog.find(query)
     .sort({ publishedAt: -1, updatedAt: -1 })
     .select('slug title description featuredImage category readTime date isFeatured _id published')
-    .lean();
+    .limit(12)
+    .lean(),
+    Blog.countDocuments(query),
+  ]);
 
   const mapped = (blogs as any[]).map((b) => ({
     id: b._id.toString(),
@@ -22,5 +27,5 @@ export default async function BlogPage() {
     isFeatured: Boolean(b.isFeatured),
   }));
 
-  return <BlogListingClient blogs={mapped} />;
+  return <BlogListingClient initialBlogs={mapped} totalCount={totalCount} />;
 }
