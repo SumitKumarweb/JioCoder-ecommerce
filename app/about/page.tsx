@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import type { Metadata } from 'next';
 import { MetadataManager } from '@/lib/metadata-manager';
-import { BreadcrumbSchema } from '@/components/schemas';
+import { BreadcrumbSchema, WebPageSchema } from '@/components/schemas';
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataManager = new MetadataManager();
@@ -32,6 +32,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function AboutPage() {
   return (
     <>
+      <WebPageSchema
+        path="/about"
+        type="AboutPage"
+        name="About Us - JioCoder"
+        description="Learn about JioCoder — India's destination for premium mechanical keyboards, gaming peripherals, and authentic gear."
+      />
       <BreadcrumbSchema
         items={[
           { label: 'Home', href: '/' },

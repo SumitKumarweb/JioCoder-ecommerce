@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobApplyForm from "../CareerJobApplyForm";
+import { WebPageSchema } from "@/components/schemas";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com";
@@ -168,8 +169,18 @@ export default async function CareerJobDetailPage({
     },
   };
 
+  const jobPath = `/careers/${job.slug || toSlug(job.title)}`;
+
   return (
     <>
+      <WebPageSchema
+        path={jobPath}
+        name={`${job.title} — Careers`}
+        description={
+          job.description?.slice(0, 300) ||
+          `${job.title} opening at ${job.companyName}. Apply on JioCoder Careers.`
+        }
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}

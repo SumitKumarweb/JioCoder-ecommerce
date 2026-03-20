@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WebPageSchema } from '@/components/schemas';
 
 // Metadata to exclude this page from SEO/Google indexing
 export const metadata: Metadata = {
@@ -18,6 +19,15 @@ export default function SaleLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <WebPageSchema
+        path="/sale"
+        name="Flash Sale - JioCoder"
+        description="Limited-time offers on mechanical keyboards and gaming peripherals."
+      />
+      {children}
+    </>
+  );
 }
 

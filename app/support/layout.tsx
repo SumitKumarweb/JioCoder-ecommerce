@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WebPageSchema } from '@/components/schemas';
 
 export const metadata: Metadata = {
   title: 'Help & Support',
@@ -39,5 +40,15 @@ export default function SupportLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <WebPageSchema
+        path="/support"
+        type="ContactPage"
+        name="Help & Support - JioCoder"
+        description="Get help with your JioCoder orders, tracking, returns, warranty, and technical support."
+      />
+      {children}
+    </>
+  );
 }

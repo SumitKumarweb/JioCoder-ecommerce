@@ -1,6 +1,7 @@
 import connectDB from '@/lib/db';
 import Blog from '@/models/Blog';
 import BlogListingClient from './BlogListingClient';
+import { WebPageSchema } from '@/components/schemas';
 
 export default async function BlogPage() {
   await connectDB();
@@ -27,5 +28,14 @@ export default async function BlogPage() {
     isFeatured: Boolean(b.isFeatured),
   }));
 
-  return <BlogListingClient initialBlogs={mapped} totalCount={totalCount} />;
+  return (
+    <>
+      <WebPageSchema
+        path="/blog"
+        name="Blog - JioCoder"
+        description="Tech guides, product reviews, setup tours, and industry news from JioCoder."
+      />
+      <BlogListingClient initialBlogs={mapped} totalCount={totalCount} />
+    </>
+  );
 }

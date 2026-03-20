@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WebPageSchema } from '@/components/schemas';
 
 // Search result pages should not be indexed — they are session-specific,
 // produce near-infinite URL variations (?q=...), and waste crawl budget.
@@ -17,5 +18,14 @@ export default function SearchLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <WebPageSchema
+        path="/search"
+        name="Search - JioCoder"
+        description="Search products, blog posts, and collections on JioCoder."
+      />
+      {children}
+    </>
+  );
 }

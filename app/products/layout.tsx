@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WebPageSchema } from '@/components/schemas';
 
 export const metadata: Metadata = {
   title: 'Mechanical Keyboards & Gaming Peripherals',
@@ -40,5 +41,14 @@ export default function ProductsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <WebPageSchema
+        path="/products"
+        name="Mechanical Keyboards & Gaming Peripherals - JioCoder"
+        description="Browse premium mechanical keyboards, gaming mice, keycaps, custom cables, and gaming peripherals with fast India-wide shipping."
+      />
+      {children}
+    </>
+  );
 }

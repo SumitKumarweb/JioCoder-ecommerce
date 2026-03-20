@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WebPageSchema } from '@/components/schemas';
 
 export const metadata: Metadata = {
   title: 'Curated Collections',

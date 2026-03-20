@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import connectDB from '@/lib/db';
 import Collection from '@/models/Collection';
+import { WebPageSchema } from '@/components/schemas';
 
 export async function generateMetadata({
   params,
@@ -70,10 +71,39 @@ export async function generateMetadata({
   }
 }
 
-export default function CollectionDetailLayout({
+export default async function CollectionDetailLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ slug: string }>;
 }) {
-  return children;
+  const { slug } = await params;
+  let name = 'Collection';
+  let description =
+    'Curated mechanical keyboards and gaming peripherals at JioCoder — fast India-wide shipping.';
+
+  try {
+    await connectDB();
+    const col = (await Collection.findOne({ slug }).select('name description').lean()) as {
+      name?: string;
+      description?: string;
+    } | null;
+    if (col?.name) name = col.name;
+    if (col?.description) description = col.description;
+  } catch {
+    // keep fallbacks
+  }
+
+  return (
+    <>
+      <WebPageSchema
+        path={`/collections/${slug}`}
+        type="CollectionPage"
+        name={name}
+        description={description}
+      />
+      {children}
+    </>
+  );
 }

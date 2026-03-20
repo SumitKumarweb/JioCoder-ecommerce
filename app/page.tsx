@@ -13,7 +13,8 @@ import Footer from "@/components/Footer";
 import CompareNotification from "@/components/CompareNotification";
 import SaleModal from "@/components/SaleModal";
 import { MetadataManager } from "@/lib/metadata-manager";
-import { BreadcrumbSchema } from "@/components/schemas";
+import { BreadcrumbSchema, WebPageSchema } from "@/components/schemas";
+import { getSiteUrl } from "@/lib/seo/getSiteUrl";
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataManager = new MetadataManager();
@@ -39,13 +40,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function Home() {
+  const siteUrl = getSiteUrl();
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Store",
     name: "JioCoder",
     description: "Premium mechanical keyboards, gaming mice, keycaps, and custom cables",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com",
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/logo.png`,
+    url: siteUrl,
+    logo: `${siteUrl}/logo.png`,
     address: {
       "@type": "PostalAddress",
       addressCountry: "IN",
@@ -58,6 +60,11 @@ export default function Home() {
 
   return (
     <>
+      <WebPageSchema
+        path="/"
+        name="JioCoder - Premium Mechanical Keyboards & Gaming Peripherals"
+        description="Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables with fast India-wide shipping."
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

@@ -4,6 +4,7 @@ import Collection from '@/models/Collection';
 import Product from '@/models/Product';
 import Blog from '@/models/Blog';
 import CareerJob from '@/models/CareerJob';
+import CoderCommunityGroup from '@/models/CoderCommunityGroup';
 
 // Revalidate sitemap every hour (3600 seconds)
 // This ensures new products, collections, and blogs are included within 1 hour
@@ -54,6 +55,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
       {
         url: `${baseUrl}/community`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.65,
+      },
+      {
+        url: `${baseUrl}/compare`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.55,
+      },
+      {
+        url: `${baseUrl}/cart`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/sale`,
         lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 0.65,
@@ -249,6 +268,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     } catch (careerError) {
       console.error('[Sitemap] Error fetching career jobs:', careerError);
       // Continue even if careers fail
+    }
+
+    // Public coder community groups (join + chat pages)
+    try {
+      const communityGroups = await CoderCommunityGroup.find({})
+        .select('slug updatedAt')
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      communityGroups.forEach((g) => {
+        const slug = g.slug ? String(g.slug).trim() : '';
+        if (!slug) return;
+        sitemapEntries.push({
+          url: `${baseUrl}/community/groups/${encodeURIComponent(slug)}`,
+          lastModified: g.updatedAt ? new Date(g.updatedAt) : new Date(),
+          changeFrequency: 'daily',
+          priority: 0.55,
+        });
+      });
+
+      console.log(`[Sitemap] Added ${communityGroups.length} community group pages to sitemap`);
+    } catch (communityError) {
+      console.error('[Sitemap] Error fetching community groups:', communityError);
     }
 
   } catch (error) {

@@ -3,7 +3,7 @@ import { use } from 'react';
 import Navbar from '@/components/Navbar';
 import ProductDetail from '@/components/ProductDetail';
 import Footer from '@/components/Footer';
-import { ProductSchema } from '@/components/schemas';
+import { ProductSchema, WebPageSchema } from '@/components/schemas';
 import connectDB from '@/lib/db';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
@@ -87,8 +87,21 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const product = await getProduct(id);
   
+  const canonicalPath = `/product/${product ? product.slug || id : id}`;
+
   return (
     <>
+      {product && (
+        <WebPageSchema
+          path={canonicalPath}
+          type="ItemPage"
+          name={`${product.name} - JioCoder`}
+          description={
+            product.description ||
+            `Buy ${product.name} — premium ${product.category || 'gaming peripheral'} from JioCoder.`
+          }
+        />
+      )}
       {product && (
         <ProductSchema
           product={{

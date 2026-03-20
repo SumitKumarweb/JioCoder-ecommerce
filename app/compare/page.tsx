@@ -5,6 +5,7 @@ import CompareTable from '@/components/CompareTable';
 import CompareFeatures from '@/components/CompareFeatures';
 import Footer from '@/components/Footer';
 import { BreadcrumbItem } from '@/components/Breadcrumb';
+import { WebPageSchema, BreadcrumbSchema } from '@/components/schemas';
 
 export const metadata: Metadata = {
   title: "Compare Products",
@@ -27,42 +28,14 @@ export default function ComparePage() {
     { label: 'Comparison' },
   ];
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Compare Products - JioCoder",
-    description: "Compare mechanical keyboards, gaming mice, and peripherals side-by-side",
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/compare`,
-    breadcrumb: {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Home",
-          item: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com",
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Products",
-          item: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"}/products`,
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: "Comparison",
-        },
-      ],
-    },
-  };
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      <WebPageSchema
+        path="/compare"
+        name="Compare Products - JioCoder"
+        description="Compare mechanical keyboards, gaming mice, and peripherals side-by-side with detailed specifications."
       />
+      <BreadcrumbSchema items={breadcrumbItems} />
       <Navbar />
       <main className="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-20 py-6">
         <CompareHeader

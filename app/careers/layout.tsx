@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { WebPageSchema } from "@/components/schemas";
 
 export const metadata: Metadata = {
   title: "Careers",

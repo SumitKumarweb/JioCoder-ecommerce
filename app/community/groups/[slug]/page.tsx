@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import CommunityGroupClient from './CommunityGroupClient';
+import { WebPageSchema } from '@/components/schemas';
 
 export async function generateMetadata({
   params,
@@ -20,5 +21,16 @@ export default async function CommunityGroupPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <CommunityGroupClient slug={decodeURIComponent(slug)} />;
+  const decoded = decodeURIComponent(slug);
+  return (
+    <>
+      <WebPageSchema
+        path={`/community/groups/${slug}`}
+        type="ProfilePage"
+        name={`${decoded} · Group`}
+        description="JioCoder community group chat and members."
+      />
+      <CommunityGroupClient slug={decoded} />
+    </>
+  );
 }

@@ -1,7 +1,7 @@
+import { getSiteUrl } from '@/lib/seo/getSiteUrl';
+
 export default function OrganizationSchema() {
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com'
-  ).replace(/\/$/, '');
+  const baseUrl = getSiteUrl();
 
   const schema = {
     '@context': 'https://schema.org',
@@ -71,7 +71,7 @@ export default function OrganizationSchema() {
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: `${baseUrl}/products?q={search_term_string}`,
+            urlTemplate: `${baseUrl}/search?q={search_term_string}`,
           },
           'query-input': 'required name=search_term_string',
         },

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobsClient from "./CareerJobsClient";
+import { WebPageSchema } from "@/components/schemas";
 
 export const metadata: Metadata = {
   title: "Careers - JioCoder",
@@ -46,6 +47,15 @@ export default async function CareersPage() {
     published: Boolean(j.published),
   }));
 
-  return <CareerJobsClient jobs={mapped} />;
+  return (
+    <>
+      <WebPageSchema
+        path="/careers"
+        name="Careers at JioCoder"
+        description="Explore open roles and join the team behind JioCoder."
+      />
+      <CareerJobsClient jobs={mapped} />
+    </>
+  );
 }
 
