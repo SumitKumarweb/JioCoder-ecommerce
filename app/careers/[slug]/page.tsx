@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
@@ -11,6 +12,22 @@ function toSlug(input: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  return {
+    alternates: {
+      canonical: `/careers/${slug}`,
+    },
+    openGraph: {
+      url: `/careers/${slug}`,
+    },
+  };
 }
 
 export default async function CareerJobDetailPage({

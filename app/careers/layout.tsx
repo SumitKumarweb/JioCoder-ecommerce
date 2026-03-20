@@ -4,9 +4,6 @@ import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Careers - JioCoder",
-  alternates: {
-    canonical: "/careers",
-  },
   robots: {
     index: true,
     follow: true,

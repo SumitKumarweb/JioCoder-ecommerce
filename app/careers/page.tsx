@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobsClient from "./CareerJobsClient";
+
+export const metadata: Metadata = {
+  title: "Careers - JioCoder",
+  alternates: {
+    canonical: "/careers",
+  },
+};
 
 function toSlug(input: string) {
   return String(input || "")
