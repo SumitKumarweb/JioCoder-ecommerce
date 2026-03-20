@@ -12,7 +12,7 @@ export async function GET(
 
     const applications = await CareerJobApplication.find({ jobId })
       .sort({ createdAt: -1 })
-      .select("fullName email phone linkedin status domainSnapshot createdAt")
+      .select("fullName email phone linkedin coverLetter resumeUrl resumeFileName status domainSnapshot createdAt")
       .lean();
 
     return NextResponse.json(applications);

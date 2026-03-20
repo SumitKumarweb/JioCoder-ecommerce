@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 
 type Job = {
   id: string;
@@ -25,7 +26,6 @@ function formatCTC(minCTC: number | null, maxCTC: number | null) {
 
 export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
   const [domain, setDomain] = useState<string>('All');
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(jobs[0]?.id || null);
 
   const domains = useMemo(() => {
     const set = new Set(jobs.map((j) => j.domain).filter(Boolean));
@@ -36,11 +36,6 @@ export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
     if (domain === 'All') return jobs;
     return jobs.filter((j) => j.domain === domain);
   }, [jobs, domain]);
-
-  const selectedJob = useMemo(() => {
-    if (!selectedJobId) return null;
-    return jobs.find((j) => j.id === selectedJobId) || null;
-  }, [jobs, selectedJobId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -103,14 +98,12 @@ export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
               </div>
             ) : (
               filtered.map((job) => (
-                <article
+                <Link
                   key={job.id}
+                  href={`/careers/${job.id}`}
                   className={`rounded-2xl border p-5 transition-all cursor-pointer ${
-                    selectedJobId === job.id
-                      ? 'border-primary shadow-lg shadow-primary/10 bg-primary/5'
-                      : 'border-slate-200 bg-white hover:shadow-md'
+                    'border-slate-200 bg-white hover:shadow-md hover:border-primary/40'
                   }`}
-                  onClick={() => setSelectedJobId(job.id)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -135,145 +128,27 @@ export default function CareerJobsClient({ jobs }: { jobs: Job[] }) {
                       ? `Apply before ${new Date(job.expirationDateTime).toLocaleDateString()}`
                       : 'No closing date specified'}
                   </p>
-                </article>
+                </Link>
               ))
             )}
           </div>
-
           <div className="xl:col-span-2">
             <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              {!selectedJob ? (
-                <p className="text-sm text-slate-600">Select a job to apply.</p>
-              ) : (
-                <>
-                  <div className="mb-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">{selectedJob.domain}</p>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedJob.title}</h3>
-                    <p className="text-sm text-slate-600 mt-1">{selectedJob.companyName}</p>
-                  </div>
-
-                  <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
-                    <p className="font-bold mb-1">Problem-Solving Challenge</p>
-                    <p>
-                      Explain one real problem you solved in your domain. Share approach, trade-offs, and outcome in 5-10 lines.
-                    </p>
-                  </div>
-
-                  <ApplicationForm jobId={selectedJob.id} defaultDomain={selectedJob.domain} />
-                </>
-              )}
+              <h3 className="text-xl font-black text-slate-900 mb-2">How to apply</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Click any job card to open full details page, solve the challenge, and submit your resume.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-700 list-disc pl-5">
+                <li>Read full role details</li>
+                <li>Write your problem-solving answer</li>
+                <li>Upload resume (PDF/DOC/DOCX)</li>
+                <li>Submit and track with admin</li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
     </div>
-  );
-}
-
-function ApplicationForm({ jobId, defaultDomain }: { jobId: string; defaultDomain: string }) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [problemSolution, setProblemSolution] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-
-    if (!fullName.trim() || !email.trim() || !problemSolution.trim()) {
-      setMessage('Name, email and problem-solving answer are required.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch('/api/career-jobs/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobId,
-          fullName,
-          email,
-          phone: phone.trim() || undefined,
-          linkedin: linkedin.trim() || undefined,
-          // Reuse existing backend field to avoid schema changes.
-          coverLetter: problemSolution.trim(),
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message || `HTTP ${res.status}`);
-      }
-
-      setMessage('Application submitted successfully.');
-      setFullName('');
-      setEmail('');
-      setPhone('');
-      setLinkedin('');
-      setProblemSolution('');
-    } catch (err: any) {
-      setMessage(err?.message || 'Failed to submit. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={submit} className="space-y-3">
-      <div className="text-xs text-slate-500">
-        Domain match: <span className="font-bold">{defaultDomain}</span>
-      </div>
-
-      <input
-        required
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-primary text-sm"
-        placeholder="Full name"
-      />
-      <input
-        required
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-primary text-sm"
-        placeholder="Email"
-      />
-      <input
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-primary text-sm"
-        placeholder="Phone (optional)"
-      />
-      <input
-        value={linkedin}
-        onChange={(e) => setLinkedin(e.target.value)}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-primary text-sm"
-        placeholder="LinkedIn or portfolio (optional)"
-      />
-      <textarea
-        required
-        value={problemSolution}
-        onChange={(e) => setProblemSolution(e.target.value)}
-        rows={5}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-primary text-sm"
-        placeholder="Describe the domain problem you solved, your approach, and result..."
-      />
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full px-4 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
-      >
-        {loading ? 'Submitting...' : 'Apply Now'}
-      </button>
-
-      {message && <p className="text-sm font-semibold text-slate-700">{message}</p>}
-    </form>
   );
 }
 

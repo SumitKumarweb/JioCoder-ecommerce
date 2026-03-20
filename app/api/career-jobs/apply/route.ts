@@ -2,22 +2,77 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobApplication from "@/models/CareerJobApplication";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 
 function isValidEmail(email: string) {
   return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
 }
 
+async function saveResume(file: File): Promise<{ url: string; fileName: string } | null> {
+  if (!file || !file.name) return null;
+  const maxBytes = 5 * 1024 * 1024; // 5 MB
+  if (file.size <= 0 || file.size > maxBytes) {
+    throw new Error("Resume must be between 1 byte and 5MB");
+  }
+
+  const ext = path.extname(file.name).toLowerCase();
+  const allowed = new Set([".pdf", ".doc", ".docx"]);
+  if (!allowed.has(ext)) {
+    throw new Error("Only PDF/DOC/DOCX resume files are allowed");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const safeName = `resume-${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "resumes");
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, safeName), buffer);
+
+  return {
+    url: `/uploads/resumes/${safeName}`,
+    fileName: file.name,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
+    const contentType = req.headers.get("content-type") || "";
 
-    const jobId = typeof body.jobId === "string" ? body.jobId.trim() : "";
-    const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
-    const emailRaw = typeof body.email === "string" ? body.email.trim() : "";
-    const email = emailRaw.toLowerCase();
-    const phone = typeof body.phone === "string" ? body.phone.trim() : undefined;
-    const linkedin = typeof body.linkedin === "string" ? body.linkedin.trim() : undefined;
-    const coverLetter = typeof body.coverLetter === "string" ? body.coverLetter.trim() : undefined;
+    let jobId = "";
+    let fullName = "";
+    let email = "";
+    let phone: string | undefined;
+    let linkedin: string | undefined;
+    let coverLetter: string | undefined;
+    let resumeUrl: string | undefined;
+    let resumeFileName: string | undefined;
+
+    if (contentType.includes("multipart/form-data")) {
+      const form = await req.formData();
+      jobId = String(form.get("jobId") || "").trim();
+      fullName = String(form.get("fullName") || "").trim();
+      email = String(form.get("email") || "").trim().toLowerCase();
+      phone = String(form.get("phone") || "").trim() || undefined;
+      linkedin = String(form.get("linkedin") || "").trim() || undefined;
+      coverLetter = String(form.get("coverLetter") || "").trim() || undefined;
+
+      const resume = form.get("resume");
+      if (resume && typeof resume !== "string") {
+        const saved = await saveResume(resume);
+        resumeUrl = saved?.url;
+        resumeFileName = saved?.fileName;
+      }
+    } else {
+      const body = await req.json().catch(() => ({}));
+      jobId = typeof body.jobId === "string" ? body.jobId.trim() : "";
+      fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
+      email = (typeof body.email === "string" ? body.email.trim() : "").toLowerCase();
+      phone = typeof body.phone === "string" ? body.phone.trim() : undefined;
+      linkedin = typeof body.linkedin === "string" ? body.linkedin.trim() : undefined;
+      coverLetter = typeof body.coverLetter === "string" ? body.coverLetter.trim() : undefined;
+      resumeUrl = typeof body.resumeUrl === "string" ? body.resumeUrl.trim() : undefined;
+      resumeFileName = typeof body.resumeFileName === "string" ? body.resumeFileName.trim() : undefined;
+    }
 
     if (!jobId || !fullName || !email) {
       return NextResponse.json({ message: "jobId, fullName and email are required" }, { status: 400 });
@@ -46,6 +101,8 @@ export async function POST(req: NextRequest) {
           phone,
           linkedin,
           coverLetter,
+          resumeUrl,
+          resumeFileName,
           status: "submitted",
           domainSnapshot: job.domain,
         },

@@ -23,6 +23,9 @@ type JobApplication = {
   email: string;
   phone?: string;
   linkedin?: string;
+  coverLetter?: string;
+  resumeUrl?: string;
+  resumeFileName?: string;
   status: "submitted" | "shortlisted" | "rejected";
   domainSnapshot?: string;
   createdAt?: string;
@@ -420,27 +423,54 @@ export default function JobOpeningsAdminPage() {
                     <tr className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
                       <th className="py-2 pr-4">Name</th>
                       <th className="py-2 pr-4">Email</th>
+                      <th className="py-2 pr-4">Phone</th>
+                      <th className="py-2 pr-4">Resume</th>
                       <th className="py-2 pr-4">Domain</th>
                       <th className="py-2 pr-4">Status</th>
                       <th className="py-2 pr-4">Submitted</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {apps.map((a, idx) => (
-                      <tr key={(a._id || a.email) + String(idx)} className="border-b border-slate-100">
-                        <td className="py-2 pr-4 font-semibold text-slate-900">{a.fullName}</td>
-                        <td className="py-2 pr-4 text-slate-700">{a.email}</td>
-                        <td className="py-2 pr-4 text-slate-600">{a.domainSnapshot || '—'}</td>
-                        <td className="py-2 pr-4">
-                          <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
-                            {a.status}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-4 text-slate-600">
-                          {a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}
-                        </td>
-                      </tr>
-                    ))}
+                    {apps.flatMap((a, idx) => {
+                      const key = (a._id || a.email) + String(idx);
+                      return [
+                        <tr key={key} className="border-b border-slate-100">
+                          <td className="py-2 pr-4 font-semibold text-slate-900">{a.fullName}</td>
+                          <td className="py-2 pr-4 text-slate-700">{a.email}</td>
+                          <td className="py-2 pr-4 text-slate-600">{a.phone || '—'}</td>
+                          <td className="py-2 pr-4">
+                            {a.resumeUrl ? (
+                              <a
+                                href={a.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-xs font-bold"
+                              >
+                                {a.resumeFileName || 'View Resume'}
+                              </a>
+                            ) : (
+                              <span className="text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 pr-4 text-slate-600">{a.domainSnapshot || '—'}</td>
+                          <td className="py-2 pr-4">
+                            <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                              {a.status}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-4 text-slate-600">
+                            {a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}
+                          </td>
+                        </tr>,
+                        a.coverLetter ? (
+                          <tr key={`${key}-cover`} className="border-b border-slate-100 bg-slate-50/70">
+                            <td colSpan={7} className="py-2 pr-4 text-slate-700 text-xs">
+                              <span className="font-bold">Problem solution:</span> {a.coverLetter}
+                            </td>
+                          </tr>
+                        ) : null,
+                      ].filter(Boolean);
+                    })}
                   </tbody>
                 </table>
               </div>

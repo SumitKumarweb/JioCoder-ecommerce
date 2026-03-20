@@ -7,6 +7,8 @@ export interface ICareerJobApplication extends Document {
   phone?: string;
   linkedin?: string;
   coverLetter?: string;
+  resumeUrl?: string;
+  resumeFileName?: string;
   status: "submitted" | "shortlisted" | "rejected";
   domainSnapshot?: string;
 }
@@ -19,6 +21,8 @@ const CareerJobApplicationSchema: Schema<ICareerJobApplication> = new Schema(
     phone: { type: String, trim: true },
     linkedin: { type: String, trim: true },
     coverLetter: { type: String, trim: true },
+    resumeUrl: { type: String, trim: true },
+    resumeFileName: { type: String, trim: true },
     status: { type: String, enum: ["submitted", "shortlisted", "rejected"], default: "submitted" },
     domainSnapshot: { type: String, trim: true },
   },
