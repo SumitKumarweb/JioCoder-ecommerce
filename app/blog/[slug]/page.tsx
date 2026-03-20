@@ -117,8 +117,55 @@ export default async function BlogPostPage({
     featuredImage: p.featuredImage || '',
   }));
 
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com'
+  ).replace(/\/$/, '');
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: mappedBlogPost.title,
+    description: mappedBlogPost.description || mappedBlogPost.summary || '',
+    ...(mappedBlogPost.featuredImage
+      ? {
+          image: {
+            '@type': 'ImageObject',
+            url: mappedBlogPost.featuredImage,
+          },
+        }
+      : {}),
+    url: `${baseUrl}/blog/${mappedBlogPost.slug}`,
+    datePublished: mappedBlogPost.date || new Date().toISOString(),
+    dateModified: (blogPost as any).updatedAt
+      ? new Date((blogPost as any).updatedAt).toISOString()
+      : mappedBlogPost.date || new Date().toISOString(),
+    author: {
+      '@type': 'Person',
+      name: mappedBlogPost.author?.name || 'JioCoder Team',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'JioCoder',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/logo.png`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${baseUrl}/blog/${mappedBlogPost.slug}`,
+    },
+    keywords: mappedBlogPost.tags?.join(', ') || '',
+    articleSection: mappedBlogPost.category || 'Tech',
+    inLanguage: 'en-IN',
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <BreadcrumbSchema

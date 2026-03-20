@@ -31,26 +31,55 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const product = await getProduct(id);
   
   if (product) {
+    const canonicalSlug = product.slug || id;
+    const desc =
+      product.description ||
+      `Buy ${product.name} — premium ${product.category || 'gaming peripheral'} from JioCoder. Authentic gear with fast India-wide shipping and expert support.`;
+
     return {
       title: `${product.name} - JioCoder`,
-      description: product.description || `${product.name} - Premium ${product.category || 'product'} from JioCoder. Fast India-wide shipping.`,
+      description: desc,
+      keywords: [
+        product.name,
+        product.category,
+        'buy online India',
+        'JioCoder',
+        'fast shipping India',
+      ].filter(Boolean) as string[],
+      alternates: {
+        canonical: `/product/${canonicalSlug}`,
+      },
       openGraph: {
         title: `${product.name} - JioCoder`,
-        description: product.description || `${product.name} - Premium ${product.category || 'product'}`,
-        url: `/product/${product.slug || id}`,
-        images: product.image ? [{ url: product.image }] : undefined,
+        description: desc,
+        url: `/product/${canonicalSlug}`,
+        type: 'website',
+        images: product.image ? [{ url: product.image, alt: product.name }] : undefined,
+      },
+      twitter: {
+        card: product.image ? 'summary_large_image' : 'summary',
+        title: `${product.name} - JioCoder`,
+        description: desc,
+        images: product.image ? [product.image] : undefined,
+      },
+      robots: {
+        index: true,
+        follow: true,
       },
     };
   }
-  
+
   return {
     title: 'Product Details',
-    description: 'View detailed product information, specifications, reviews, and FAQs for premium mechanical keyboards and gaming peripherals.',
+    description:
+      'View detailed product information, specifications, reviews, and FAQs for premium mechanical keyboards and gaming peripherals.',
     openGraph: {
       title: 'Product Details - JioCoder',
-      description: 'View detailed product information, specifications, and reviews.',
+      description:
+        'View detailed product information, specifications, and reviews.',
       url: '/product',
     },
+    robots: { index: false, follow: true },
   };
 }
 

@@ -1,5 +1,7 @@
-// Metadata manager for reading metadata from API
-// Supports both server-side (generateMetadata) and client-side use
+// Metadata manager for reading metadata from DB (server) or API (client).
+// Previously the server-side path made an HTTP request to the same host, which
+// was skipped on production (causing every page to fall back to default metadata).
+// Now the server-side path queries MongoDB directly, which works in all environments.
 
 export interface PageMetadata {
   metaTitle: string;
@@ -35,77 +37,71 @@ function getPathFromPageId(pageId: string): string {
 // Minimal fallback metadata
 function getFallbackMetadata(pageId: string): PageMetadata {
   const path = getPathFromPageId(pageId);
-  
+
   return {
     metaTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
-    metaDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder.',
-    metaKeywords: 'mechanical keyboards, gaming mice, keycaps, custom cables, gaming peripherals',
+    metaDescription:
+      'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder.',
+    metaKeywords:
+      'mechanical keyboards, gaming mice, keycaps, custom cables, gaming peripherals',
     ogTitle: 'JioCoder - Premium Mechanical Keyboards & Gaming Peripherals',
-    ogDescription: 'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables.',
+    ogDescription:
+      'Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables.',
     ogImage: '',
     canonicalUrl: path,
+  };
+}
+
+function mapDbDoc(data: any, path: string): PageMetadata {
+  return {
+    metaTitle: data.metaTitle || '',
+    metaDescription: data.metaDescription || '',
+    metaKeywords: data.metaKeywords || '',
+    ogTitle: data.ogTitle || data.metaTitle || '',
+    ogDescription: data.ogDescription || data.metaDescription || '',
+    ogImage: data.ogImage || '',
+    canonicalUrl: data.canonicalUrl || path,
   };
 }
 
 export class MetadataManager {
   async getPageMetadata(pageId: string): Promise<PageMetadata> {
     const path = getPathFromPageId(pageId);
-    
-    try {
-      // Construct API URL - works for both server and client
-      let apiUrl: string;
-      let shouldSkipFetch = false;
-      
-      if (typeof window === 'undefined') {
-        // Server-side: need absolute URL
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.jiocoder.com');
-        apiUrl = `${baseUrl}/api/page-metadata?path=${encodeURIComponent(path)}`;
-        
-        // Skip fetch if trying to reach external URL during build (API won't be available)
-        // Only fetch if it's localhost or VERCEL_URL (during deployment)
-        if (baseUrl.includes('www.jiocoder.com') || baseUrl.includes('jiocoder.com')) {
-          // During build, external URLs won't be accessible, so skip
-          shouldSkipFetch = true;
-        }
-      } else {
-        // Client-side: use relative URL
-        apiUrl = `/api/page-metadata?path=${encodeURIComponent(path)}`;
-      }
-      
-      if (shouldSkipFetch) {
-        return getFallbackMetadata(pageId);
-      }
-      
-      const response = await fetch(apiUrl, {
-        // Use revalidate for ISR (Incremental Static Regeneration)
-        next: { revalidate: 3600 }, // Revalidate every hour
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Map API response to PageMetadata interface
-        if (data && data.path) {
-          return {
-            metaTitle: data.metaTitle || '',
-            metaDescription: data.metaDescription || '',
-            metaKeywords: data.metaKeywords || '',
-            ogTitle: data.ogTitle || data.metaTitle || '',
-            ogDescription: data.ogDescription || data.metaDescription || '',
-            ogImage: data.ogImage || '',
-            canonicalUrl: data.canonicalUrl || path,
-          };
+    try {
+      if (typeof window === 'undefined') {
+        // ── Server-side: query the database directly ──────────────────────
+        // Avoid making an HTTP call to ourselves, which fails during `next build`
+        // and was previously skipped entirely on production (bug).
+        const connectDB = (await import('@/lib/db')).default;
+        const PageMetadata = (await import('@/models/PageMetadata')).default;
+
+        await connectDB();
+        const doc = await PageMetadata.findOne({ path }).lean();
+        if (doc) {
+          return mapDbDoc(doc, path);
+        }
+        return getFallbackMetadata(pageId);
+      } else {
+        // ── Client-side: use the public API route ─────────────────────────
+        const response = await fetch(
+          `/api/page-metadata?path=${encodeURIComponent(path)}`,
+          { next: { revalidate: 3600 } }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.path) {
+            return mapDbDoc(data, path);
+          }
         }
       }
     } catch (error) {
-      // Silently fall back to default metadata
       if (process.env.NODE_ENV !== 'production') {
         console.error(`Failed to fetch metadata for ${path}:`, error);
       }
     }
 
-    // Return fallback if API call fails
     return getFallbackMetadata(pageId);
   }
 

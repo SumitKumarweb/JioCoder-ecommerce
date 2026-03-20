@@ -4,6 +4,9 @@ import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobApplyForm from "../CareerJobApplyForm";
 
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com";
+
 function toSlug(input: string) {
   return String(input || "")
     .toLowerCase()
@@ -20,14 +23,67 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  return {
-    alternates: {
-      canonical: `/careers/${slug}`,
-    },
-    openGraph: {
-      url: `/careers/${slug}`,
-    },
-  };
+
+  try {
+    await connectDB();
+    const job = (await CareerJob.findOne({ slug, published: true }).lean()) as any;
+
+    if (!job) {
+      return {
+        title: "Job Not Found",
+        robots: { index: false, follow: false },
+      };
+    }
+
+    const ctc =
+      job.minCTC != null || job.maxCTC != null
+        ? ` | ${job.minCTC ?? "?"}–${job.maxCTC ?? "?"}L CTC`
+        : "";
+    const location = job.location || "Remote / Flexible";
+    const title = `${job.title} at ${job.companyName}${ctc} | JioCoder Careers`;
+    const rawDesc = job.description || "";
+    const description = rawDesc.length > 0
+      ? rawDesc.slice(0, 155).replace(/\n/g, " ") + (rawDesc.length > 155 ? "…" : "")
+      : `${job.title} opening at ${job.companyName}. ${location}. Apply now on JioCoder Careers.`;
+
+    return {
+      title,
+      description,
+      keywords: [
+        job.title,
+        job.domain,
+        job.companyName,
+        location,
+        "jobs in India",
+        "tech jobs",
+        "jiocoder careers",
+      ].filter(Boolean) as string[],
+      alternates: {
+        canonical: `/careers/${slug}`,
+      },
+      openGraph: {
+        title,
+        description,
+        url: `/careers/${slug}`,
+        type: "website",
+        siteName: "JioCoder",
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description,
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  } catch {
+    return {
+      title: "Careers | JioCoder",
+      alternates: { canonical: `/careers/${slug}` },
+    };
+  }
 }
 
 export default async function CareerJobDetailPage({
@@ -60,7 +116,64 @@ export default async function CareerJobDetailPage({
     job.problemSolvingRequirement?.trim() ||
     "Share one real problem you solved in your domain, your approach, trade-offs, and result.";
 
+  const jobPostingSchema = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description || requirement,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.companyName || "JioCoder",
+      sameAs: BASE_URL,
+      logo: `${BASE_URL}/logo.png`,
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "IN",
+        addressLocality: job.location || "Remote",
+      },
+    },
+    ...(job.location?.toLowerCase().includes("remote") || !job.location
+      ? { jobLocationType: "TELECOMMUTE" }
+      : {}),
+    employmentType: "FULL_TIME",
+    datePosted: (job as any).createdAt
+      ? new Date((job as any).createdAt).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+    ...(job.expirationDateTime
+      ? { validThrough: new Date(job.expirationDateTime).toISOString() }
+      : {}),
+    ...(job.minCTC != null || job.maxCTC != null
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: "INR",
+            value: {
+              "@type": "QuantitativeValue",
+              ...(job.minCTC != null ? { minValue: job.minCTC * 100000 } : {}),
+              ...(job.maxCTC != null ? { maxValue: job.maxCTC * 100000 } : {}),
+              unitText: "YEAR",
+            },
+          },
+        }
+      : {}),
+    url: `${BASE_URL}/careers/${job.slug || toSlug(job.title)}`,
+    occupationalCategory: job.domain || "Technology",
+    industry: "E-commerce / Gaming Peripherals",
+    applicantLocationRequirements: {
+      "@type": "Country",
+      name: "India",
+    },
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
+      />
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-10">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8">
@@ -112,6 +225,7 @@ export default async function CareerJobDetailPage({
         </div>
       </div>
     </div>
+    </>
   );
 }
 

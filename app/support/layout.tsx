@@ -1,14 +1,36 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Help & Support - JioCoder',
+  title: 'Help & Support',
   description:
-    'Get help with your orders, returns, payments, warranty claims, and technical support. Contact our 24/7 customer service team via live chat, email, or phone.',
-  keywords: ['customer support', 'help center', 'contact support', 'order tracking', 'returns', 'warranty'],
+    'Get help with your JioCoder orders. Track shipments, manage returns and refunds, troubleshoot products, check warranty status, and reach our 24/7 customer support team.',
+  keywords: [
+    'jiocoder support',
+    'order tracking India',
+    'return policy',
+    'keyboard warranty India',
+    'customer service',
+    'gaming peripherals support',
+  ],
+  alternates: {
+    canonical: '/support',
+  },
   openGraph: {
     title: 'Help & Support - JioCoder',
-    description: 'Get help with your orders, returns, payments, warranty claims, and technical support.',
+    description:
+      'Get help with orders, returns, warranty, and technical support at JioCoder.',
+    url: '/support',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Help & Support - JioCoder',
+    description:
+      'Get help with orders, returns, and technical support at JioCoder.',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -17,6 +39,5 @@ export default function SupportLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return children;
 }
-
