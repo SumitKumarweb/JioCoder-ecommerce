@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import CareerJob from "@/models/CareerJob";
 import CareerJobApplication from "@/models/CareerJobApplication";
 import { mkdir, writeFile } from "fs/promises";
+import os from "os";
 import path from "path";
 
 function isValidEmail(email: string) {
-  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+  // Simple RFC-style check (no spaces, one @, has a dot in domain)
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function isJobExpired(expirationDateTime: unknown): boolean {
+  if (expirationDateTime == null) return false;
+  const t =
+    expirationDateTime instanceof Date
+      ? expirationDateTime.getTime()
+      : new Date(String(expirationDateTime)).getTime();
+  if (Number.isNaN(t)) return false;
+  return t < Date.now();
 }
 
 async function saveResume(file: File): Promise<{ url: string; fileName: string } | null> {
@@ -24,12 +37,16 @@ async function saveResume(file: File): Promise<{ url: string; fileName: string }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const safeName = `resume-${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "resumes");
+  // Vercel/serverless: only /tmp is writable; local dev uses public/ so files are served
+  const usePublic =
+    process.env.VERCEL !== "1" && process.env.VERCEL !== "true" && !process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const tmpDir = path.join(os.tmpdir(), "jiocoder-resumes");
+  const uploadDir = usePublic ? path.join(process.cwd(), "public", "uploads", "resumes") : tmpDir;
   await mkdir(uploadDir, { recursive: true });
   await writeFile(path.join(uploadDir, safeName), buffer);
 
   return {
-    url: `/uploads/resumes/${safeName}`,
+    url: usePublic ? `/uploads/resumes/${safeName}` : `/api/career-jobs/resume-file?name=${encodeURIComponent(safeName)}`,
     fileName: file.name,
   };
 }
@@ -58,9 +75,14 @@ export async function POST(req: NextRequest) {
 
       const resume = form.get("resume");
       if (resume && typeof resume !== "string") {
-        const saved = await saveResume(resume);
-        resumeUrl = saved?.url;
-        resumeFileName = saved?.fileName;
+        try {
+          const saved = await saveResume(resume as File);
+          resumeUrl = saved?.url;
+          resumeFileName = saved?.fileName;
+        } catch (fileErr) {
+          console.error("Resume save failed (continuing without file):", fileErr);
+          // Don't fail the whole application if disk is read-only or upload fails
+        }
       }
     } else {
       const body = await req.json().catch(() => ({}));
@@ -81,6 +103,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid email" }, { status: 400 });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return NextResponse.json({ message: "Invalid job id" }, { status: 400 });
+    }
+
     await connectDB();
 
     const job = await CareerJob.findById(jobId).lean();
@@ -88,32 +114,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Job not found" }, { status: 404 });
     }
 
-    const now = new Date();
-    if (job.expirationDateTime && job.expirationDateTime instanceof Date && job.expirationDateTime.getTime() < now.getTime()) {
+    if (isJobExpired(job.expirationDateTime)) {
       return NextResponse.json({ message: "Job is expired" }, { status: 410 });
     }
 
-    const created = await CareerJobApplication.findOneAndUpdate(
-      { jobId: job._id, email },
-      {
-        $set: {
-          fullName,
-          phone,
-          linkedin,
-          coverLetter,
-          resumeUrl,
-          resumeFileName,
-          status: "submitted",
-          domainSnapshot: job.domain,
+    const jobObjectId = new mongoose.Types.ObjectId(String(job._id));
+
+    let created;
+    try {
+      created = await CareerJobApplication.findOneAndUpdate(
+        { jobId: jobObjectId, email },
+        {
+          $set: {
+            fullName,
+            phone,
+            linkedin,
+            coverLetter,
+            resumeUrl,
+            resumeFileName,
+            status: "submitted",
+            domainSnapshot: job.domain,
+          },
         },
-      },
-      { upsert: true, new: true }
-    ).lean();
+        { upsert: true, new: true }
+      ).lean();
+    } catch (dup: unknown) {
+      const err = dup as { code?: number };
+      if (err?.code === 11000) {
+        const existing = await CareerJobApplication.findOne({ jobId: jobObjectId, email }).lean();
+        return NextResponse.json({
+          ok: true,
+          applicationId: existing?._id?.toString?.(),
+          duplicate: true,
+        });
+      }
+      throw dup;
+    }
 
     return NextResponse.json({ ok: true, applicationId: created?._id?.toString?.() });
   } catch (error) {
     console.error("POST /api/career-jobs/apply failed:", error);
-    return NextResponse.json({ message: "Failed to submit application" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Failed to submit application" },
+      { status: 500 }
+    );
   }
 }
 
