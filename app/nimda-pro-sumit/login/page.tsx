@@ -8,7 +8,9 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [token, setToken] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showToken, setShowToken] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -42,17 +44,35 @@ export default function AdminLoginPage() {
 
     setLoading(true);
 
-    // Mock authentication - replace with actual API call
-    // Default credentials: admin@jiocoder.com / admin123
-    if (trimmedEmail === 'admin@jiocoder.com' && trimmedPassword === 'admin123') {
-      // Set admin token
-      localStorage.setItem('adminToken', 'admin-auth-token-' + Date.now());
-      localStorage.setItem('adminEmail', trimmedEmail);
-      
-      // Redirect to dashboard
+    if (!token.trim()) {
+      setError('Admin token is required');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password: trimmedPassword,
+          token: token.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Invalid login details');
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem('adminToken', data.token);
+      localStorage.setItem('adminEmail', data.user?.email || trimmedEmail);
       router.push('/nimda-pro-sumit/dashboard');
-    } else {
-      setError('Invalid email or password');
+    } catch {
+      setError('Network error. Please try again.');
       setLoading(false);
     }
   };
@@ -128,6 +148,34 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Admin Token
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  key
+                </span>
+                <input
+                  type={showToken ? 'text' : 'password'}
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Enter admin token"
+                  required
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowToken(!showToken)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <span className="material-symbols-outlined">
+                    {showToken ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="rounded" />
@@ -157,14 +205,11 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Security note */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs font-bold text-blue-900 mb-2">Demo Credentials:</p>
+            <p className="text-xs font-bold text-blue-900 mb-2">Security note</p>
             <p className="text-xs text-blue-700">
-              Email: <span className="font-mono">admin@jiocoder.com</span>
-            </p>
-            <p className="text-xs text-blue-700">
-              Password: <span className="font-mono">admin123</span>
+              Enter your admin token configured on server.
             </p>
           </div>
         </div>

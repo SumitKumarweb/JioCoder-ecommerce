@@ -8,7 +8,7 @@ export default async function BlogPage() {
   const query = { published: true };
   const [blogs, totalCount] = await Promise.all([
     Blog.find(query)
-    .sort({ publishedAt: -1, updatedAt: -1 })
+    .sort({ publishedAt: -1, updatedAt: -1, _id: -1 })
     .select('slug title description featuredImage category readTime date isFeatured _id published')
     .limit(12)
     .lean(),

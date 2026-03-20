@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const [rows, total] = await Promise.all([
       Blog.find(query)
-        .sort({ publishedAt: -1, updatedAt: -1 })
+        .sort({ publishedAt: -1, updatedAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit)
         .select("slug title description featuredImage category readTime date isFeatured _id")
