@@ -105,6 +105,15 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Community group chat (Socket.IO)
+
+Group messages use **Socket.IO** for real-time delivery when you run the custom server:
+
+- **Dev / prod**: `npm run dev` and `npm start` run `tsx server.ts` (Next.js + Socket.IO on the same port, default `3000`).
+- **Without sockets**: `npm run dev:next-only` uses plain `next dev` — chat falls back to REST + ~15s polling (no instant updates).
+- **Deploy**: Serverless platforms (e.g. Vercel) cannot run this WebSocket server. Host on a **Node** process (VPS, Railway, Render, Docker) with `npm run build && npm start`.
+- **Separate API domain**: set `NEXT_PUBLIC_SOCKET_URL` to your site origin (e.g. `https://api.example.com`) so the browser connects to the correct host.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

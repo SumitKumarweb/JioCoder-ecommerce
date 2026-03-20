@@ -95,6 +95,11 @@ export default function Footer() {
                 Careers
               </Link>
             </li>
+            <li>
+              <Link className="hover:text-white transition-colors" href="/community">
+                Coder Community
+              </Link>
+            </li>
           </ul>
         </div>
 

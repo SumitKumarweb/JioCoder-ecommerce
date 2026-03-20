@@ -5,6 +5,8 @@ export interface IUser extends Document {
   email: string;
   password: string; // hashed password
   name?: string;
+  /** Last community story upload — max one new story per 24h from this time */
+  lastCommunityStatusUploadedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -27,6 +29,10 @@ const UserSchema: Schema<IUser> = new Schema(
     name: {
       type: String,
       trim: true,
+    },
+    lastCommunityStatusUploadedAt: {
+      type: Date,
+      default: undefined,
     },
   },
   {

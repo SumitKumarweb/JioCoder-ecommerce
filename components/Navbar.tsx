@@ -55,6 +55,13 @@ export default function Navbar() {
     };
   }, []);
 
+  /** e.g. community group page: "Log in to join" → opens same modal as header account */
+  useEffect(() => {
+    const openLogin = () => setIsLoginModalOpen(true);
+    window.addEventListener('openLoginModal', openLogin);
+    return () => window.removeEventListener('openLoginModal', openLogin);
+  }, []);
+
   const handleAccountClick = () => {
     if (typeof window !== 'undefined' && localStorage.getItem('userId')) {
       router.push('/profile');

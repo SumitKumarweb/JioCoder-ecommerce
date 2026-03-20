@@ -115,6 +115,7 @@ export default function AdminLayout({
     { href: '/nimda-pro-sumit/section-products', label: 'Section Products', icon: 'view_module' },
     { href: '/nimda-pro-sumit/orders', label: 'Orders', icon: 'shopping_bag' },
     { href: '/nimda-pro-sumit/orders/pending', label: 'Pending Orders', icon: 'pending' },
+    { href: '/nimda-pro-sumit/community', label: 'Coder Community', icon: 'forum' },
     { href: '/nimda-pro-sumit/community-reviews', label: 'Community Reviews', icon: 'video_library' },
     { href: '/nimda-pro-sumit/instagram-reels', label: 'Instagram Reels', icon: 'movie' },
     { href: '/nimda-pro-sumit/page-metadata', label: 'Page Metadata', icon: 'seo' },

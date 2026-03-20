@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 import databaseConfig from '@/config/database';
 
-const MONGODB_URI = process.env.MONGODB_URI || '';
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI || '';
+  if (!uri) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+  return uri;
 }
 
 /**
@@ -30,6 +32,8 @@ if (!global.mongoose) {
 }
 
 async function connectDB() {
+  const MONGODB_URI = getMongoUri();
+
   // Check if connection is already established and healthy
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
