@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Footer() {
   const handleNewsletterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,6 +89,11 @@ export default function Footer() {
               <a className="hover:text-white transition-colors" href="#">
                 Track Order
               </a>
+            </li>
+            <li>
+              <Link className="hover:text-white transition-colors" href="/careers">
+                Careers
+              </Link>
             </li>
           </ul>
         </div>
