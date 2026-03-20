@@ -27,10 +27,14 @@ type ReadNextPost = {
   featuredImage: string;
 };
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   await connectDB();
 
-  const slug = params.slug;
+  const { slug } = await params;
 
   const blogPost = await Blog.findOne({
     slug,

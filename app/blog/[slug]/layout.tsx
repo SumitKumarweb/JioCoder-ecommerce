@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
-}): Metadata {
-  const slug = params?.slug ? encodeURIComponent(params.slug) : "";
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug ? encodeURIComponent(rawSlug) : "";
 
   return {
     title: "Blog Article - JioCoder",
