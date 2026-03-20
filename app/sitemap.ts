@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import Collection from '@/models/Collection';
 import Product from '@/models/Product';
 import Blog from '@/models/Blog';
+import CareerJob from '@/models/CareerJob';
 
 // Revalidate sitemap every hour (3600 seconds)
 // This ensures new products, collections, and blogs are included within 1 hour
@@ -74,6 +75,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(),
         changeFrequency: 'monthly',
         priority: 0.7,
+      },
+      {
+        url: `${baseUrl}/search`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.6,
       }
     );
 
@@ -209,6 +216,45 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     } catch (blogError) {
       console.error('[Sitemap] Error fetching blog posts:', blogError);
       // Continue even if blog posts fail
+    }
+
+    // Fetch all published and active career jobs
+    try {
+      const now = new Date();
+      const careerJobs = await CareerJob.find({
+        published: true,
+        $or: [{ expirationDateTime: { $exists: false } }, { expirationDateTime: { $gt: now } }],
+      })
+        .select('slug title updatedAt')
+        .sort({ updatedAt: -1, _id: -1 })
+        .lean();
+
+      (careerJobs as any[]).forEach((job) => {
+        const slug = job.slug
+          ? encodeURIComponent(String(job.slug))
+          : encodeURIComponent(
+              String(job.title || '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+            );
+
+        if (!slug) return;
+        sitemapEntries.push({
+          url: `${baseUrl}/careers/${slug}`,
+          lastModified: job.updatedAt ? new Date(job.updatedAt) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        });
+      });
+
+      console.log(`[Sitemap] Added ${careerJobs.length} career pages to sitemap`);
+    } catch (careerError) {
+      console.error('[Sitemap] Error fetching career jobs:', careerError);
+      // Continue even if careers fail
     }
 
   } catch (error) {
