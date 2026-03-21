@@ -79,7 +79,7 @@ export default function OrderSuccessPage() {
           },
           body: JSON.stringify({
             customerName: formData.fullName,
-            customerEmail: formData.mobile ? `${formData.mobile}@example.com` : 'customer@example.com', // Generate email from mobile
+            customerEmail: formData.mobile ? `${formData.mobile}@example.com` : 'customer@example.com',
             items: orderItems,
             total: paymentData.finalTotal,
             currency: 'INR',
@@ -87,6 +87,8 @@ export default function OrderSuccessPage() {
             paymentStatus: 'PAID',
             paymentMethod: paymentData.method,
             shippingAddress: shippingAddress,
+            couponCode: paymentData.couponCode || undefined,
+            couponDiscount: paymentData.couponDiscount || 0,
           }),
         });
 
@@ -106,6 +108,7 @@ export default function OrderSuccessPage() {
         // Clear localStorage
         localStorage.removeItem('checkoutFormData');
         localStorage.removeItem('paymentData');
+        localStorage.removeItem('appliedCoupon');
 
         // Clear cart
         clearCart();

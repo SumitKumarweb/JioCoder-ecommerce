@@ -1,22 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { useCart } from '@/contexts/CartContext';
 
+interface AppliedCoupon {
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED' | 'VOUCHER';
+  value: number;
+  discountAmount: number;
+  description: string;
+}
+
 export default function PaymentPage() {
-  const { cartItems, getSubtotal, getGST, getTotalPrice } = useCart();
+  const { cartItems, getSubtotal, getTotalPrice } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('upi');
   const [upiId, setUpiId] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('appliedCoupon');
+    if (saved) {
+      try { setAppliedCoupon(JSON.parse(saved)); } catch { /* ignore */ }
+    }
+  }, []);
 
   const subtotal = getSubtotal();
-  const gst = getGST();
-  const total = getTotalPrice();
-  const discount = 1000; // Applied discount
-  const finalTotal = total - discount;
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const finalTotal = Math.max(getTotalPrice() - couponDiscount, 0);
 
   // Redirect to cart if empty
   if (cartItems.length === 0) {
@@ -338,7 +353,7 @@ export default function PaymentPage() {
                 <div className="space-y-3 pt-6 border-t border-slate-100">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">
-                      Subtotal ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
+                      Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)
                     </span>
                     <span className="font-medium">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
@@ -346,10 +361,17 @@ export default function PaymentPage() {
                     <span className="text-slate-500">Shipping</span>
                     <span className="text-primary font-medium">FREE</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">GST (18%)</span>
-                    <span className="font-medium">₹{gst.toLocaleString('en-IN')}</span>
-                  </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-700 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">local_offer</span>
+                        {appliedCoupon.code}
+                      </span>
+                      <span className="text-green-700 font-bold">
+                        -₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-lg font-bold pt-4 border-t border-slate-100">
                     <span>Total Payable</span>
                     <span>₹{finalTotal.toLocaleString('en-IN')}</span>
@@ -360,15 +382,13 @@ export default function PaymentPage() {
                 <Link
                   href="/checkout/success"
                   onClick={() => {
-                    // Save payment data to localStorage
                     const paymentData = {
                       method: selectedPaymentMethod,
                       upiId: upiId,
                       subtotal,
-                      gst,
-                      total,
-                      discount,
                       finalTotal,
+                      couponCode: appliedCoupon?.code || null,
+                      couponDiscount,
                     };
                     localStorage.setItem('paymentData', JSON.stringify(paymentData));
                   }}
@@ -392,18 +412,20 @@ export default function PaymentPage() {
                 </p>
               </div>
 
-              {/* Offers */}
-              <div className="bg-primary/5 rounded-xl border border-primary/20 p-4">
-                <div className="flex gap-3">
-                  <span className="material-symbols-outlined text-primary">sell</span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-800">Applied: ELECTRO_OFF_1000</h4>
-                    <p className="text-xs text-slate-600">
-                      Savings of ₹1,000 on first purchase included in price.
-                    </p>
+              {/* Applied coupon display */}
+              {appliedCoupon && (
+                <div className="bg-green-50 rounded-xl border border-green-200 p-4">
+                  <div className="flex gap-3 items-center">
+                    <span className="material-symbols-outlined text-green-600">local_offer</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-green-800 font-mono tracking-wider">{appliedCoupon.code}</h4>
+                      <p className="text-xs text-green-700">
+                        Saving ₹{appliedCoupon.discountAmount.toLocaleString('en-IN')} — {appliedCoupon.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

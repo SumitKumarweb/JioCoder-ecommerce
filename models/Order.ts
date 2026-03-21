@@ -10,7 +10,8 @@ type OrderStatus =
 type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 
 export interface IOrderItem {
-  product: mongoose.Types.ObjectId;
+  product?: mongoose.Types.ObjectId | string;
+  productSlug?: string;
   name: string;
   quantity: number;
   price: number;
@@ -29,6 +30,8 @@ export interface IOrder extends Document {
   paymentId?: string;
   paymentMethod?: string;
   shippingAddress?: Record<string, unknown>;
+  couponCode?: string;
+  couponDiscount?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -36,9 +39,12 @@ export interface IOrder extends Document {
 const OrderItemSchema = new Schema<IOrderItem>(
   {
     product: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed,
       ref: "Product",
-      required: true,
+      required: false,
+    },
+    productSlug: {
+      type: String,
     },
     name: {
       type: String,
@@ -114,6 +120,14 @@ const OrderSchema = new Schema<IOrder>(
     },
     shippingAddress: {
       type: Schema.Types.Mixed,
+    },
+    couponCode: {
+      type: String,
+      uppercase: true,
+    },
+    couponDiscount: {
+      type: Number,
+      default: 0,
     },
   },
   {
