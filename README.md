@@ -90,6 +90,12 @@ Also set `NEXT_PUBLIC_SITE_URL` to your canonical origin (e.g. `https://www.jioc
 
 The root layout sets **`alternates.languages`** (`en-IN`, `x-default`) and Open Graph **`alternateLocale`** for clearer international signals. Key section pages (`/code`, `/studio`, `/code/*`) mirror the same pattern where configured.
 
+### Favicon & Google search results
+
+- **`app/icon.png`** and **`app/apple-icon.png`** — copied from `public/logo.png` so Next.js emits standard `<link rel="icon">` / Apple touch tags.
+- **`/favicon.ico`** — `next.config.ts` rewrites to `/logo.png` because Googlebot often requests `/favicon.ico` first.
+- Use a **square** logo **≥ 48×48 px** (512×512 is ideal). If the favicon still doesn’t show in Google, use **URL Inspection** / **request indexing** in Search Console; Google can take days to refresh favicons.
+
 ## Getting Started
 
 First, run the development server:

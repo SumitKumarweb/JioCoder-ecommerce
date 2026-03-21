@@ -19,6 +19,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Google Search expects https://domain/favicon.ico — serve the same asset as logo.png
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/logo.png" }];
+  },
+
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400, // 24h for remote images

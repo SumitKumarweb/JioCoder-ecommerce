@@ -91,10 +91,11 @@ const baseMetadata: Metadata = {
       "Shop gaming gear in India + free learn-to-code tracks with a live playground.",
     images: ["/og-image.jpg"],
   },
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
+  /**
+   * Favicons: use `app/icon.png` + `app/apple-icon.png` (copied from `public/logo.png`)
+   * so Next emits correct <link rel="icon"> tags. `/favicon.ico` rewrites to `/logo.png`
+   * for Googlebot (see next.config.ts).
+   */
   appleWebApp: {
     capable: true,
     title: "JioCoder",
