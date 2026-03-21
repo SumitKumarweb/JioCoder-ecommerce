@@ -1,34 +1,58 @@
-import { Metadata } from 'next';
-import connectDB from '@/lib/db';
-import PageMetadata from '@/models/PageMetadata';
+import type { Metadata } from 'next';
+import { WebPageSchema, BreadcrumbSchema } from '@/components/schemas';
 
-export async function generateMetadata(): Promise<Metadata> {
-  try {
-    await connectDB();
-    const meta = await PageMetadata.findOne({ path: '/studio' }).lean() as any;
-    if (meta) {
-      return {
-        title: meta.metaTitle || 'JioCoder Design Studio — Custom Mouse Pad Printing',
-        description: meta.metaDescription || 'Design and print your own custom mouse pads with the JioCoder Studio. Upload artwork, add text, pick sizes, and order in minutes.',
-        keywords: meta.metaKeywords || 'custom mouse pad, print on demand, gaming mousepad, desk mat, custom print',
-        openGraph: {
-          title: meta.ogTitle || meta.metaTitle || 'JioCoder Design Studio',
-          description: meta.ogDescription || meta.metaDescription || '',
-          images: meta.ogImage ? [meta.ogImage] : [],
-        },
-        alternates: { canonical: meta.canonicalUrl || 'https://www.jiocoder.com/studio' },
-        robots: meta.noIndex ? 'noindex, nofollow' : 'index, follow',
-      };
-    }
-  } catch { /* fallback below */ }
-
-  return {
-    title: 'JioCoder Design Studio — Custom Mouse Pad Printing',
-    description: 'Design and print your own custom mouse pads with the JioCoder Studio. Upload artwork, add text, pick sizes, and order in minutes.',
-    alternates: { canonical: 'https://www.jiocoder.com/studio' },
-  };
-}
+export const metadata: Metadata = {
+  title: 'JioCoder Studio — Custom desk mats & mouse pads',
+  description:
+    'Design your own desk mat or extended mouse pad in the browser: upload artwork, pick size and colors, add text, and order print-to-order shipping across India. Ideal for gaming setups and creators.',
+  keywords: [
+    'custom desk mat India',
+    'custom mouse pad',
+    'print desk mat',
+    'XL mouse pad custom',
+    'gaming desk mat',
+    'JioCoder Studio',
+    'personalized mousepad',
+  ],
+  alternates: {
+    canonical: '/studio',
+  },
+  openGraph: {
+    title: 'JioCoder Studio — Custom desk mats & mouse pads',
+    description:
+      'Upload your design, choose size and materials, and order a custom-printed desk mat shipped in India.',
+    url: '/studio',
+    type: 'website',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'JioCoder Studio' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'JioCoder Studio — Custom desk mats',
+    description: 'Design and order custom desk mats and large mouse pads with India-wide shipping.',
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <WebPageSchema
+        path="/studio"
+        type="WebPage"
+        name="JioCoder Studio — Custom desk mats & mouse pads"
+        description="Browser-based designer for custom-printed desk mats and extended mouse pads. Upload graphics, choose dimensions, materials, and text; order with shipping across India."
+      />
+      <BreadcrumbSchema
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Studio' },
+        ]}
+      />
+      {children}
+    </>
+  );
 }

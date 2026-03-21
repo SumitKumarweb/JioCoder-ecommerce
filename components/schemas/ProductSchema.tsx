@@ -1,3 +1,5 @@
+import { getSiteUrl } from '@/lib/seo/getSiteUrl';
+
 interface ProductSchemaProps {
   product: {
     id: string;
@@ -9,6 +11,7 @@ interface ProductSchemaProps {
     inStock: boolean;
     category?: string;
     brand?: string;
+    /** Only pass when backed by real reviews (avoid misleading rich results). */
     rating?: number;
     reviewCount?: number;
     sku?: string;
@@ -17,7 +20,7 @@ interface ProductSchemaProps {
 }
 
 export default function ProductSchema({ product, url }: ProductSchemaProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com';
+  const baseUrl = getSiteUrl();
   const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
   const imageUrl = product.image 
     ? (product.image.startsWith('http') ? product.image : `${baseUrl}${product.image}`)
@@ -47,8 +50,7 @@ export default function ProductSchema({ product, url }: ProductSchemaProps) {
         ? "https://schema.org/InStock" 
         : "https://schema.org/OutOfStock",
       "seller": {
-        "@type": "Organization",
-        "name": "JioCoder"
+        "@id": `${baseUrl}/#organization`
       },
       "shippingDetails": {
         "@type": "OfferShippingDetails",
@@ -83,15 +85,19 @@ export default function ProductSchema({ product, url }: ProductSchemaProps) {
         }
       }
     },
-    ...(product.rating && product.reviewCount ? {
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": product.rating.toString(),
-        "reviewCount": product.reviewCount.toString(),
-        "bestRating": "5",
-        "worstRating": "1"
-      }
-    } : {})
+    ...(product.rating != null &&
+    product.reviewCount != null &&
+    product.reviewCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: String(product.rating),
+            reviewCount: String(Math.round(product.reviewCount)),
+            bestRating: '5',
+            worstRating: '1',
+          },
+        }
+      : {})
   };
 
   return (

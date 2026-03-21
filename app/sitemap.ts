@@ -19,7 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   // Static URLs first so Google still gets core pages if MongoDB is unavailable.
-  // Omit /cart (blocked in robots.txt) and /sale (layout sets noindex — conflicts with sitemap).
+  // Omit /cart (blocked in robots.txt), /sale (layout sets noindex), /checkout and /studio/checkout
+  // (transactional flows — not listed here; see robots.txt).
   sitemapEntries.push(
     {
       url: baseUrl,
@@ -62,6 +63,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.55,
+    },
+    {
+      url: `${baseUrl}/studio`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.78,
     },
     {
       url: `${baseUrl}/about`,

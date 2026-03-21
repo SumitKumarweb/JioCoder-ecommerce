@@ -26,17 +26,44 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com";
+
 const baseMetadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: "JioCoder",
   title: {
     default: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
     template: "%s | JioCoder",
   },
-  description: "Shop premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping, authentic products, and expert support for your perfect setup.",
-  keywords: ["mechanical keyboards", "gaming peripherals", "keycaps", "gaming mice", "custom cables", "India", "keyboard accessories"],
-  authors: [{ name: "JioCoder" }],
+  description:
+    "Shop premium mechanical keyboards, gaming mice, keycaps, custom cables, and JioCoder Studio custom desk mats. Fast India-wide shipping, authentic gaming peripherals, and expert support.",
+  keywords: [
+    "mechanical keyboards India",
+    "gaming keyboards",
+    "gaming mice",
+    "keycaps",
+    "custom cables",
+    "desk mat",
+    "custom mouse pad India",
+    "JioCoder Studio",
+    "gaming peripherals",
+    "buy keyboard online India",
+  ],
+  authors: [{ name: "JioCoder", url: siteUrl.replace(/\/$/, "") }],
   creator: "JioCoder",
   publisher: "JioCoder",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com"),
+  manifest: "/site.webmanifest",
+  referrer: "origin-when-cross-origin",
+  formatDetection: {
+    telephone: false,
+  },
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -62,6 +89,10 @@ const baseMetadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png",
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
   robots: {
     index: true,
     follow: true,

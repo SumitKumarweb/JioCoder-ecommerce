@@ -113,8 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             currency: product.currency || 'INR',
             inStock: product.inStock,
             category: product.category,
-            rating: 4.8, // Default rating, can be updated when review system is implemented
-            reviewCount: 1240, // Default review count
+            // aggregateRating omitted until reviews are stored on the product model
           }}
           url={`/product/${product.slug || id}`}
         />

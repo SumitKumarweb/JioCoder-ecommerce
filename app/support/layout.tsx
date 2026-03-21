@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { WebPageSchema } from '@/components/schemas';
+import { WebPageSchema, FAQPageSchema } from '@/components/schemas';
+import { SUPPORT_FAQ_ITEMS } from '@/lib/seo/supportFaq';
 
 export const metadata: Metadata = {
   title: 'Help & Support',
@@ -48,6 +49,7 @@ export default function SupportLayout({
         name="Help & Support - JioCoder"
         description="Get help with your JioCoder orders, tracking, returns, warranty, and technical support."
       />
+      <FAQPageSchema items={SUPPORT_FAQ_ITEMS} />
       {children}
     </>
   );

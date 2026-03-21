@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { BreadcrumbSchema } from '@/components/schemas';
+import { SUPPORT_FAQ_ITEMS } from '@/lib/seo/supportFaq';
 
 const quickHelpItems = [
   {
@@ -43,25 +44,6 @@ const quickHelpItems = [
     icon: 'lock',
     title: 'Account Security',
     description: 'Secure your profile and update personal security settings.',
-  },
-];
-
-const faqItems = [
-  {
-    question: 'What is the return window for high-end electronics?',
-    href: '#',
-  },
-  {
-    question: 'How do I track my international shipment?',
-    href: '#',
-  },
-  {
-    question: 'Are there any installation charges for appliances?',
-    href: '#',
-  },
-  {
-    question: 'Can I change my delivery address after shipping?',
-    href: '#',
   },
 ];
 
@@ -223,19 +205,25 @@ export default function SupportPage() {
           </div>
         </section>
 
-        {/* FAQ Quick Links */}
-        <section className="mt-20 pt-10 border-t border-slate-200">
-          <h2 className="text-xl font-bold mb-6">Frequently Asked Questions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-            {faqItems.map((faq, index) => (
-              <Link
+        {/* FAQ — copy matches JSON-LD in layout for search & AI consistency */}
+        <section className="mt-20 pt-10 border-t border-slate-200" id="faq">
+          <h2 className="text-xl font-bold mb-6">Frequently asked questions</h2>
+          <div className="space-y-3 max-w-3xl">
+            {SUPPORT_FAQ_ITEMS.map((faq, index) => (
+              <details
                 key={index}
-                href={faq.href}
-                className="flex items-center justify-between py-3 border-b border-slate-100 hover:text-primary transition-colors"
+                className="group rounded-xl border border-slate-200 bg-white px-4 py-3 open:shadow-sm"
               >
-                <span className="text-sm">{faq.question}</span>
-                <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-              </Link>
+                <summary className="cursor-pointer list-none font-semibold text-slate-900 flex items-center justify-between gap-2">
+                  <span>{faq.question}</span>
+                  <span className="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform shrink-0">
+                    expand_more
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                  {faq.answer}
+                </p>
+              </details>
             ))}
           </div>
         </section>

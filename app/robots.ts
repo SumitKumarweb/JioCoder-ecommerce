@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           '/nimda-pro-sumit/',
           '/api/',
           '/checkout/',
+          '/studio/checkout/',
           '/cart',
           '/profile/',
           '/sale-modal/',

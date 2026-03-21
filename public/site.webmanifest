@@ -1,0 +1,20 @@
+{
+  "name": "JioCoder — Mechanical keyboards & gaming peripherals",
+  "short_name": "JioCoder",
+  "description": "Shop mechanical keyboards, gaming mice, keycaps, cables, and JioCoder Studio custom desk mats with India-wide shipping.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "games"]
+}

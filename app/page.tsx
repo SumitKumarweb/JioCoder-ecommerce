@@ -14,7 +14,6 @@ import CompareNotification from "@/components/CompareNotification";
 import SaleModal from "@/components/SaleModal";
 import { MetadataManager } from "@/lib/metadata-manager";
 import { BreadcrumbSchema, WebPageSchema } from "@/components/schemas";
-import { getSiteUrl } from "@/lib/seo/getSiteUrl";
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataManager = new MetadataManager();
@@ -25,7 +24,18 @@ export async function generateMetadata(): Promise<Metadata> {
     description: pageMetadata.metaDescription || 
       "Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables at JioCoder. Shop trending products, best sellers, and authentic gear with fast India-wide shipping.",
     keywords: pageMetadata.metaKeywords?.split(',').map((k: string) => k.trim()) || 
-      ["mechanical keyboards", "gaming mice", "keycaps", "custom cables", "gaming peripherals", "India keyboard store"],
+      [
+        "mechanical keyboards India",
+        "gaming keyboards",
+        "gaming mice",
+        "keycaps",
+        "custom cables",
+        "desk mat",
+        "custom mouse pad",
+        "JioCoder Studio",
+        "gaming peripherals",
+        "buy mechanical keyboard online India",
+      ],
     openGraph: {
       title: pageMetadata.ogTitle || pageMetadata.metaTitle || "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
       description: pageMetadata.ogDescription || pageMetadata.metaDescription || 
@@ -40,34 +50,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function Home() {
-  const siteUrl = getSiteUrl();
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Store",
-    name: "JioCoder",
-    description: "Premium mechanical keyboards, gaming mice, keycaps, and custom cables",
-    url: siteUrl,
-    logo: `${siteUrl}/logo.png`,
-    address: {
-      "@type": "PostalAddress",
-      addressCountry: "IN",
-    },
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "INR",
-    },
-  };
-
   return (
     <>
       <WebPageSchema
         path="/"
         name="JioCoder - Premium Mechanical Keyboards & Gaming Peripherals"
-        description="Discover premium mechanical keyboards, gaming mice, keycaps, and custom cables with fast India-wide shipping."
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        description="Discover premium mechanical keyboards, gaming mice, keycaps, custom cables, and JioCoder Studio custom desk mats with fast India-wide shipping."
       />
       <BreadcrumbSchema
         items={[

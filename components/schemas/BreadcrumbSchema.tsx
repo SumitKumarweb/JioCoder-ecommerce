@@ -1,3 +1,5 @@
+import { getSiteUrl } from '@/lib/seo/getSiteUrl';
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -8,19 +10,25 @@ interface BreadcrumbSchemaProps {
 }
 
 export default function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com';
+  const baseUrl = getSiteUrl();
 
   const schema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.label,
-      "item": item.href 
-        ? (item.href.startsWith('http') ? item.href : `${baseUrl}${item.href}`)
-        : undefined
-    })).filter(item => item.item !== undefined) // Only include items with URLs
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => {
+      const position = index + 1;
+      const path = item.href
+        ? item.href.startsWith('http')
+          ? item.href
+          : `${baseUrl}${item.href.startsWith('/') ? item.href : `/${item.href}`}`
+        : undefined;
+      return {
+        '@type': 'ListItem',
+        position,
+        name: item.label,
+        ...(path ? { item: path } : {}),
+      };
+    }),
   };
 
   return (

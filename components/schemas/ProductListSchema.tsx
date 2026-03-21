@@ -1,3 +1,5 @@
+import { getSiteUrl } from '@/lib/seo/getSiteUrl';
+
 interface Product {
   id: string;
   name: string;
@@ -62,13 +64,17 @@ export default function ProductListSchema({
         ...(product.category ? {
           "category": product.category
         } : {}),
-        ...(product.rating && product.reviewCount ? {
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": product.rating.toString(),
-            "reviewCount": product.reviewCount.toString()
-          }
-        } : {})
+        ...(product.rating != null &&
+        product.reviewCount != null &&
+        product.reviewCount > 0
+          ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: String(product.rating),
+                reviewCount: String(Math.round(product.reviewCount)),
+              },
+            }
+          : {})
       }
     }))
   };

@@ -7,9 +7,10 @@ export default function OrganizationSchema() {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
+        '@type': ['Organization', 'OnlineStore'],
         '@id': `${baseUrl}/#organization`,
         name: 'JioCoder',
+        alternateName: ['JioCoder India', 'jiocoder.com'],
         url: baseUrl,
         logo: {
           '@type': 'ImageObject',
@@ -20,7 +21,8 @@ export default function OrganizationSchema() {
         },
         image: { '@id': `${baseUrl}/#logo` },
         description:
-          "Premium mechanical keyboards, gaming mice, keycaps, and custom cables. India's leading destination for authentic gaming peripherals with fast nationwide shipping.",
+          'JioCoder is an India-focused online store for mechanical keyboards, gaming mice, keycaps, custom cables, and desk accessories—plus JioCoder Studio for custom-printed desk mats and large mouse pads with fast nationwide shipping.',
+        slogan: 'Premium mechanical keyboards & gaming peripherals, shipped across India.',
         address: {
           '@type': 'PostalAddress',
           addressCountry: 'IN',
@@ -31,15 +33,13 @@ export default function OrganizationSchema() {
             contactType: 'customer service',
             areaServed: 'IN',
             availableLanguage: ['en', 'hi'],
+            url: `${baseUrl}/support`,
           },
         ],
         sameAs: [
-          // Add verified social profiles once available:
+          // Add verified social profiles when live (improves Knowledge Graph):
           // 'https://www.instagram.com/jiocoder',
-          // 'https://twitter.com/jiocoder',
-          // 'https://www.facebook.com/jiocoder',
-          // 'https://www.youtube.com/@jiocoder',
-          // 'https://www.linkedin.com/company/jiocoder',
+          // 'https://x.com/jiocoder',
         ],
         foundingDate: '2024',
         numberOfEmployees: {
@@ -48,16 +48,26 @@ export default function OrganizationSchema() {
           maxValue: 50,
         },
         knowsAbout: [
-          'Mechanical Keyboards',
-          'Gaming Peripherals',
-          'Keycaps',
-          'Custom Cables',
-          'Gaming Mice',
+          'Mechanical keyboards',
+          'Gaming keyboards India',
+          'Hot-swappable keyboards',
+          'Gaming mice',
+          'Keycaps PBT ABS',
+          'Custom coiled cables',
+          'Desk mats',
+          'Extended mouse pads',
+          'Custom printed mouse pad',
+          'Gaming peripherals',
+          'PC gaming accessories',
+          'JioCoder Studio custom desk mat',
         ],
         areaServed: {
           '@type': 'Country',
           name: 'India',
         },
+        priceRange: '₹₹',
+        currenciesAccepted: 'INR',
+        paymentAccepted: 'Credit Card, Debit Card, UPI, Net Banking, Wallets',
       },
       {
         '@type': 'WebSite',
@@ -65,8 +75,9 @@ export default function OrganizationSchema() {
         url: baseUrl,
         name: 'JioCoder',
         description:
-          'Premium mechanical keyboards, gaming mice, keycaps, and custom cables.',
+          'Shop mechanical keyboards, gaming mice, keycaps, cables, and custom desk mats. Use JioCoder Studio to design your own mouse pad.',
         publisher: { '@id': `${baseUrl}/#organization` },
+        about: { '@id': `${baseUrl}/#organization` },
         potentialAction: {
           '@type': 'SearchAction',
           target: {
@@ -75,7 +86,7 @@ export default function OrganizationSchema() {
           },
           'query-input': 'required name=search_term_string',
         },
-        inLanguage: 'en-IN',
+        inLanguage: ['en-IN', 'en'],
       },
     ],
   };
