@@ -100,6 +100,11 @@ export default function Footer() {
                 Coder Community
               </Link>
             </li>
+            <li>
+              <Link className="hover:text-white transition-colors" href="/studio">
+                Design Studio
+              </Link>
+            </li>
           </ul>
         </div>
 
