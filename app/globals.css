@@ -377,3 +377,280 @@ details[open] .faq-icon {
     display: none !important;
   }
 }
+
+/* ─── /code developer zone — IDE / terminal aesthetic ─── */
+@keyframes code-grid-drift {
+  0% {
+    transform: perspective(800px) rotateX(60deg) translateY(0);
+  }
+  100% {
+    transform: perspective(800px) rotateX(60deg) translateY(48px);
+  }
+}
+
+@keyframes code-aurora {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    opacity: 0.65;
+    transform: translate(4%, -3%) scale(1.05);
+  }
+  66% {
+    opacity: 0.5;
+    transform: translate(-3%, 2%) scale(0.98);
+  }
+}
+
+@keyframes code-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes code-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes code-pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.18), 0 0 48px rgba(74, 222, 128, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(52, 211, 153, 0.28), 0 0 64px rgba(163, 230, 53, 0.12);
+  }
+}
+
+@keyframes code-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes code-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.code-dev-root {
+  --code-accent: #4ade80;
+  --code-accent-bright: #86efac;
+  --code-accent-dim: rgba(74, 222, 128, 0.4);
+  --code-green-deep: rgba(16, 185, 129, 0.35);
+  --code-violet: rgba(52, 211, 153, 0.15);
+}
+
+/* Playground editor + terminal — “cyber” scrollbar (Firefox + WebKit) */
+.scrollbar-code-dev {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(134, 239, 172, 0.75) rgba(4, 24, 16, 0.75);
+}
+
+.scrollbar-code-dev::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+.scrollbar-code-dev::-webkit-scrollbar-track {
+  margin-block: 4px;
+  margin-inline: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 28, 18, 0.92) 0%,
+    rgba(2, 12, 8, 0.96) 50%,
+    rgba(4, 20, 14, 0.94) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(52, 211, 153, 0.14),
+    inset 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+.scrollbar-code-dev::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(
+    165deg,
+    #d9f99d 0%,
+    #4ade80 38%,
+    #059669 72%,
+    #047857 100%
+  );
+  border: 2px solid rgba(2, 10, 7, 0.92);
+  box-shadow:
+    0 0 14px rgba(74, 222, 128, 0.4),
+    0 0 28px rgba(34, 197, 94, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease,
+    background 0.2s ease;
+}
+
+.scrollbar-code-dev::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.12) saturate(1.05);
+  box-shadow:
+    0 0 18px rgba(190, 244, 156, 0.55),
+    0 0 36px rgba(74, 222, 128, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.scrollbar-code-dev::-webkit-scrollbar-thumb:active {
+  filter: brightness(0.95);
+}
+
+.scrollbar-code-dev::-webkit-scrollbar-corner {
+  background: rgba(2, 10, 7, 0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollbar-code-dev::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}
+
+.code-dev-grid-layer {
+  position: absolute;
+  inset: -50%;
+  background-image:
+    linear-gradient(rgba(74, 222, 128, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: code-grid-drift 22s linear infinite;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+  pointer-events: none;
+}
+
+.code-dev-aurora {
+  position: absolute;
+  width: 140%;
+  height: 80%;
+  top: -20%;
+  left: -20%;
+  background:
+    radial-gradient(ellipse at 18% 28%, rgba(74, 222, 128, 0.22), transparent 52%),
+    radial-gradient(ellipse at 82% 22%, rgba(34, 197, 94, 0.18), transparent 48%),
+    radial-gradient(ellipse at 55% 78%, rgba(163, 230, 53, 0.12), transparent 42%),
+    radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.06), transparent 55%);
+  animation: code-aurora 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.code-dev-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, transparent 0%, #030712 82%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(5, 46, 22, 0.35), transparent 55%);
+  pointer-events: none;
+}
+
+.code-dev-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.code-animate-in {
+  animation: code-fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.code-card-hover {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.code-card-hover:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+.code-title-shimmer {
+  background: linear-gradient(
+    105deg,
+    #ecfdf5 0%,
+    #4ade80 18%,
+    #a3e635 38%,
+    #34d399 58%,
+    #86efac 78%,
+    #f0fdf4 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: code-shimmer 8s linear infinite;
+}
+
+.dark .code-title-shimmer {
+  background: linear-gradient(
+    105deg,
+    #f0fdf4 0%,
+    #4ade80 20%,
+    #bef264 40%,
+    #22c55e 60%,
+    #86efac 82%,
+    #ecfdf5 100%
+  );
+  background-size: 240% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.code-cursor-blink::after {
+  content: '▍';
+  animation: code-blink 1s step-end infinite;
+  color: var(--code-accent);
+  margin-left: 2px;
+}
+
+.code-track-icon-float {
+  animation: code-float 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-dev-grid-layer,
+  .code-dev-aurora,
+  .code-title-shimmer,
+  .code-cursor-blink::after {
+    animation: none !important;
+  }
+  .code-animate-in {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .code-card-hover:hover {
+    transform: none;
+  }
+  .code-track-icon-float {
+    animation: none !important;
+  }
+  .code-hub-ping {
+    display: none !important;
+  }
+}

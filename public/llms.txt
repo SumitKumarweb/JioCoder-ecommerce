@@ -19,7 +19,8 @@
 - [Blog](https://www.jiocoder.com/blog): Guides and keyboard content.
 - [Support](https://www.jiocoder.com/support): Help, FAQ, and contact.
 - [About](https://www.jiocoder.com/about): Brand information.
-- [Learn to code](https://www.jiocoder.com/code): Hub for JS, web front-end, Python, Java, C, C++, C# (topics + examples).
+- [Learn to code](https://www.jiocoder.com/code): Hub for JS, web front-end, Python, Java, C, C++, C#.
+- Language playbooks (e.g. `/code/python`, `/code/javascript`): **editor + Run** with a terminal; HTML uses a **live preview**; JavaScript runs in the browser; Python uses **Pyodide** in the browser; Java/C/C++/C# show **local run guidance** (no remote execution).
 
 ## Product scope (non-exhaustive)
 

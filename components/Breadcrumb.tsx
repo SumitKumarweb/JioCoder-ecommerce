@@ -13,6 +13,11 @@ interface BreadcrumbProps {
   autoGenerate?: boolean;
   collectionName?: string;
   productName?: string;
+  /** Override nav wrapper (e.g. dark code zone) */
+  className?: string;
+  linkClassName?: string;
+  activeClassName?: string;
+  separatorClassName?: string;
 }
 
 // Route to collection name mapping
@@ -26,7 +31,16 @@ const routeToCollectionName: Record<string, string> = {
   compare: 'Compare',
 };
 
-export default function Breadcrumb({ items, autoGenerate = false, collectionName, productName }: BreadcrumbProps) {
+export default function Breadcrumb({
+  items,
+  autoGenerate = false,
+  collectionName,
+  productName,
+  className,
+  linkClassName = 'hover:text-primary transition-colors',
+  activeClassName = 'text-primary font-bold',
+  separatorClassName = 'text-slate-400',
+}: BreadcrumbProps) {
   const pathname = usePathname();
 
   // Auto-generate breadcrumbs from pathname if enabled
@@ -88,24 +102,25 @@ export default function Breadcrumb({ items, autoGenerate = false, collectionName
     return null;
   }
 
+  const navClass =
+    className ??
+    'flex items-center gap-2 text-xs font-medium text-slate-500 mb-6';
+
   return (
-    <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-6">
+    <nav className={navClass}>
       {breadcrumbItems.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
           {index > 0 && (
-            <span className="material-symbols-outlined text-sm text-slate-400">
+            <span className={`material-symbols-outlined text-sm ${separatorClassName}`}>
               chevron_right
             </span>
           )}
           {item.href ? (
-            <Link
-              className="hover:text-primary transition-colors"
-              href={item.href}
-            >
+            <Link className={linkClassName} href={item.href}>
               {item.label}
             </Link>
           ) : (
-            <span className="text-primary font-bold">{item.label}</span>
+            <span className={activeClassName}>{item.label}</span>
           )}
         </div>
       ))}

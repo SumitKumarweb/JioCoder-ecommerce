@@ -6,6 +6,9 @@ import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { BreadcrumbSchema, WebPageSchema } from '@/components/schemas';
 import { getAllCodeSlugs, getCodeTrack } from '@/lib/code/codeTracks';
+import CodeDevBackdrop from '@/components/code/CodeDevBackdrop';
+import CodePlayground from '@/components/code/CodePlayground';
+import { getPlaygroundRuntime } from '@/lib/code/playgroundConfig';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,24 +24,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   const path = `/code/${track.slug}`;
   return {
-    title: `${track.title} — Learn`,
-    description: track.description,
+    title: `${track.title} — Playground`,
+    description: `Write and run ${track.title} in the browser. ${track.tagline}`,
     keywords: [
       `learn ${track.title}`,
-      `${track.title} tutorial`,
+      `${track.title} playground`,
       'JioCoder',
-      'programming India',
+      'online code runner',
     ],
     alternates: { canonical: path },
     openGraph: {
-      title: `${track.title} — JioCoder Code`,
-      description: track.tagline + '. ' + track.description,
+      title: `${track.title} — JioCoder Playground`,
+      description: track.tagline,
       url: path,
-      type: 'article',
+      type: 'website',
     },
     robots: { index: true, follow: true },
   };
 }
+
+const bcNav =
+  'flex items-center gap-2 text-xs font-mono text-slate-500 mb-0 pt-4 pb-3';
+const bcLink = 'text-emerald-400/90 hover:text-lime-300 transition-colors';
+const bcActive = 'text-lime-100 font-semibold';
+const bcSep = 'text-emerald-800/40';
 
 export default async function CodeTrackPage({ params }: Props) {
   const { slug } = await params;
@@ -46,6 +55,9 @@ export default async function CodeTrackPage({ params }: Props) {
   if (!track) notFound();
 
   const path = `/code/${track.slug}`;
+  const playground = getPlaygroundRuntime(slug);
+  const editorFilename = playground?.filename ?? track.sample.filename;
+
   const related = track.related
     .map((s) => getCodeTrack(s))
     .filter(Boolean) as NonNullable<ReturnType<typeof getCodeTrack>>[];
@@ -54,8 +66,8 @@ export default async function CodeTrackPage({ params }: Props) {
     <>
       <WebPageSchema
         path={path}
-        name={`${track.title} — Learn to code`}
-        description={track.description}
+        name={`${track.title} — Code playground`}
+        description={`Write and run ${track.title} code with a live terminal.`}
       />
       <BreadcrumbSchema
         items={[
@@ -64,116 +76,95 @@ export default async function CodeTrackPage({ params }: Props) {
           { label: track.title },
         ]}
       />
-      <Navbar />
-      <main className="max-w-[900px] mx-auto w-full min-w-0 px-4 md:px-8 py-8 md:py-12">
-        <Breadcrumb
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Code', href: '/code' },
-            { label: track.title },
-          ]}
-        />
+      {/* Viewport-height main: playground fills space below navbar */}
+      <div className="flex min-h-dvh flex-col overflow-x-hidden bg-[#030712] text-slate-200">
+        <Navbar />
+        <div className="code-dev-root relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <CodeDevBackdrop />
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-4 pt-0 sm:px-6 md:px-10 lg:px-12">
+            <div className="flex min-h-0 w-full min-w-0  flex-1 flex-col">
+          <div className="shrink-0">
+            <Breadcrumb
+              items={[
+                { label: 'Home', href: '/' },
+                { label: 'Code', href: '/code' },
+                { label: track.title },
+              ]}
+              className={bcNav}
+              linkClassName={bcLink}
+              activeClassName={bcActive}
+              separatorClassName={bcSep}
+            />
+          </div>
 
-        <header className="mt-6">
           <Link
             href="/code"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"
+            className="mb-4 inline-flex max-w-fit shrink-0 items-center gap-2 rounded-lg border border-emerald-500/35 bg-emerald-950/40 px-4 py-2.5 text-xs font-mono text-lime-300/95 hover:bg-emerald-900/50 hover:border-lime-400/40 hover:shadow-[0_0_24px_-6px_rgba(74,222,128,0.25)] transition-all md:mb-5"
           >
-            <span className="material-symbols-outlined text-lg">arrow_back</span>
-            All tracks
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            All languages
           </Link>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span
-              className={`size-14 rounded-2xl bg-gradient-to-br ${track.accent} border ${track.borderAccent} flex items-center justify-center text-slate-800 dark:text-slate-100`}
+
+          <header className="mb-4 flex shrink-0 flex-wrap items-start gap-4 md:mb-5 md:gap-6">
+            <div
+              className={`code-track-icon-float relative flex size-14 md:size-16 shrink-0 items-center justify-center rounded-2xl border bg-gradient-to-br ${track.accent} ${track.borderAccent} shadow-[0_0_48px_-6px_rgba(74,222,128,0.35)]`}
             >
-              <span className="material-symbols-outlined text-3xl">{track.icon}</span>
-            </span>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {track.title}
+              <span className="material-symbols-outlined text-3xl md:text-4xl text-white/90 drop-shadow-lg">
+                {track.icon}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="font-mono text-xs text-emerald-500/85 tracking-wide">playground /{track.slug}</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-white leading-tight">
+                <span className="code-title-shimmer">{track.title}</span>
               </h1>
-              <p className="text-slate-600 dark:text-slate-300 mt-1">{track.tagline}</p>
+              <p className="text-sm md:text-base text-lime-300/80 font-medium">{track.tagline}</p>
+              <p className="text-xs text-slate-500 pt-1 max-w-2xl leading-relaxed">
+                {playground?.execution === 'html-preview'
+                  ? 'Edit markup on the left — Run refreshes the live preview. Scripts run in a sandboxed iframe.'
+                  : playground?.execution === 'pyodide'
+                    ? 'Write code and use Run. Python runs in your browser with Pyodide (first run may download ~10MB).'
+                    : playground?.execution === 'browser-js'
+                      ? 'Write code and use Run. JavaScript runs in a sandboxed iframe; output appears in the terminal.'
+                      : playground?.execution === 'local-guide'
+                        ? 'Use Run for compile/run steps and tips. Copy code to your machine or an online IDE to execute it.'
+                        : 'Write code and use Run; output appears in the terminal.'}
+              </p>
+            </div>
+          </header>
+
+          <CodePlayground slug={slug} filename={editorFilename} fullViewport />
+
             </div>
           </div>
-          <p className="mt-5 text-slate-600 dark:text-slate-300 leading-relaxed">{track.description}</p>
-        </header>
+        </div>
+      </div>
 
-        <section className="mt-10" aria-labelledby="topics-heading">
-          <h2 id="topics-heading" className="text-xl font-bold text-slate-900 dark:text-white">
-            What you&apos;ll cover
-          </h2>
-          <ol className="mt-4 space-y-4 list-none p-0">
-            {track.topics.map((topic, i) => (
-              <li
-                key={topic.name}
-                className="flex gap-4 rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900/60 p-4 md:p-5"
-              >
-                <span
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-200"
-                  aria-hidden
-                >
-                  {i + 1}
-                </span>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{topic.name}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                    {topic.summary}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="mt-10" aria-labelledby="sample-heading">
-          <h2 id="sample-heading" className="text-xl font-bold text-slate-900 dark:text-white">
-            Starter example
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-            Copy into your editor or IDE and run when you&apos;re ready — adjust names and values to experiment.
-          </p>
-          <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-950 text-slate-100">
-            <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-slate-800 bg-slate-900/80">
-              <span className="text-xs font-mono text-slate-400">{track.sample.filename}</span>
-            </div>
-            <pre className="p-4 text-xs md:text-sm overflow-x-auto font-mono leading-relaxed whitespace-pre">
-              <code>{track.sample.code}</code>
-            </pre>
+      {related.length > 0 && (
+        <div className="bg-[#030712] text-slate-200">
+          <div className="mx-auto max-w-[1100px] px-5 py-12 sm:px-6 md:px-10 lg:px-12 md:py-16">
+            <section className="border-t border-emerald-500/15 pt-10" aria-labelledby="related-heading">
+              <h2 id="related-heading" className="text-sm font-bold text-emerald-500/90 font-mono mb-4">
+                Other languages
+              </h2>
+              <ul className="flex flex-wrap gap-2 md:gap-3 list-none p-0">
+                {related.map((r) => (
+                  <li key={r.slug}>
+                    <Link
+                      href={`/code/${r.slug}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/25 px-3 py-2 text-xs font-medium text-slate-200 hover:border-lime-400/40 hover:text-lime-50 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-lime-400 text-base">{r.icon}</span>
+                      {r.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
-        </section>
+        </div>
+      )}
 
-        <section className="mt-10" aria-labelledby="prereq-heading">
-          <h2 id="prereq-heading" className="text-xl font-bold text-slate-900 dark:text-white">
-            Before you start
-          </h2>
-          <ul className="mt-3 list-disc pl-5 text-slate-600 dark:text-slate-300 space-y-1">
-            {track.prerequisites.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        </section>
-
-        {related.length > 0 && (
-          <section className="mt-12 pt-10 border-t border-slate-200 dark:border-slate-700" aria-labelledby="related-heading">
-            <h2 id="related-heading" className="text-lg font-bold text-slate-900 dark:text-white">
-              Related tracks
-            </h2>
-            <ul className="mt-4 flex flex-wrap gap-2 list-none p-0">
-              {related.map((r) => (
-                <li key={r.slug}>
-                  <Link
-                    href={`/code/${r.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-base text-slate-500">{r.icon}</span>
-                    {r.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </main>
       <Footer />
     </>
   );
