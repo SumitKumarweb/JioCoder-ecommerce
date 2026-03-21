@@ -9,10 +9,13 @@ type AccountSidebarProps = {
 export default function AccountSidebar({ activeKey }: AccountSidebarProps) {
   const router = useRouter();
 const handleLogout = () => {
-  localStorage.removeItem("userToken");
-  localStorage.removeItem("userId");
-
-  router.push("/login");
+  localStorage.removeItem('userToken');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userAvatar');
+  localStorage.removeItem('appliedCoupon');
+  router.push('/login');
 };
   const linkClass = (key: AccountSidebarProps['activeKey']) =>
     key === activeKey

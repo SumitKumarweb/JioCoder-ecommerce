@@ -71,15 +71,23 @@ export default function OrderSuccessPage() {
           addressType: formData.addressType,
         };
 
-        // Create order via API
+        const loggedInUserId = localStorage.getItem('userId');
+        const storedEmail = localStorage.getItem('userEmail')?.trim();
+        const mobile = String(formData.mobile || '').replace(/\s/g, '');
+        const customerEmail =
+          storedEmail ||
+          (mobile ? `${mobile}@jiocoder.user` : 'guest@jiocoder.com');
+
+        // Create order via API (links to account when logged in)
         const response = await fetch('/api/orders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            userId: loggedInUserId || undefined,
             customerName: formData.fullName,
-            customerEmail: formData.mobile ? `${formData.mobile}@example.com` : 'customer@example.com',
+            customerEmail,
             items: orderItems,
             total: paymentData.finalTotal,
             currency: 'INR',

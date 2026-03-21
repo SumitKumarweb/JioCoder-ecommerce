@@ -16,7 +16,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let userRef: mongoose.Types.ObjectId | undefined;
+    if (body.userId && mongoose.isValidObjectId(String(body.userId))) {
+      userRef = new mongoose.Types.ObjectId(String(body.userId));
+    }
+
     const order = await Order.create({
+      ...(userRef ? { user: userRef } : {}),
       customerName: body.customerName,
       customerEmail: body.customerEmail,
       items: body.items.map((item: any) => {
@@ -73,8 +79,17 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
+    const email = searchParams.get("email")?.trim().toLowerCase();
 
-    const query = userId ? { user: userId } : {};
+    const query: Record<string, unknown> = {};
+    if (userId && mongoose.isValidObjectId(userId)) {
+      query.user = userId;
+    } else if (email) {
+      query.customerEmail = email;
+    } else {
+      // Avoid returning every order when no filter is provided
+      return NextResponse.json([]);
+    }
     const orders = await Order.find(query)
       .sort({ createdAt: -1 })
       .limit(50)
