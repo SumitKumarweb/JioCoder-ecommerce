@@ -5,6 +5,7 @@ import Product from '@/models/Product';
 import Blog from '@/models/Blog';
 import CareerJob from '@/models/CareerJob';
 import CoderCommunityGroup from '@/models/CoderCommunityGroup';
+import { getAllCodeSlugs } from '@/lib/code/codeTracks';
 
 // Revalidate sitemap every hour (3600 seconds)
 // This ensures new products, collections, and blogs are included within 1 hour
@@ -87,7 +88,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.6,
-    }
+    },
+    {
+      url: `${baseUrl}/code`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.62,
+    },
+    ...getAllCodeSlugs().map((slug) => ({
+      url: `${baseUrl}/code/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.55,
+    }))
   );
 
   try {

@@ -105,6 +105,11 @@ export default function Footer() {
                 Design Studio
               </Link>
             </li>
+            <li>
+              <Link className="hover:text-white transition-colors" href="/code">
+                Learn to code
+              </Link>
+            </li>
           </ul>
         </div>
 

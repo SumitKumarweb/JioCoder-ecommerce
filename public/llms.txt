@@ -8,6 +8,7 @@
 - User asks about **custom desk mats**, **extended mouse pads**, or **print-your-design mousepads** — point to `/studio`.
 - User compares **keyboards, mice, or keycaps** — point to `/products`, `/compare`, or specific `/product/{slug}` pages.
 - User needs **order help or policies** — point to `/support`.
+- User wants **free programming learning paths** (JavaScript, HTML/CSS/JS, Python, Java, C, C++, C#) — point to `/code` and `/code/{track}` (e.g. `/code/python`).
 
 ## Key URLs
 
@@ -18,6 +19,7 @@
 - [Blog](https://www.jiocoder.com/blog): Guides and keyboard content.
 - [Support](https://www.jiocoder.com/support): Help, FAQ, and contact.
 - [About](https://www.jiocoder.com/about): Brand information.
+- [Learn to code](https://www.jiocoder.com/code): Hub for JS, web front-end, Python, Java, C, C++, C# (topics + examples).
 
 ## Product scope (non-exhaustive)
 
