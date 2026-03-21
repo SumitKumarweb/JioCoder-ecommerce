@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 interface ProductFiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -13,7 +13,7 @@ export interface FilterState {
   inStockOnly: boolean;
 }
 
-const brands = [
+const BRANDS = [
   { name: 'Logitech', count: 42 },
   { name: 'Keychron', count: 28 },
   { name: 'Razer', count: 15 },
@@ -21,163 +21,335 @@ const brands = [
   { name: 'TVS Gold', count: 4 },
 ];
 
-export default function ProductFilters({ onFilterChange }: ProductFiltersProps) {
-  const [priceRange, setPriceRange] = useState<[number, number]>([500, 50000]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(['Logitech']);
-  const [minRating, setMinRating] = useState<number>(0);
-  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+const RATING_OPTIONS = [5, 4, 3, 2];
 
-  const handlePriceChange = (value: number) => {
-    const newRange: [number, number] = [500, value];
-    setPriceRange(newRange);
-    updateFilters({ priceRange: newRange, brands: selectedBrands, minRating, inStockOnly });
-  };
+const MIN_PRICE = 500;
+const MAX_PRICE = 50000;
 
-  const handleBrandToggle = (brand: string) => {
-    const newBrands = selectedBrands.includes(brand)
-      ? selectedBrands.filter((b) => b !== brand)
-      : [...selectedBrands, brand];
-    setSelectedBrands(newBrands);
-    updateFilters({ priceRange, brands: newBrands, minRating, inStockOnly });
-  };
-
-  const handleRatingClick = (rating: number) => {
-    const newRating = minRating === rating ? 0 : rating;
-    setMinRating(newRating);
-    updateFilters({ priceRange, brands: selectedBrands, minRating: newRating, inStockOnly });
-  };
-
-  const handleStockToggle = () => {
-    const newStock = !inStockOnly;
-    setInStockOnly(newStock);
-    updateFilters({ priceRange, brands: selectedBrands, minRating, inStockOnly: newStock });
-  };
-
-  const updateFilters = (filters: FilterState) => {
-    onFilterChange(filters);
-  };
-
-  const clearAllFilters = () => {
-    setPriceRange([500, 50000]);
-    setSelectedBrands([]);
-    setMinRating(0);
-    setInStockOnly(false);
-    updateFilters({ priceRange: [500, 50000], brands: [], minRating: 0, inStockOnly: false });
-  };
-
+function StarRow({ filled, total = 5 }: { filled: number; total?: number }) {
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 space-y-6 sm:space-y-8">
-      {/* Price Range */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
-          Price Range
-        </h3>
-        <div className="px-2">
-          <input
-            className="w-full accent-primary h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-            max={50000}
-            min={500}
-            step={500}
-            type="range"
-            value={priceRange[1]}
-            onChange={(e) => handlePriceChange(Number(e.target.value))}
-          />
-          <div className="flex justify-between mt-3 text-sm font-semibold">
-            <span>₹{priceRange[0].toLocaleString('en-IN')}</span>
-            <span>₹{priceRange[1].toLocaleString('en-IN')}+</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Brand */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
-          Brand
-        </h3>
-        <div className="space-y-3">
-          {brands.map((brand) => (
-            <label key={brand.name} className="flex items-center gap-3 cursor-pointer group">
-              <input
-                checked={selectedBrands.includes(brand.name)}
-                className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary/20 transition-all"
-                type="checkbox"
-                onChange={() => handleBrandToggle(brand.name)}
-              />
-              <span className="text-sm font-medium group-hover:text-primary transition-colors">
-                {brand.name} <span className="text-slate-400 ml-1">({brand.count})</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Rating */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
-          Rating
-        </h3>
-        <div className="space-y-3">
-          <button
-            onClick={() => handleRatingClick(4)}
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              minRating === 4 ? 'text-primary' : 'hover:text-primary'
-            }`}
-          >
-            <div className="flex text-yellow-400">
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg">star</span>
-            </div>
-            <span>& Up</span>
-          </button>
-          <button
-            onClick={() => handleRatingClick(3)}
-            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-              minRating === 3 ? 'text-primary' : 'hover:text-primary'
-            }`}
-          >
-            <div className="flex text-yellow-400">
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg fill-1">star</span>
-              <span className="material-symbols-outlined text-lg">star</span>
-              <span className="material-symbols-outlined text-lg">star</span>
-            </div>
-            <span>& Up</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Availability */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
-          Availability
-        </h3>
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <input
-            checked={inStockOnly}
-            className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary/20 transition-all"
-            type="checkbox"
-            onChange={handleStockToggle}
-          />
-          <span className="text-sm font-medium group-hover:text-primary transition-colors">
-            In Stock Only
-          </span>
-        </label>
-      </div>
-
-      {/* Clear Filters */}
-      <div className="pt-6 border-t border-slate-200">
-        <button
-          onClick={clearAllFilters}
-          className="w-full py-2.5 px-4 bg-primary/5 hover:bg-primary/10 text-primary font-bold rounded-xl transition-all text-sm"
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          className="material-symbols-outlined text-[18px] leading-none"
+          style={{
+            color: i < filled ? '#f59e0b' : '#cbd5e1',
+            fontVariationSettings: i < filled ? "'FILL' 1" : "'FILL' 0",
+          }}
         >
-          Clear All Filters
-        </button>
-      </div>
-    </aside>
+          star
+        </span>
+      ))}
+    </div>
   );
 }
 
+// Dual-thumb range slider
+function DualRangeSlider({
+  min,
+  max,
+  step,
+  valueMin,
+  valueMax,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  step: number;
+  valueMin: number;
+  valueMax: number;
+  onChange: (min: number, max: number) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const percent = (v: number) => ((v - min) / (max - min)) * 100;
+
+  return (
+    <div className="relative pt-1 pb-3 px-1">
+      {/* Track background */}
+      <div ref={trackRef} className="relative h-1.5 w-full bg-slate-200 rounded-full">
+        {/* Active fill */}
+        <div
+          className="absolute h-full bg-primary rounded-full"
+          style={{ left: `${percent(valueMin)}%`, right: `${100 - percent(valueMax)}%` }}
+        />
+      </div>
+
+      {/* Min thumb */}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={valueMin}
+        onChange={(e) => {
+          const v = Math.min(Number(e.target.value), valueMax - step);
+          onChange(v, valueMax);
+        }}
+        className="absolute inset-0 w-full h-1.5 opacity-0 cursor-pointer"
+        style={{ zIndex: valueMin > max - step ? 5 : 3 }}
+      />
+
+      {/* Max thumb */}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={valueMax}
+        onChange={(e) => {
+          const v = Math.max(Number(e.target.value), valueMin + step);
+          onChange(valueMin, v);
+        }}
+        className="absolute inset-0 w-full h-1.5 opacity-0 cursor-pointer"
+        style={{ zIndex: 4 }}
+      />
+
+      {/* Thumb indicators */}
+      <div
+        className="absolute top-0 w-4 h-4 -mt-[5px] bg-white border-2 border-primary rounded-full shadow-md pointer-events-none"
+        style={{ left: `calc(${percent(valueMin)}% - 8px)` }}
+      />
+      <div
+        className="absolute top-0 w-4 h-4 -mt-[5px] bg-white border-2 border-primary rounded-full shadow-md pointer-events-none"
+        style={{ left: `calc(${percent(valueMax)}% - 8px)` }}
+      />
+    </div>
+  );
+}
+
+export default function ProductFilters({ onFilterChange }: ProductFiltersProps) {
+  const [priceRange, setPriceRange] = useState<[number, number]>([MIN_PRICE, MAX_PRICE]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+
+  const emit = useCallback(
+    (overrides: Partial<FilterState>) => {
+      onFilterChange({
+        priceRange,
+        brands: selectedBrands,
+        minRating,
+        inStockOnly,
+        ...overrides,
+      });
+    },
+    [priceRange, selectedBrands, minRating, inStockOnly, onFilterChange]
+  );
+
+  const handlePriceChange = (lo: number, hi: number) => {
+    const next: [number, number] = [lo, hi];
+    setPriceRange(next);
+    emit({ priceRange: next });
+  };
+
+  const handleBrandToggle = (brand: string) => {
+    const next = selectedBrands.includes(brand)
+      ? selectedBrands.filter((b) => b !== brand)
+      : [...selectedBrands, brand];
+    setSelectedBrands(next);
+    emit({ brands: next });
+  };
+
+  const handleRatingClick = (rating: number) => {
+    const next = minRating === rating ? 0 : rating;
+    setMinRating(next);
+    emit({ minRating: next });
+  };
+
+  const handleStockToggle = () => {
+    const next = !inStockOnly;
+    setInStockOnly(next);
+    emit({ inStockOnly: next });
+  };
+
+  const clearAllFilters = () => {
+    setPriceRange([MIN_PRICE, MAX_PRICE]);
+    setSelectedBrands([]);
+    setMinRating(0);
+    setInStockOnly(false);
+    onFilterChange({ priceRange: [MIN_PRICE, MAX_PRICE], brands: [], minRating: 0, inStockOnly: false });
+  };
+
+  const activeCount =
+    (priceRange[0] !== MIN_PRICE || priceRange[1] !== MAX_PRICE ? 1 : 0) +
+    selectedBrands.length +
+    (minRating > 0 ? 1 : 0) +
+    (inStockOnly ? 1 : 0);
+
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+
+  return (
+    <aside className="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-lg text-slate-600">tune</span>
+          <span className="font-bold text-slate-800 text-sm">Filters</span>
+          {activeCount > 0 && (
+            <span className="bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {activeCount}
+            </span>
+          )}
+        </div>
+        {activeCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            className="text-xs text-primary font-semibold hover:underline"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {/* Price Range */}
+      <Section title="Price Range">
+        <DualRangeSlider
+          min={MIN_PRICE}
+          max={MAX_PRICE}
+          step={500}
+          valueMin={priceRange[0]}
+          valueMax={priceRange[1]}
+          onChange={handlePriceChange}
+        />
+        <div className="flex items-center justify-between gap-2 mt-1">
+          <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-center">
+            <p className="text-[10px] text-slate-400 font-medium">Min</p>
+            <p className="text-sm font-bold text-slate-800">₹{priceRange[0].toLocaleString('en-IN')}</p>
+          </div>
+          <div className="w-4 h-0.5 bg-slate-200 flex-shrink-0" />
+          <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-center">
+            <p className="text-[10px] text-slate-400 font-medium">Max</p>
+            <p className="text-sm font-bold text-slate-800">
+              ₹{priceRange[1].toLocaleString('en-IN')}{priceRange[1] === MAX_PRICE ? '+' : ''}
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Brand */}
+      <Section title="Brand">
+        <div className="space-y-2.5">
+          {BRANDS.map((brand) => {
+            const checked = selectedBrands.includes(brand.name);
+            return (
+              <label
+                key={brand.name}
+                className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-1.5 transition-colors ${
+                  checked ? 'bg-primary/5' : 'hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 transition-colors ${
+                    checked ? 'bg-primary border-primary' : 'border-slate-300'
+                  }`}
+                  onClick={() => handleBrandToggle(brand.name)}
+                >
+                  {checked && (
+                    <span
+                      className="material-symbols-outlined text-white text-[13px]"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      check
+                    </span>
+                  )}
+                </div>
+                <input type="checkbox" className="hidden" checked={checked} onChange={() => handleBrandToggle(brand.name)} />
+                <span className={`text-sm font-medium flex-1 transition-colors ${checked ? 'text-primary' : 'text-slate-700'}`}>
+                  {brand.name}
+                </span>
+                <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{brand.count}</span>
+              </label>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Rating */}
+      <Section title="Min Rating">
+        <div className="space-y-1.5">
+          {RATING_OPTIONS.map((rating) => {
+            const active = minRating === rating;
+            return (
+              <button
+                key={rating}
+                onClick={() => handleRatingClick(rating)}
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                    : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <StarRow filled={rating} />
+                  <span className="text-xs">& Up</span>
+                </div>
+                {active && (
+                  <span
+                    className="material-symbols-outlined text-primary text-base"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Availability */}
+      <Section title="Availability">
+        <label
+          className={`flex items-center gap-3 cursor-pointer rounded-lg px-2 py-2 transition-colors ${
+            inStockOnly ? 'bg-primary/5' : 'hover:bg-slate-50'
+          }`}
+        >
+          <div
+            className={`w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 transition-colors ${
+              inStockOnly ? 'bg-primary border-primary' : 'border-slate-300'
+            }`}
+            onClick={handleStockToggle}
+          >
+            {inStockOnly && (
+              <span
+                className="material-symbols-outlined text-white text-[13px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                check
+              </span>
+            )}
+          </div>
+          <input type="checkbox" className="hidden" checked={inStockOnly} onChange={handleStockToggle} />
+          <div>
+            <span className={`text-sm font-medium block ${inStockOnly ? 'text-primary' : 'text-slate-700'}`}>
+              In Stock Only
+            </span>
+            <span className="text-xs text-slate-400">Ships immediately</span>
+          </div>
+          {inStockOnly && (
+            <span className="ml-auto text-[10px] font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+              ON
+            </span>
+          )}
+        </label>
+      </Section>
+
+      {/* Clear Filters — only when active */}
+      {activeCount > 0 && (
+        <button
+          onClick={clearAllFilters}
+          className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-700 text-white font-bold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-base">filter_list_off</span>
+          Clear All Filters ({activeCount})
+        </button>
+      )}
+    </aside>
+  );
+}
