@@ -1,7 +1,7 @@
 {
-  "name": "JioCoder — Mechanical keyboards & gaming peripherals",
+  "name": "JioCoder — Gaming gear & learn to code",
   "short_name": "JioCoder",
-  "description": "Shop mechanical keyboards, gaming mice, keycaps, cables, and JioCoder Studio custom desk mats with India-wide shipping.",
+  "description": "Shop mechanical keyboards, gaming mice, keycaps, cables, and JioCoder Studio custom desk mats. Free /code tracks: JavaScript, Python, Java, C, C++, C#, web — with a live playground.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -16,5 +16,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["shopping", "games"]
+  "categories": ["shopping", "games", "education"]
 }

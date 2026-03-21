@@ -1,5 +1,13 @@
+# Fallback for static hosts; Next.js also serves /robots from app/robots.ts
 User-agent: *
 Allow: /
 Disallow: /nimda-pro-sumit/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /studio/checkout/
+Disallow: /cart
+Disallow: /profile/
+Disallow: /sale-modal/
 
 Sitemap: https://www.jiocoder.com/sitemap.xml
+ 

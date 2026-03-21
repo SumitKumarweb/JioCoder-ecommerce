@@ -21,7 +21,7 @@ export default function OrganizationSchema() {
         },
         image: { '@id': `${baseUrl}/#logo` },
         description:
-          'JioCoder is an India-focused online store for mechanical keyboards, gaming mice, keycaps, custom cables, and desk accessories—plus JioCoder Studio for custom-printed desk mats and large mouse pads with fast nationwide shipping.',
+          'JioCoder is an India-focused online store for mechanical keyboards, gaming mice, keycaps, custom cables, and desk accessories—plus JioCoder Studio for custom-printed desk mats and large mouse pads. The site also offers free /code learning paths (JavaScript, Python, Java, C, C++, C#, web) with an interactive playground.',
         slogan: 'Premium mechanical keyboards & gaming peripherals, shipped across India.',
         address: {
           '@type': 'PostalAddress',
@@ -60,6 +60,15 @@ export default function OrganizationSchema() {
           'Gaming peripherals',
           'PC gaming accessories',
           'JioCoder Studio custom desk mat',
+          'Learn to code',
+          'JavaScript tutorial',
+          'Python programming',
+          'Java programming',
+          'C programming',
+          'C++ programming',
+          'C# programming',
+          'HTML CSS web development',
+          'Online code playground',
         ],
         areaServed: {
           '@type': 'Country',
@@ -75,7 +84,7 @@ export default function OrganizationSchema() {
         url: baseUrl,
         name: 'JioCoder',
         description:
-          'Shop mechanical keyboards, gaming mice, keycaps, cables, and custom desk mats. Use JioCoder Studio to design your own mouse pad.',
+          'Shop mechanical keyboards, gaming mice, keycaps, cables, and custom desk mats. Use JioCoder Studio to design your own mouse pad. Learn programming free at /code with live editors and runners.',
         publisher: { '@id': `${baseUrl}/#organization` },
         about: { '@id': `${baseUrl}/#organization` },
         potentialAction: {

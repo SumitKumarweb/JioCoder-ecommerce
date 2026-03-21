@@ -76,6 +76,18 @@ export async function GET() {
 }
 ```
 
+### SEO verification (optional)
+
+Add to `.env.local` (values from Google Search Console, Yandex, Bing Webmaster):
+
+```env
+GOOGLE_SITE_VERIFICATION=your-google-token
+YANDEX_SITE_VERIFICATION=your-yandex-token
+BING_SITE_VERIFICATION=your-bing-msvalidate-token
+```
+
+Also set `NEXT_PUBLIC_SITE_URL` to your canonical origin (e.g. `https://www.jiocoder.com`) for metadata, sitemap, and structured data.
+
 ## Getting Started
 
 First, run the development server:

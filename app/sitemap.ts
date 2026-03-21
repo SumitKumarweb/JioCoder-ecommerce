@@ -93,13 +93,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/code`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 0.62,
+      priority: 0.68,
     },
     ...getAllCodeSlugs().map((slug) => ({
       url: `${baseUrl}/code/${slug}`,
       lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.55,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
     }))
   );
 

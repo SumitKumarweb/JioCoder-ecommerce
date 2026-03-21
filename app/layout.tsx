@@ -10,6 +10,7 @@ import { WishlistProvider } from "@/contexts/WishlistContext";
 import CartDrawer from "@/components/CartDrawer";
 import ResetPasswordHandler from "@/components/ResetPasswordHandler";
 import { OrganizationSchema, WebSiteSchema } from "@/components/schemas";
+import { buildSiteVerification } from "@/lib/seo/siteVerification";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,15 +29,17 @@ const inter = Inter({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.jiocoder.com";
 
+const siteVerification = buildSiteVerification();
+
 const baseMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "JioCoder",
   title: {
-    default: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
+    default: "JioCoder — Mechanical Keyboards, Gaming Gear & Learn to Code",
     template: "%s | JioCoder",
   },
   description:
-    "Shop premium mechanical keyboards, gaming mice, keycaps, custom cables, and JioCoder Studio custom desk mats. Fast India-wide shipping, authentic gaming peripherals, and expert support.",
+    "Shop mechanical keyboards, gaming mice, keycaps, cables, and JioCoder Studio custom desk mats with India-wide shipping. Plus free /code tracks: JavaScript, Python, Java, C, C++, C#, and web dev — editor, Run, and terminal.",
   keywords: [
     "mechanical keyboards India",
     "gaming keyboards",
@@ -48,7 +51,13 @@ const baseMetadata: Metadata = {
     "JioCoder Studio",
     "gaming peripherals",
     "buy keyboard online India",
+    "learn JavaScript free",
+    "learn Python India",
+    "online code playground",
+    "free coding tutorial",
+    "HTML CSS JavaScript course",
   ],
+  category: "ecommerce",
   authors: [{ name: "JioCoder", url: siteUrl.replace(/\/$/, "") }],
   creator: "JioCoder",
   publisher: "JioCoder",
@@ -57,19 +66,14 @@ const baseMetadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  ...(process.env.GOOGLE_SITE_VERIFICATION
-    ? {
-        verification: {
-          google: process.env.GOOGLE_SITE_VERIFICATION,
-        },
-      }
-    : {}),
+  ...(siteVerification ? { verification: siteVerification } : {}),
   openGraph: {
     type: "website",
     locale: "en_IN",
     siteName: "JioCoder",
-    title: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
-    description: "Shop premium mechanical keyboards, gaming mice, keycaps, and custom cables. Fast India-wide shipping, authentic products, and expert support.",
+    title: "JioCoder — Mechanical Keyboards, Gaming Gear & Learn to Code",
+    description:
+      "Premium keyboards, mice, keycaps, and custom desk mats shipped across India. Free coding playground for JavaScript, Python, Java, C, C++, C#, and web.",
     images: [
       {
         url: "/og-image.jpg",
@@ -81,8 +85,9 @@ const baseMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "JioCoder - Premium Mechanical Keyboards & Gaming Peripherals",
-    description: "Shop premium mechanical keyboards, gaming mice, keycaps, and custom cables.",
+    title: "JioCoder — Keyboards, Gaming Peripherals & Free /code",
+    description:
+      "Shop gaming gear in India + free learn-to-code tracks with a live playground.",
     images: ["/og-image.jpg"],
   },
   icons: {
@@ -126,7 +131,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
         {/* Google Tag Manager */}
         <Script

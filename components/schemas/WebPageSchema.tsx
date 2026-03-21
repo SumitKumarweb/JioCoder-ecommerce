@@ -14,6 +14,8 @@ type BaseProps = {
   path: string;
   name: string;
   description?: string;
+  /** Comma-separated keywords for discoverability (schema.org `keywords`) */
+  keywords?: string;
   type?: Exclude<WebPageSchemaType, 'BlogPosting'>;
   dateModified?: string;
 };
@@ -82,6 +84,7 @@ export default function WebPageSchema(props: BaseProps | BlogPostingProps) {
     inLanguage: 'en-IN',
   };
   if (props.dateModified) schema.dateModified = props.dateModified;
+  if ('keywords' in props && props.keywords) schema.keywords = props.keywords;
 
   return (
     <script

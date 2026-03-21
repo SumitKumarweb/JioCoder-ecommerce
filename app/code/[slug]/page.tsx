@@ -9,6 +9,12 @@ import { getAllCodeSlugs, getCodeTrack } from '@/lib/code/codeTracks';
 import CodeDevBackdrop from '@/components/code/CodeDevBackdrop';
 import CodePlayground from '@/components/code/CodePlayground';
 import { getPlaygroundRuntime } from '@/lib/code/playgroundConfig';
+import {
+  codeTrackMetaDescription,
+  codeTrackMetaKeywords,
+  codeTrackOgDescription,
+  codeTrackSchemaKeywords,
+} from '@/lib/seo/codeTrackSeo';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -24,20 +30,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   const path = `/code/${track.slug}`;
   return {
-    title: `${track.title} — Playground`,
-    description: `Write and run ${track.title} in the browser. ${track.tagline}`,
-    keywords: [
-      `learn ${track.title}`,
-      `${track.title} playground`,
-      'JioCoder',
-      'online code runner',
-    ],
+    title: `${track.title} playground — learn & run online`,
+    description: codeTrackMetaDescription(track),
+    keywords: codeTrackMetaKeywords(track),
     alternates: { canonical: path },
     openGraph: {
-      title: `${track.title} — JioCoder Playground`,
-      description: track.tagline,
+      title: `${track.title} — JioCoder playground`,
+      description: codeTrackOgDescription(track),
       url: path,
       type: 'website',
+      images: [
+        {
+          url: '/og-image.jpg',
+          width: 1200,
+          height: 630,
+          alt: `${track.title} — JioCoder`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${track.title} — JioCoder`,
+      description: codeTrackOgDescription(track),
+      images: ['/og-image.jpg'],
     },
     robots: { index: true, follow: true },
   };
@@ -67,7 +82,8 @@ export default async function CodeTrackPage({ params }: Props) {
       <WebPageSchema
         path={path}
         name={`${track.title} — Code playground`}
-        description={`Write and run ${track.title} code with a live terminal.`}
+        description={codeTrackMetaDescription(track)}
+        keywords={codeTrackSchemaKeywords(track)}
       />
       <BreadcrumbSchema
         items={[
