@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
  */
 export function buildSiteVerification(): Metadata['verification'] | undefined {
   const google = process.env.GOOGLE_SITE_VERIFICATION?.trim();
-  const yandex = process.env.YANDEX_SITE_VERIFICATION?.trim();
+  const yandex = process.env.YANDEX_SITE_VERIFICATION?.trim() || 'd0495b36690c2cb8'
   const bing = process.env.BING_SITE_VERIFICATION?.trim();
 
   const out: NonNullable<Metadata['verification']> = {};
