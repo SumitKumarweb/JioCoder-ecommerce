@@ -24,9 +24,12 @@
 
 ## SEO / discovery
 
-- Set **`NEXT_PUBLIC_SITE_URL`** for canonical URLs, JSON-LD, sitemap, and robots.
+- Set **`NEXT_PUBLIC_SITE_URL`** for canonical URLs, JSON-LD, sitemap, and robots (use the **canonical** host, e.g. `https://www.jiocoder.com`).
 - Optional verification (server env, not public): **`GOOGLE_SITE_VERIFICATION`**, **`YANDEX_SITE_VERIFICATION`**, **`BING_SITE_VERIFICATION`**.
-- **`/sitemap.xml`** lists products, blog, careers, community groups, and `/code` tracks.
+- HTML file verification (if required by a console): **`/d0495b36690c2cb8.html`** in `public/` — rename the file if the provider specifies another name.
+- **`/sitemap.xml`** — products, collections, blog, careers, community groups, `/code` hub and language tracks.
+- **`/robots.txt`** — dynamic via `app/robots.ts`; `public/robots.txt` is a static fallback.
+- Default metadata uses **`hreflang`-style** `alternates.languages` (`en-IN`, `x-default`) on the root layout and key section pages.
 
 ## Product scope (non-exhaustive)
 
@@ -34,5 +37,6 @@ Mechanical and wireless keyboards, gaming mice, PBT/ABS keycaps, coiled/aviation
 
 ## Optional
 
-- Sitemap: `/sitemap.xml`
-- Public site URL env: `NEXT_PUBLIC_SITE_URL` (canonical domain for links).
+- **`/llms.txt`** (this file): machine-readable site summary for AI assistants and crawlers that support it.
+- **`/site.webmanifest`**: PWA / install metadata (`scope`, `start_url`, categories).
+- Analytics: **Google Tag Manager**, **Microsoft Clarity** (see root layout).

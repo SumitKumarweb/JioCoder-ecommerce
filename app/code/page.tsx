@@ -23,7 +23,10 @@ export const metadata: Metadata = {
     'JioCoder /code',
     'free programming course',
   ],
-  alternates: { canonical: '/code' },
+  alternates: {
+    canonical: '/code',
+    languages: { 'en-IN': '/code', 'x-default': '/code' },
+  },
   openGraph: {
     title: 'Learn to code — JioCoder (free tracks + playground)',
     description:

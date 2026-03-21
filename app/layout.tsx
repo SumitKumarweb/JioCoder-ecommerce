@@ -70,6 +70,7 @@ const baseMetadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
+    alternateLocale: ["en_US", "en"],
     siteName: "JioCoder",
     title: "JioCoder — Mechanical Keyboards, Gaming Gear & Learn to Code",
     description:
@@ -79,7 +80,7 @@ const baseMetadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "JioCoder - Premium Mechanical Keyboards",
+        alt: "JioCoder — mechanical keyboards, gaming peripherals, and free learn-to-code playground",
       },
     ],
   },
@@ -93,6 +94,11 @@ const baseMetadata: Metadata = {
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "JioCoder",
+    statusBarStyle: "black-translucent",
   },
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
@@ -117,7 +123,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     ...baseMetadata,
-    alternates: { canonical: canonicalPath },
+    alternates: {
+      canonical: canonicalPath,
+      languages: {
+        "en-IN": canonicalPath,
+        "x-default": canonicalPath,
+      },
+    },
     openGraph: {
       ...(baseMetadata.openGraph || {}),
       url: canonicalPath,

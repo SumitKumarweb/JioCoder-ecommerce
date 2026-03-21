@@ -88,6 +88,8 @@ BING_SITE_VERIFICATION=your-bing-msvalidate-token
 
 Also set `NEXT_PUBLIC_SITE_URL` to your canonical origin (e.g. `https://www.jiocoder.com`) for metadata, sitemap, and structured data.
 
+The root layout sets **`alternates.languages`** (`en-IN`, `x-default`) and Open Graph **`alternateLocale`** for clearer international signals. Key section pages (`/code`, `/studio`, `/code/*`) mirror the same pattern where configured.
+
 ## Getting Started
 
 First, run the development server:

@@ -33,7 +33,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${track.title} playground — learn & run online`,
     description: codeTrackMetaDescription(track),
     keywords: codeTrackMetaKeywords(track),
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      languages: { 'en-IN': path, 'x-default': path },
+    },
     openGraph: {
       title: `${track.title} — JioCoder playground`,
       description: codeTrackOgDescription(track),

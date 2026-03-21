@@ -95,6 +95,15 @@ export default function OrganizationSchema() {
           },
           'query-input': 'required name=search_term_string',
         },
+        /** Important entry points for crawlers & knowledge panels */
+        relatedLink: [
+          `${baseUrl}/products`,
+          `${baseUrl}/collections`,
+          `${baseUrl}/code`,
+          `${baseUrl}/studio`,
+          `${baseUrl}/blog`,
+          `${baseUrl}/support`,
+        ],
         inLanguage: ['en-IN', 'en'],
       },
     ],

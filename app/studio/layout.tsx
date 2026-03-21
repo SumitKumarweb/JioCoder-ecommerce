@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical: '/studio',
+    languages: { 'en-IN': '/studio', 'x-default': '/studio' },
   },
   openGraph: {
     title: 'JioCoder Studio — Custom desk mats & mouse pads',
