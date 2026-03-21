@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 import CustomOrder from '@/models/CustomOrder';
+
+const COP_ORDER_RE = /^COP\d{6}$/;
+
+/** Next COP###### after the highest existing (not countDocuments — avoids gaps / races). */
+async function nextStudioOrderNumber(): Promise<string> {
+  const last = await CustomOrder.findOne({ orderNumber: { $regex: COP_ORDER_RE } })
+    .sort({ orderNumber: -1 })
+    .select('orderNumber')
+    .lean();
+
+  let seq = 1001;
+  if (last?.orderNumber && typeof last.orderNumber === 'string') {
+    const parsed = parseInt(last.orderNumber.slice(3), 10);
+    if (!Number.isNaN(parsed)) seq = parsed + 1;
+  }
+  return `COP${String(seq).padStart(6, '0')}`;
+}
+
+function isDuplicateOrderNumberError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code: number }).code === 11000
+  );
+}
 
 // POST — create a new custom print order (public)
 export async function POST(req: NextRequest) {
@@ -30,11 +57,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    const order = await CustomOrder.create({
+    const uid =
+      userId && mongoose.isValidObjectId(String(userId))
+        ? new mongoose.Types.ObjectId(String(userId))
+        : undefined;
+
+    const payload = {
       customerName: String(customerName).trim(),
       customerEmail: String(customerEmail).trim().toLowerCase(),
       customerPhone: customerPhone ? String(customerPhone).trim() : undefined,
-      userId: userId || undefined,
+      userId: uid,
       designImageUrl,
       designImageName: designImageName || 'custom-design',
       size,
@@ -46,7 +78,28 @@ export async function POST(req: NextRequest) {
       quantity: Number(quantity) || 1,
       total: Number(total) || Number(price),
       shippingAddress: shippingAddress || undefined,
-    });
+    };
+
+    const MAX_ATTEMPTS = 10;
+    let order: mongoose.Document & { orderNumber: string; _id: mongoose.Types.ObjectId } | null = null;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const orderNumber = await nextStudioOrderNumber();
+      try {
+        order = (await CustomOrder.create({ ...payload, orderNumber })) as mongoose.Document & {
+          orderNumber: string;
+          _id: mongoose.Types.ObjectId;
+        };
+        break;
+      } catch (e) {
+        if (isDuplicateOrderNumberError(e) && attempt < MAX_ATTEMPTS - 1) continue;
+        throw e;
+      }
+    }
+
+    if (!order) {
+      return NextResponse.json({ message: 'Could not assign order number. Try again.' }, { status: 503 });
+    }
 
     return NextResponse.json({ success: true, orderNumber: order.orderNumber, id: order._id }, { status: 201 });
   } catch (error: any) {

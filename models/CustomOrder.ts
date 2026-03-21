@@ -68,16 +68,19 @@ const CustomOrderSchema: Schema<ICustomOrder> = new Schema(
   { timestamps: true }
 );
 
-CustomOrderSchema.pre('save', async function (next) {
-  if (!this.orderNumber) {
-    const count = await (this.constructor as Model<ICustomOrder>).countDocuments();
-    this.orderNumber = `COP${String(count + 1001).padStart(6, '0')}`;
+// orderNumber is assigned in app/api/studio/orders (POST)
+// Drop any cached model so Next.js HMR / stale processes never keep old schema + middleware
+try {
+  if (mongoose.models.CustomOrder) {
+    delete mongoose.models.CustomOrder;
   }
-  next();
-});
+} catch {
+  /* ignore */
+}
 
-const CustomOrder: Model<ICustomOrder> =
-  mongoose.models.CustomOrder ||
-  mongoose.model<ICustomOrder>('CustomOrder', CustomOrderSchema);
+const CustomOrder: Model<ICustomOrder> = mongoose.model<ICustomOrder>(
+  'CustomOrder',
+  CustomOrderSchema
+);
 
 export default CustomOrder;

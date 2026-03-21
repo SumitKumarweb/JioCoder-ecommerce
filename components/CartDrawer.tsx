@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 
+interface AppliedCoupon {
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED' | 'VOUCHER';
+  value: number;
+  discountAmount: number;
+  description: string;
+}
+
 const frequentlyBoughtTogether = [
   {
     id: 'fbt-1',
@@ -37,10 +45,15 @@ export default function CartDrawer() {
     getTotalPrice,
     getItemCount,
     addToCart,
+    isCartHydrated,
   } = useCart();
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -55,10 +68,88 @@ export default function CartDrawer() {
     }
   }, [isOpen]);
 
+  // Restore coupon from checkout flow (same key as CheckoutAddressClient)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('appliedCoupon');
+    if (saved) {
+      try {
+        setAppliedCoupon(JSON.parse(saved));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  // Clear coupon when cart is emptied (only after cart hydrated from storage)
+  useEffect(() => {
+    if (!isCartHydrated || cartItems.length > 0) return;
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+    if (typeof window !== 'undefined') localStorage.removeItem('appliedCoupon');
+  }, [isCartHydrated, cartItems.length]);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    if (cartItems.length === 0) {
+      setCouponError('Add items to your cart first');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          cartTotal: getSubtotal(),
+          cartItemIds: cartItems.map((i) => i.id),
+        }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setCouponError(data.error || 'Invalid coupon');
+        setAppliedCoupon(null);
+        localStorage.removeItem('appliedCoupon');
+      } else {
+        const coupon: AppliedCoupon = {
+          code: data.code,
+          type: data.type,
+          value: data.value,
+          discountAmount: data.discountAmount,
+          description: data.description ?? '',
+        };
+        setAppliedCoupon(coupon);
+        localStorage.setItem('appliedCoupon', JSON.stringify(coupon));
+        setCouponInput('');
+      }
+    } catch {
+      setCouponError('Failed to apply coupon. Please try again.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    localStorage.removeItem('appliedCoupon');
+    setCouponInput('');
+    setCouponError('');
+  };
+
   const freeShippingGoal = 5000;
   const currentTotal = getSubtotal();
   const remainingForFreeShipping = Math.max(0, freeShippingGoal - currentTotal);
   const progressPercentage = Math.min(100, (currentTotal / freeShippingGoal) * 100);
+
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const finalTotal = Math.max(getTotalPrice() - couponDiscount, 0);
 
   if (!shouldRender) return null;
 
@@ -230,23 +321,70 @@ export default function CartDrawer() {
 
         {/* Footer */}
         <div className="p-6 border-t border-slate-100 bg-white">
-          <div className="mb-6">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-lg text-slate-400">
-                  confirmation_number
-                </span>
-                <input
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400 outline-none transition-all"
-                  placeholder="Coupon / Gift Voucher"
-                  type="text"
-                />
-              </div>
-              <button className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-primary font-bold text-sm rounded-lg transition-colors">
-                Apply
-              </button>
+          {cartItems.length > 0 && (
+            <div className="mb-6">
+              {appliedCoupon ? (
+                <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50/80 px-3 py-2.5">
+                  <span className="material-symbols-outlined text-green-600 !text-xl shrink-0 mt-0.5">
+                    verified
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-green-800 font-mono tracking-wide">
+                      {appliedCoupon.code}
+                    </p>
+                    <p className="text-xs text-green-700 truncate">{appliedCoupon.description}</p>
+                    <p className="text-xs font-bold text-green-800 mt-1">
+                      −₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="shrink-0 p-1 text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+                    title="Remove coupon"
+                  >
+                    <span className="material-symbols-outlined !text-lg">close</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 !text-lg text-slate-400">
+                        confirmation_number
+                      </span>
+                      <input
+                        value={couponInput}
+                        onChange={(e) => {
+                          setCouponInput(e.target.value.toUpperCase());
+                          setCouponError('');
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400 outline-none transition-all"
+                        placeholder="Coupon / Gift Voucher"
+                        type="text"
+                        disabled={couponLoading}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:pointer-events-none text-primary font-bold text-sm rounded-lg transition-colors"
+                    >
+                      {couponLoading ? '…' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                      <span className="material-symbols-outlined !text-sm">error</span>
+                      {couponError}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
-          </div>
+          )}
           <div className="space-y-3 mb-6">
             <div className="flex justify-between text-sm text-slate-500">
               <span>Subtotal</span>
@@ -256,9 +394,18 @@ export default function CartDrawer() {
               <span>Estimated GST (18%)</span>
               <span>₹{getGST().toLocaleString('en-IN')}</span>
             </div>
+            {appliedCoupon && cartItems.length > 0 && (
+              <div className="flex justify-between text-sm text-green-700 font-medium">
+                <span>Coupon ({appliedCoupon.code})</span>
+                <span>−₹{appliedCoupon.discountAmount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-slate-50">
               <span>Total Amount</span>
-              <span>₹{getTotalPrice().toLocaleString('en-IN')}</span>
+              <span>
+                ₹
+                {(cartItems.length > 0 ? finalTotal : 0).toLocaleString('en-IN')}
+              </span>
             </div>
           </div>
           <Link

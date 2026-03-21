@@ -25,6 +25,8 @@ interface CartContextType {
   getSubtotal: () => number;
   getGST: () => number;
   getItemCount: () => number;
+  /** true after cart has been read from localStorage (avoid treating initial [] as empty cart) */
+  isCartHydrated: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -140,6 +142,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getSubtotal,
         getGST,
         getItemCount,
+        isCartHydrated: hydrated,
       }}
     >
       {children}
