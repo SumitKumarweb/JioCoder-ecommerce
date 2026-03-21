@@ -11,7 +11,8 @@ export async function generateMetadata({
   return {
     title: `Group · ${decodeURIComponent(slug)}`,
     alternates: { canonical: `/community/groups/${slug}` },
-    robots: { index: false, follow: true },
+    // Public group URLs are listed in sitemap — allow indexing (aligns with sitemap.xml)
+    robots: { index: true, follow: true },
   };
 }
 

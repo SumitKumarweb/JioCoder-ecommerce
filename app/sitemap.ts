@@ -18,84 +18,73 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
+  // Static URLs first so Google still gets core pages if MongoDB is unavailable.
+  // Omit /cart (blocked in robots.txt) and /sale (layout sets noindex — conflicts with sitemap).
+  sitemapEntries.push(
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/products`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/collections`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/careers`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/community`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.65,
+    },
+    {
+      url: `${baseUrl}/compare`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.55,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/support`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/search`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }
+  );
+
   try {
     await connectDB();
-
-    // Static pages
-    sitemapEntries.push(
-      {
-        url: baseUrl,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 1,
-      },
-      {
-        url: `${baseUrl}/products`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/collections`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/blog`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.8,
-      },
-      {
-        url: `${baseUrl}/careers`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.6,
-      },
-      {
-        url: `${baseUrl}/community`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.65,
-      },
-      {
-        url: `${baseUrl}/compare`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.55,
-      },
-      {
-        url: `${baseUrl}/cart`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.5,
-      },
-      {
-        url: `${baseUrl}/sale`,
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.65,
-      },
-      {
-        url: `${baseUrl}/about`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/support`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      },
-      {
-        url: `${baseUrl}/search`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.6,
-      }
-    );
 
     // Fetch all collections
     const collections = await Collection.find({}).select('slug updatedAt').lean();

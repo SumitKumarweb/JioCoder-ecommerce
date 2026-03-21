@@ -17,7 +17,6 @@ export default function robots(): MetadataRoute.Robots {
           '/cart',
           '/profile/',
           '/sale-modal/',
-          '/compare',
         ],
       },
       // Allow Google Image bot full access to product images
