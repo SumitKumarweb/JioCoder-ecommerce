@@ -18,7 +18,7 @@ interface OrderData {
 
 export default function OrderSuccessPage() {
   const router = useRouter();
-  const { cartItems, getTotalPrice, clearCart } = useCart();
+  const { cartItems, clearCart } = useCart();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(true);
   const [deliveryDate] = useState(() => {

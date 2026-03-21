@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 interface ProductFiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -45,6 +45,16 @@ function StarRow({ filled, total = 5 }: { filled: number; total?: number }) {
   );
 }
 
+// Section wrapper — defined outside the main component so React never unmounts/remounts children
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 // Dual-thumb range slider
 function DualRangeSlider({
   min,
@@ -61,13 +71,12 @@ function DualRangeSlider({
   valueMax: number;
   onChange: (min: number, max: number) => void;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
   const percent = (v: number) => ((v - min) / (max - min)) * 100;
 
   return (
     <div className="relative pt-1 pb-3 px-1">
       {/* Track background */}
-      <div ref={trackRef} className="relative h-1.5 w-full bg-slate-200 rounded-full">
+      <div className="relative h-1.5 w-full bg-slate-200 rounded-full">
         {/* Active fill */}
         <div
           className="absolute h-full bg-primary rounded-full"
@@ -176,13 +185,6 @@ export default function ProductFilters({ onFilterChange }: ProductFiltersProps) 
     selectedBrands.length +
     (minRating > 0 ? 1 : 0) +
     (inStockOnly ? 1 : 0);
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">{title}</h3>
-      {children}
-    </div>
-  );
 
   return (
     <aside className="w-full lg:w-64 flex-shrink-0 lg:sticky lg:top-24 space-y-3">

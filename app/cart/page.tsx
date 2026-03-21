@@ -1,36 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { useCart } from '@/contexts/CartContext';
 
-const frequentlyBoughtTogether = [
-  {
-    id: 'fbt-1',
-    name: 'Premium XL Desk Mat',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0KVWlgx1gxDelTIA5_GVLmU9J95me49jPmrwy50wTzGLJGxj6GP59DbvYqxo8XAqb6Y2HiPvB3CGor1tEUL9Fi0OXePGrD0tlds7PYdZHW3Ok4OI5mDPiEJd0x7tahONhL5uEqFnD-mA8-QNdqM7Lc4jZlSvUfFl1V38WZC-ORwI_Kmufwu8ewTkXFzUVPat0Ua4BtBDYwyXeuALauZwiE35dZJ3WFlwobyHYqrVnpZa87TR5DybieawXCMJUt6icl0iadUWOz9xL',
-    price: 1299,
-  },
-  {
-    id: 'fbt-2',
-    name: '7-in-1 USB-C Hub',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAp7gDYjQrR7IYaYmhiAENlTEaSiOOyVNgYNpp8FD4o_GORTLPjPzduRcnR4T9lXeo9s0swYJQWY4pHlwOohUxSvJH9LmiYomhpJgeLatYpWKxGh1KejKnPWC0TE8pFwm5LjyQ_-1vAJZd-Gq1pRAaVj9rEmHEZHh0NvEOBYQN9IuDW3_sZrHa4LH8Qmp6V6E6zhknPUCLVeK0NaeEioLzOH6FJdEXuHOa1oDBJIRYirVlqs5TjZUhR-C486nUy2ozwJvAbFBTs1dh0',
-    price: 3499,
-  },
-  {
-    id: 'fbt-3',
-    name: 'Hardshell Laptop Case',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBBsX9SMcGhzmK4mPuh9rxrhrhDeQdKpqQhZZNLZ-BSGTflqNTxHmTXrRxxpRKGU8R97eh0U2z64qvLgGN1Q8ZkoqwqMfbhDtTXoAD4Rzn9p9B6RSPZSbdlLeefZ0CylEup-LKlRY2iCoymEBm26NsMearBv2OfquwCtlvZISy82wUSQg5p7Lh3-ZbY97QyovGrfBv1z9tefgrRScjdMuBhhh7hfLGeB7qXylEke4zJfWI564eHEq_Ga0KeZ-kWfXlhL3CkwNUIh-4x',
-    price: 2199,
-  },
-];
+interface AppliedCoupon {
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED' | 'VOUCHER';
+  value: number;
+  discountAmount: number;
+  description: string;
+}
+
+interface SuggestedProduct {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  slug: string;
+}
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, addToCart, getSubtotal, getGST, getTotalPrice } = useCart();
   const [promoCode, setPromoCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [suggestedProducts, setSuggestedProducts] = useState<SuggestedProduct[]>([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(true);
+
+  // Restore any previously applied coupon from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('appliedCoupon');
+    if (saved) {
+      try { setAppliedCoupon(JSON.parse(saved)); } catch { /* ignore */ }
+    }
+  }, []);
+
+  // Fetch real products for "You May Also Like", excluding items already in cart
+  useEffect(() => {
+    const fetchSuggested = async () => {
+      setSuggestedLoading(true);
+      try {
+        const res = await fetch('/api/products?inStock=true');
+        if (!res.ok) return;
+        const data = await res.json();
+        const cartIds = new Set(cartItems.map((i) => i.id));
+        // Filter out products already in cart, shuffle, take 3
+        const filtered: SuggestedProduct[] = (Array.isArray(data) ? data : [])
+          .filter((p: any) => p.image && !cartIds.has(p.slug || p._id?.toString()))
+          .map((p: any) => ({
+            id: p.slug || String(p._id),
+            name: p.name,
+            image: p.image,
+            price: p.price,
+            slug: p.slug || String(p._id),
+          }))
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        setSuggestedProducts(filtered);
+      } catch {
+        setSuggestedProducts([]);
+      } finally {
+        setSuggestedLoading(false);
+      }
+    };
+    fetchSuggested();
+  }, [cartItems]);
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -40,14 +79,56 @@ export default function CartPage() {
     }
   };
 
-  const handleApplyPromo = () => {
-    // Promo code logic would go here
-    console.log('Applying promo code:', promoCode);
+  const handleApplyPromo = async () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) { setCouponError('Please enter a coupon code'); return; }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          cartTotal: getSubtotal(),
+          cartItemIds: cartItems.map((i) => i.id),
+        }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setCouponError(data.error || 'Invalid coupon code');
+        setAppliedCoupon(null);
+        localStorage.removeItem('appliedCoupon');
+      } else {
+        const coupon: AppliedCoupon = {
+          code: data.code,
+          type: data.type,
+          value: data.value,
+          discountAmount: data.discountAmount,
+          description: data.description,
+        };
+        setAppliedCoupon(coupon);
+        localStorage.setItem('appliedCoupon', JSON.stringify(coupon));
+        setPromoCode('');
+        setCouponError('');
+      }
+    } catch {
+      setCouponError('Failed to apply coupon. Please try again.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    localStorage.removeItem('appliedCoupon');
+    setCouponError('');
   };
 
   const subtotal = getSubtotal();
   const gst = getGST();
-  const total = getTotalPrice();
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const total = Math.max(getTotalPrice() - couponDiscount, 0);
 
   // If cart is empty, show empty state
   if (cartItems.length === 0) {
@@ -168,38 +249,53 @@ export default function CartPage() {
               </div>
             ))}
 
-            {/* Frequently Bought Together */}
-            <div className="mt-12">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">auto_awesome</span>
-                Frequently Bought Together
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {frequentlyBoughtTogether.map((product) => (
-                  <div key={product.id} className="bg-white p-4 border border-slate-200 rounded-xl">
-                    <img
-                      className="w-full h-32 object-cover rounded-lg mb-3"
-                      alt={product.name}
-                      src={product.image}
-                    />
-                    <h4 className="text-sm font-bold truncate">{product.name}</h4>
-                    <p className="text-sm font-bold text-primary mb-3">₹{product.price.toLocaleString('en-IN')}</p>
-                    <button
-                      onClick={() => addToCart({
-                        id: product.id,
-                        name: product.name,
-                        image: product.image,
-                        price: product.price,
-                      }, false)}
-                      className="w-full py-2 bg-primary/10 text-slate-900 hover:bg-primary hover:text-white transition-all rounded-lg text-sm font-bold flex items-center justify-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-base">add</span>
-                      Add
-                    </button>
-                  </div>
-                ))}
+            {/* You May Also Like — dynamic from DB */}
+            {(suggestedLoading || suggestedProducts.length > 0) && (
+              <div className="mt-12">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                  You May Also Like
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {suggestedLoading
+                    ? Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white p-4 border border-slate-200 rounded-xl animate-pulse">
+                          <div className="w-full h-32 bg-slate-200 rounded-lg mb-3" />
+                          <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
+                          <div className="h-4 bg-slate-200 rounded w-1/3 mb-4" />
+                          <div className="h-9 bg-slate-200 rounded-lg" />
+                        </div>
+                      ))
+                    : suggestedProducts.map((product) => (
+                        <div key={product.id} className="bg-white p-4 border border-slate-200 rounded-xl">
+                          <Link href={`/product/${product.slug}`}>
+                            <img
+                              className="w-full h-32 object-cover rounded-lg mb-3 hover:opacity-90 transition-opacity"
+                              alt={product.name}
+                              src={product.image}
+                            />
+                          </Link>
+                          <Link href={`/product/${product.slug}`}>
+                            <h4 className="text-sm font-bold truncate hover:text-primary transition-colors">{product.name}</h4>
+                          </Link>
+                          <p className="text-sm font-bold text-primary mb-3">₹{product.price.toLocaleString('en-IN')}</p>
+                          <button
+                            onClick={() => addToCart({
+                              id: product.id,
+                              name: product.name,
+                              image: product.image,
+                              price: product.price,
+                            }, false)}
+                            className="w-full py-2 bg-primary/10 text-slate-900 hover:bg-primary hover:text-white transition-all rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-base">add</span>
+                            Add to Cart
+                          </button>
+                        </div>
+                      ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column: Order Summary (30%) */}
@@ -234,24 +330,65 @@ export default function CartPage() {
               {/* Coupon */}
               <div className="mb-6 pt-6 border-t border-slate-100">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">
-                  Promo Code
+                  Promo / Voucher Code
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 bg-slate-50 border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary outline-none"
-                    placeholder="ELECTRO20"
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                  />
-                  <button
-                    onClick={handleApplyPromo}
-                    className="px-4 py-2 bg-slate-900 text-white font-bold rounded-lg text-sm hover:opacity-90 transition-opacity"
-                  >
-                    Apply
-                  </button>
-                </div>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="material-symbols-outlined text-green-600 text-lg flex-shrink-0">local_offer</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-green-700 font-mono tracking-wider">{appliedCoupon.code}</p>
+                        <p className="text-xs text-green-600 truncate">-₹{appliedCoupon.discountAmount.toLocaleString('en-IN')} off</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors flex-shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-base">close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono uppercase tracking-wider focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="Enter coupon code"
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={couponLoading || !promoCode.trim()}
+                        className="px-4 py-2 bg-slate-900 text-white font-bold rounded-lg text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {couponLoading ? (
+                          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        ) : 'Apply'}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-rose-600 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">error</span>
+                        {couponError}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Coupon Savings Row */}
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm text-green-700 font-medium mb-4 -mt-2">
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">local_offer</span>
+                    Coupon Discount
+                  </span>
+                  <span className="font-bold">-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
 
               {/* Total */}
               <div className="pt-6 border-t border-slate-100 mb-8">

@@ -159,10 +159,12 @@ export default function PaymentPage() {
                       <div className="flex flex-col items-center text-center space-y-4">
                         <div className="p-4 bg-white rounded-lg shadow-md border border-slate-100">
                           <div className="size-48 bg-slate-50 rounded flex items-center justify-center relative">
-                            {/* QR Code */}
-                            <div
-                              className="absolute inset-0 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=jiocoder-payment-${finalTotal}')] bg-contain opacity-90"
-                            ></div>
+                            {/* QR Code — src uses template literal so finalTotal is correctly interpolated */}
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=jiocoder-payment-${finalTotal}`}
+                              alt="Payment QR code"
+                              className="absolute inset-0 w-full h-full object-contain opacity-90"
+                            />
                             <div className="z-10 bg-white p-1 rounded-sm border border-slate-200">
                               <span className="material-symbols-outlined text-primary text-3xl">flash_on</span>
                             </div>

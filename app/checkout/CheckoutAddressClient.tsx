@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -126,7 +126,6 @@ export default function CheckoutAddressClient() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
-  const couponInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-fill from localStorage
   useEffect(() => {
@@ -580,7 +579,6 @@ export default function CheckoutAddressClient() {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <input
-                        ref={couponInputRef}
                         value={couponInput}
                         onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
                         onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
