@@ -44,6 +44,23 @@
   }
 }
 
+/**
+ * Viewport height: Safari <15.4 has no `dvh`; invalid `min()` with dvh drops the whole rule.
+ * Firebase / WebKit: stack vh → -webkit-fill-available → dvh.
+ */
+@layer utilities {
+  .jiocoder-min-h-viewport {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
+
+  /** iOS momentum scrolling for overflow regions (terminal, editors) */
+  .safari-momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Ensure every clickable item shows pointer cursor */
 button,
 [role="button"],

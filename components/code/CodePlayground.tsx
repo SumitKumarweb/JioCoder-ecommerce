@@ -161,7 +161,7 @@ export default function CodePlayground({ slug, filename, fullViewport = false }:
         <div
           className={
             fullViewport
-              ? 'flex min-h-[min(240px,32dvh)] flex-col min-w-0 lg:min-h-0'
+              ? 'flex min-h-[min(240px,32vh)] flex-col min-w-0 lg:min-h-0'
               : 'flex min-h-[min(320px,42vh)] flex-col min-w-0 lg:h-full lg:min-h-0'
           }
         >
@@ -175,8 +175,8 @@ export default function CodePlayground({ slug, filename, fullViewport = false }:
             spellCheck={false}
             className={
               fullViewport
-                ? `min-h-0 w-full flex-1 resize-none rounded-xl border border-emerald-500/25 bg-[#050f0a] p-4 md:p-5 font-mono text-sm leading-relaxed text-lime-100/90 placeholder:text-slate-600 focus:border-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${codeScroll}`
-                : `min-h-[min(320px,42vh)] w-full flex-1 resize-y rounded-xl border border-emerald-500/25 bg-[#050f0a] p-4 md:p-5 font-mono text-sm leading-relaxed text-lime-100/90 placeholder:text-slate-600 focus:border-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 lg:min-h-0 ${codeScroll}`
+                ? `min-h-0 w-full flex-1 resize-none rounded-xl border border-emerald-500/25 bg-[#050f0a] p-4 md:p-5 font-mono text-sm leading-relaxed text-lime-100/90 placeholder:text-slate-600 focus:border-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 safari-momentum-scroll ${codeScroll}`
+                : `min-h-[min(320px,42vh)] w-full flex-1 resize-y rounded-xl border border-emerald-500/25 bg-[#050f0a] p-4 md:p-5 font-mono text-sm leading-relaxed text-lime-100/90 placeholder:text-slate-600 focus:border-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 lg:min-h-0 safari-momentum-scroll ${codeScroll}`
             }
             placeholder="Write your code here…"
           />
@@ -186,7 +186,7 @@ export default function CodePlayground({ slug, filename, fullViewport = false }:
         <div
           className={
             fullViewport
-              ? 'flex min-h-[min(240px,32dvh)] flex-col gap-4 min-w-0 lg:min-h-0'
+              ? 'flex min-h-[min(240px,32vh)] flex-col gap-4 min-w-0 lg:min-h-0'
               : 'flex min-h-[min(280px,38vh)] flex-col gap-4 min-w-0 lg:h-full lg:min-h-0'
           }
         >
@@ -227,7 +227,7 @@ export default function CodePlayground({ slug, filename, fullViewport = false }:
             className={
               isHtmlPreview
                 ? fullViewport
-                  ? 'flex min-h-[min(120px,16dvh)] flex-1 flex-col min-w-0 lg:min-h-0'
+                  ? 'flex min-h-[min(120px,16vh)] flex-1 flex-col min-w-0 lg:min-h-0'
                   : 'flex min-h-[min(140px,18vh)] flex-1 flex-col min-w-0 lg:min-h-[min(160px,20vh)]'
                 : fullViewport
                   ? 'flex min-h-0 flex-1 flex-col min-w-0'
@@ -240,8 +240,8 @@ export default function CodePlayground({ slug, filename, fullViewport = false }:
             <pre
               className={
                 fullViewport
-                  ? `min-h-0 flex-1 overflow-auto rounded-xl border border-emerald-500/30 bg-[#020806] p-4 md:p-5 font-mono text-xs md:text-sm text-lime-200/90 whitespace-pre-wrap break-words leading-relaxed shadow-[inset_0_0_40px_rgba(0,0,0,0.35)] ${codeScroll}`
-                  : `min-h-[min(120px,16vh)] flex-1 overflow-auto rounded-xl border border-emerald-500/30 bg-[#020806] p-4 md:p-5 font-mono text-xs md:text-sm text-lime-200/90 whitespace-pre-wrap break-words leading-relaxed shadow-[inset_0_0_40px_rgba(0,0,0,0.35)] ${codeScroll}`
+                  ? `min-h-0 flex-1 overflow-auto rounded-xl border border-emerald-500/30 bg-[#020806] p-4 md:p-5 font-mono text-xs md:text-sm text-lime-200/90 whitespace-pre-wrap break-words leading-relaxed shadow-[inset_0_0_40px_rgba(0,0,0,0.35)] safari-momentum-scroll ${codeScroll}`
+                  : `min-h-[min(120px,16vh)] flex-1 overflow-auto rounded-xl border border-emerald-500/30 bg-[#020806] p-4 md:p-5 font-mono text-xs md:text-sm text-lime-200/90 whitespace-pre-wrap break-words leading-relaxed shadow-[inset_0_0_40px_rgba(0,0,0,0.35)] safari-momentum-scroll ${codeScroll}`
               }
               role="log"
               aria-live="polite"

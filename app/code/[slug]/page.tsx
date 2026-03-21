@@ -95,10 +95,10 @@ export default async function CodeTrackPage({ params }: Props) {
           { label: track.title },
         ]}
       />
-      {/* Viewport-height main: playground fills space below navbar */}
-      <div className="flex min-h-dvh flex-col overflow-x-hidden bg-[#030712] text-slate-200">
+      {/* Viewport-height main — overflow-x must NOT wrap Navbar or sticky header breaks in Safari */}
+      <div className="jiocoder-min-h-viewport flex min-w-0 flex-col bg-[#030712] text-slate-200">
         <Navbar />
-        <div className="code-dev-root relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="code-dev-root relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden overflow-x-hidden">
           <CodeDevBackdrop />
           <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pb-4 pt-0 sm:px-6 md:px-10 lg:px-12">
             <div className="flex min-h-0 w-full min-w-0  flex-1 flex-col">
@@ -145,8 +145,8 @@ export default async function CodeTrackPage({ params }: Props) {
                     ? 'Write code and use Run. Python runs in your browser with Pyodide (first run may download ~10MB).'
                     : playground?.execution === 'browser-js'
                       ? 'Write code and use Run. JavaScript runs in a sandboxed iframe; output appears in the terminal.'
-                      : playground?.execution === 'local-guide'
-                        ? 'Use Run for compile/run steps and tips. Copy code to your machine or an online IDE to execute it.'
+                      : playground?.execution === 'server-native'
+                        ? 'Use Run to execute on a remote sandbox (Glot) when configured, or follow the in-terminal links for online compilers / local tools.'
                         : 'Write code and use Run; output appears in the terminal.'}
               </p>
             </div>

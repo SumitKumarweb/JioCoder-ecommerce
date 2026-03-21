@@ -88,6 +88,8 @@ BING_SITE_VERIFICATION=your-bing-msvalidate-token
 
 Also set `NEXT_PUBLIC_SITE_URL` to your canonical origin (e.g. `https://www.jiocoder.com`) for metadata, sitemap, and structured data.
 
+Safari / Firebase hosting pitfalls (sticky header, viewport height): see **`docs/deployment-safari-firebase.md`**.
+
 The root layout sets **`alternates.languages`** (`en-IN`, `x-default`) and Open Graph **`alternateLocale`** for clearer international signals. Key section pages (`/code`, `/studio`, `/code/*`) mirror the same pattern where configured.
 
 ### Favicon & Google search results
