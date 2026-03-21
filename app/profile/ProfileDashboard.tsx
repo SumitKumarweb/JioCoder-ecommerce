@@ -196,20 +196,26 @@ export default function ProfileDashboard() {
   const step = recent ? statusStep(recent.status) : 0;
   const isCancelled = recent?.status === 'CANCELLED';
 
+  const cardBase =
+    'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:shadow-none rounded-xl transition-all duration-200';
+  const cardHover = 'hover:shadow-md hover:border-slate-300/90 dark:hover:border-slate-600';
+  const iconBox =
+    'size-9 rounded-lg bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 flex items-center justify-center';
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 w-full">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Account Dashboard
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            Account dashboard
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage your orders, wishlist, and profile.
+          <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
+            Orders, wishlist, and profile in one place.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
-          <span className="material-symbols-outlined text-sm">verified</span>
-          JioCoder member
+        <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/90 dark:bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span className="material-symbols-outlined text-base text-slate-500 dark:text-slate-400">verified_user</span>
+          Verified member
         </div>
       </div>
 
@@ -223,63 +229,80 @@ export default function ProfileDashboard() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 rounded-xl hover:border-primary/50 transition-colors">
+        <div className={`${cardBase} ${cardHover} p-6`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Total Orders</span>
-            <div className="size-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Total orders</span>
+            <div className={iconBox}>
               <span className="material-symbols-outlined text-xl">shopping_bag</span>
             </div>
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">
+          <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
             {ordersLoading ? '…' : String(totalOrders).padStart(2, '0')}
           </p>
-          <p className="text-xs text-emerald-500 font-medium mt-1">
-            {ordersLoading ? 'Loading…' : thisMonthCount > 0 ? `+${thisMonthCount} this month` : 'No new orders this month'}
+          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1.5">
+            {ordersLoading
+              ? 'Loading…'
+              : thisMonthCount > 0
+                ? (
+                    <>
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">+{thisMonthCount}</span> this month
+                    </>
+                  )
+                : 'No new orders this month'}
           </p>
         </div>
 
         <ProfileStats />
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 rounded-xl hover:border-primary/50 transition-colors">
+        <div className={`${cardBase} ${cardHover} p-6`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Saved Addresses</span>
-            <div className="size-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Saved addresses</span>
+            <div className={iconBox}>
               <span className="material-symbols-outlined text-xl">location_on</span>
             </div>
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">
+          <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
             {String(addrCount).padStart(2, '0')}
           </p>
           <Link
             href="/profile/addresses"
-            className="text-xs text-primary font-medium mt-1 inline-block hover:underline"
+            className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1.5 inline-block hover:text-slate-900 dark:hover:text-slate-200 underline-offset-2 hover:underline"
           >
             {addrHint}
           </Link>
         </div>
       </div>
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">local_shipping</span>
-            Recent Order Status
+      <section className={`${cardBase} overflow-hidden`}>
+        <div className="px-6 py-4 border-b border-slate-200/90 dark:border-slate-700/90 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between gap-3">
+          <h3 className="font-semibold text-base text-slate-900 dark:text-white flex items-center gap-2.5">
+            <span className={`${iconBox} size-8`}>
+              <span className="material-symbols-outlined text-lg">local_shipping</span>
+            </span>
+            Recent order
           </h3>
-          <Link className="text-primary text-sm font-bold hover:underline" href="/profile/orders">
-            View All Orders
+          <Link
+            className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white underline-offset-2 hover:underline shrink-0"
+            href="/profile/orders"
+          >
+            View all
           </Link>
         </div>
         <div className="p-6">
           {ordersLoading ? (
-            <p className="text-slate-500 text-sm">Loading your orders…</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Loading your orders…</p>
           ) : !recent ? (
-            <div className="text-center py-10">
-              <span className="material-symbols-outlined text-5xl text-slate-300 mb-3 block">shopping_bag</span>
-              <p className="text-slate-600 dark:text-slate-300 font-medium">No orders yet</p>
-              <p className="text-sm text-slate-500 mt-1">Shop the store — your tracking will appear here.</p>
+            <div className="text-center py-12 px-4">
+              <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block">
+                shopping_bag
+              </span>
+              <p className="text-slate-800 dark:text-slate-200 font-medium">No orders yet</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                When you place an order, status and tracking will show here.
+              </p>
               <Link
                 href="/products"
-                className="inline-flex mt-4 text-sm font-bold text-primary hover:underline"
+                className="inline-flex mt-5 text-sm font-semibold text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Browse products
               </Link>
@@ -287,22 +310,22 @@ export default function ProfileDashboard() {
           ) : (
             <div className="flex flex-col lg:flex-row gap-8">
               <div className="flex gap-4">
-                <div className="size-24 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center p-2 shrink-0">
+                <div className="size-24 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex items-center justify-center p-2 shrink-0 border border-slate-200/80 dark:border-slate-700/80">
                   {recent.items?.[0] ? (
-                    <span className="material-symbols-outlined text-4xl text-slate-400">inventory_2</span>
+                    <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500">inventory_2</span>
                   ) : (
-                    <span className="material-symbols-outlined text-4xl text-slate-400">package</span>
+                    <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500">package</span>
                   )}
                 </div>
                 <div className="flex flex-col justify-center min-w-0">
-                  <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                  <h4 className="font-semibold text-slate-900 dark:text-white truncate">
                     {recent.items?.[0]?.name || 'Order items'}
                     {(recent.items?.length || 0) > 1 && (
-                      <span className="text-slate-500 font-normal"> +{recent.items.length - 1} more</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-normal"> +{recent.items.length - 1} more</span>
                     )}
                   </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">#{recent.orderNumber}</p>
-                  <p className="text-lg font-black text-primary mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-mono mt-0.5">#{recent.orderNumber}</p>
+                  <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white mt-1.5">
                     ₹{recent.total.toLocaleString('en-IN')}
                   </p>
                 </div>
@@ -310,34 +333,32 @@ export default function ProfileDashboard() {
 
               <div className="flex-1 flex flex-col justify-center">
                 {isCancelled ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-800 dark:text-red-200">
+                  <div className="rounded-lg border border-rose-200/90 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 p-3.5 text-sm text-rose-900 dark:text-rose-200">
                     This order was cancelled.
                   </div>
                 ) : (
                   <>
                     <div className="relative mb-6">
-                      <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 dark:bg-slate-700 -translate-y-1/2" />
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full -translate-y-1/2" />
                       <div
-                        className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 transition-all duration-500"
+                        className="absolute top-1/2 left-0 h-1 bg-slate-700 dark:bg-slate-300 rounded-full -translate-y-1/2 transition-all duration-500"
                         style={{ width: progressWidthPct(recent.status) }}
                       />
                       <div className="relative flex justify-between">
                         {[1, 2, 3, 4].map((n) => (
                           <div key={n} className="flex flex-col items-center w-1/4">
                             <div
-                              className={`size-4 rounded-full border-4 ring-4 ring-white dark:ring-slate-900 ${
+                              className={`size-3.5 rounded-full border-2 ring-4 ring-white dark:ring-slate-900 ${
                                 step >= n
-                                  ? 'bg-primary border-primary/20'
-                                  : 'bg-slate-200 dark:bg-slate-700 border-slate-200/20'
-                              } ${step === n && n < 4 ? 'flex items-center justify-center' : ''}`}
-                            >
-                              {step === n && n < 4 ? (
-                                <span className="size-1.5 bg-white rounded-full" />
-                              ) : null}
-                            </div>
+                                  ? 'bg-slate-800 dark:bg-slate-200 border-slate-800 dark:border-slate-200'
+                                  : 'bg-slate-200 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                              } ${step === n && n < 4 ? 'ring-slate-300 dark:ring-slate-600' : ''}`}
+                            />
                             <span
-                              className={`text-[10px] font-bold mt-2 uppercase text-center px-0.5 ${
-                                step === n ? 'text-primary' : 'text-slate-500'
+                              className={`text-[10px] font-semibold mt-2.5 uppercase tracking-wide text-center px-0.5 ${
+                                step >= n
+                                  ? 'text-slate-800 dark:text-slate-200'
+                                  : 'text-slate-400 dark:text-slate-500'
                               }`}
                             >
                               {n === 1 && 'Placed'}
@@ -350,15 +371,20 @@ export default function ProfileDashboard() {
                       </div>
                     </div>
 
-                    <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 flex items-start gap-3">
-                      <span className="material-symbols-outlined text-primary text-xl shrink-0">info</span>
-                      <p className="text-sm text-slate-700 dark:text-slate-300">
-                        Status: <span className="font-bold text-primary">{recent.status.replace(/_/g, ' ')}</span>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200/90 dark:border-slate-700/90 rounded-lg p-3.5 flex items-start gap-3">
+                      <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl shrink-0">
+                        info
+                      </span>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Status:{' '}
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {recent.status.replace(/_/g, ' ')}
+                        </span>
                         {recent.shippingAddress?.city && (
                           <>
                             {' '}
                             · Ship to{' '}
-                            <span className="font-semibold">
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
                               {[recent.shippingAddress.city, recent.shippingAddress.state]
                                 .filter(Boolean)
                                 .join(', ')}
@@ -386,44 +412,38 @@ export default function ProfileDashboard() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link
-          href="/profile/electropay"
-          className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 rounded-xl hover:shadow-xl hover:shadow-primary/5 transition-all block"
-        >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/profile/electropay" className={`group ${cardBase} ${cardHover} p-6 block`}>
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined">credit_card</span>
+            <div className="size-12 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 flex items-center justify-center group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+              <span className="material-symbols-outlined text-2xl">credit_card</span>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
-                Manage Payment Methods
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-100 transition-colors">
+                Payments &amp; ElectroPay
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                ElectroPay credit, UPI and saved options.
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Credit balance and payment preferences.
               </p>
             </div>
-            <span className="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">
+            <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0">
               chevron_right
             </span>
           </div>
         </Link>
 
-        <Link
-          href="/sale"
-          className="group block bg-gradient-to-r from-primary to-blue-700 p-[1px] rounded-xl shadow-lg shadow-primary/10"
-        >
-          <div className="bg-white dark:bg-slate-900 shadow-sm p-6 rounded-xl h-full flex items-center gap-4">
-            <div className="size-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-              <span className="material-symbols-outlined">workspace_premium</span>
+        <Link href="/sale" className={`group ${cardBase} ${cardHover} p-6 block border-l-[3px] border-l-slate-800 dark:border-l-slate-200`}>
+          <div className="flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-400 flex items-center justify-center group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+              <span className="material-symbols-outlined text-2xl">sell</span>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-slate-900 dark:text-white">Deals &amp; benefits</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Check current offers and free shipping thresholds.
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-slate-900 dark:text-white">Offers &amp; sale</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Current deals and shipping offers.
               </p>
             </div>
-            <span className="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">
+            <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all shrink-0">
               chevron_right
             </span>
           </div>

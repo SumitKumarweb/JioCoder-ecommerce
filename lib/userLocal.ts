@@ -8,5 +8,6 @@ export const LS_SAVED_ADDRESSES = 'jiocoder_saved_addresses';
 
 export function defaultAvatarUrl(displayName: string): string {
   const name = displayName.trim() || 'User';
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=135bec&color=fff&size=256`;
+  // Slate-800 bg, neutral professional fallback (matches dashboard palette)
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=f1f5f9&size=256&bold=true`;
 }

@@ -69,13 +69,13 @@ export default function ProfileEditPage() {
 
             <form
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 md:p-8 space-y-6 shadow-sm"
+              className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 rounded-xl p-6 md:p-8 space-y-6 shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:shadow-none"
             >
               <div className="flex items-center gap-4">
                 <img
                   src={avatar || defaultAvatarUrl(displayName)}
                   alt=""
-                  className="size-20 rounded-full object-cover border-4 border-primary/20"
+                  className="size-20 rounded-full object-cover ring-2 ring-slate-200/90 dark:ring-slate-600/80"
                 />
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -113,7 +113,7 @@ export default function ProfileEditPage() {
                   id="edit-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  className="w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-slate-500/30 focus:border-slate-400 dark:focus:border-slate-500 outline-none transition-shadow"
                   placeholder="Your name"
                 />
               </div>
@@ -127,7 +127,7 @@ export default function ProfileEditPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                  className="w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-slate-500/30 focus:border-slate-400 dark:focus:border-slate-500 outline-none transition-shadow"
                   placeholder="you@example.com"
                 />
                 <p className="text-xs text-slate-500 mt-1">
@@ -136,22 +136,22 @@ export default function ProfileEditPage() {
               </div>
 
               {saved && (
-                <p className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
-                  <span className="material-symbols-outlined !text-lg">check_circle</span>
-                  Saved
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined !text-lg text-slate-500">check_circle</span>
+                  Saved successfully
                 </p>
               )}
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity"
+                  className="px-6 py-3 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold shadow-sm hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
                 >
                   Save changes
                 </button>
                 <Link
                   href="/profile"
-                  className="px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors"
                 >
                   Cancel
                 </Link>
