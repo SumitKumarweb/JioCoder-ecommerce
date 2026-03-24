@@ -8,7 +8,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = rawSlug ? encodeURIComponent(rawSlug) : "";
+  let canonicalSlug = "";
+  try {
+    canonicalSlug = decodeURIComponent(rawSlug || "").trim().toLowerCase();
+  } catch {
+    canonicalSlug = (rawSlug || "").trim().toLowerCase();
+  }
 
   // Use DB data for metadata. Fall back to title if other fields are missing.
   let title = "Blog Article - JioCoder";
@@ -20,10 +25,9 @@ export async function generateMetadata({
   let tags: string[] = [];
 
   try {
-    // slug in DB is stored lowercase; we still query with the decoded slug.
+    // slug in DB is stored lowercase (see Blog schema).
     await connectDB();
-    const decodedSlug = rawSlug?.trim() || "";
-    const blog = await Blog.findOne({ slug: decodedSlug, published: true }).lean();
+    const blog = await Blog.findOne({ slug: canonicalSlug, published: true }).lean();
 
     if (blog) {
       title = blog.title || title;
@@ -50,13 +54,13 @@ export async function generateMetadata({
     description,
     keywords,
     alternates: {
-      canonical: slug ? `/blog/${slug}` : "/blog",
+      canonical: canonicalSlug ? `/blog/${canonicalSlug}` : "/blog",
     },
     openGraph: {
       title,
       description,
       type: "article",
-      url: slug ? `/blog/${slug}` : "/blog",
+      url: canonicalSlug ? `/blog/${canonicalSlug}` : "/blog",
       images: featuredImage ? [featuredImage] : undefined,
     },
     twitter: {

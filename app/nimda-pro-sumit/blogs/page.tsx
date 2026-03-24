@@ -27,6 +27,7 @@ interface BlogPost {
   views?: string;
   tags: string[];
   isFeatured: boolean;
+  published?: boolean;
   relatedProducts?: RelatedProduct[];
   likes?: string;
   comments?: number;
@@ -38,6 +39,13 @@ interface RelatedProduct {
   price: number;
   image: string;
   slug?: string;
+}
+
+/** Non-empty trimmed URL for <img src>; avoids React warning on "" or whitespace-only. */
+function safeImageSrc(url: unknown): string | null {
+  if (typeof url !== 'string') return null;
+  const t = url.trim();
+  return t.length > 0 ? t : null;
 }
 
 export default function BlogsPage() {
@@ -64,6 +72,7 @@ export default function BlogsPage() {
     readTime: '',
     tags: [] as string[],
     isFeatured: false,
+    published: true,
     relatedProducts: [] as RelatedProduct[],
   });
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -133,6 +142,7 @@ export default function BlogsPage() {
       readTime: '',
       tags: [],
       isFeatured: false,
+      published: true,
       relatedProducts: [],
     });
     fetchProducts();
@@ -146,11 +156,13 @@ export default function BlogsPage() {
 
     // Fetch full blog with populated relatedProducts
     let relatedProducts: RelatedProduct[] = [];
+    let published = Boolean(blog.published);
     try {
       const res = await fetch(`/api/admin/blogs/${blog.id}`);
       if (res.ok) {
         const full = await res.json();
         relatedProducts = full.relatedProducts || [];
+        published = Boolean(full.published);
       }
     } catch (err) {
       console.error('Error fetching blog details:', err);
@@ -174,6 +186,7 @@ export default function BlogsPage() {
       readTime: blog.readTime,
       tags: blog.tags || [],
       isFeatured: blog.isFeatured,
+      published,
       relatedProducts,
     });
     fetchProducts();
@@ -211,6 +224,7 @@ export default function BlogsPage() {
       readTime: formData.readTime,
       tags: formData.tags,
       isFeatured: formData.isFeatured,
+      published: formData.published,
       relatedProducts: formData.relatedProducts.map((p) => p.id),
     };
 
@@ -364,11 +378,22 @@ export default function BlogsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredBlogs.map((blog) => (
+              {filteredBlogs.map((blog) => {
+                const featuredSrc = safeImageSrc(blog.featuredImage);
+                return (
                 <tr key={blog.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img src={blog.featuredImage} alt={blog.title} className="w-16 h-16 object-cover rounded" />
+                      {featuredSrc ? (
+                        <img src={featuredSrc} alt={blog.title} className="w-16 h-16 object-cover rounded shrink-0" />
+                      ) : (
+                        <div
+                          className="w-16 h-16 rounded bg-gray-100 flex items-center justify-center shrink-0 text-gray-400"
+                          aria-hidden
+                        >
+                          <span className="material-symbols-outlined text-2xl">image</span>
+                        </div>
+                      )}
                       <div>
                         <div className="text-sm font-medium text-gray-900 line-clamp-1">{blog.title}</div>
                         <div className="text-sm text-gray-500 line-clamp-1">{blog.description}</div>
@@ -405,7 +430,8 @@ export default function BlogsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
@@ -513,9 +539,13 @@ export default function BlogsPage() {
                   placeholder="Image URL"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
-                {formData.featuredImage && (
-                  <img src={formData.featuredImage} alt="Preview" className="mt-4 w-full max-w-md h-48 object-cover rounded-lg" />
-                )}
+                {(() => {
+                  const previewSrc = safeImageSrc(formData.featuredImage);
+                  if (!previewSrc) return null;
+                  return (
+                    <img src={previewSrc} alt="Preview" className="mt-4 w-full max-w-md h-48 object-cover rounded-lg" />
+                  );
+                })()}
               </div>
 
               {/* Additional Images */}
@@ -535,17 +565,26 @@ export default function BlogsPage() {
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  {formData.images.map((img, index) => (
-                    <div key={index} className="relative">
-                      <img src={img} alt={`Image ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
-                    </div>
-                  ))}
+                  {formData.images.map((img, index) => {
+                    const imgSrc = safeImageSrc(img);
+                    return (
+                      <div key={index} className="relative">
+                        {imgSrc ? (
+                          <img src={imgSrc} alt={`Image ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-full h-32 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            Invalid URL
+                          </div>
+                        )}
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"
+                        >
+                          <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -657,7 +696,7 @@ export default function BlogsPage() {
               {/* Additional Details */}
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Details</h3>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Publish Date</label>
                     <input
@@ -689,6 +728,18 @@ export default function BlogsPage() {
                       <span className="text-sm">Mark as featured</span>
                     </label>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+                    <label className="flex items-center gap-2 mt-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.published}
+                        onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Published on site (public /blog URL)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -700,11 +751,13 @@ export default function BlogsPage() {
                 {/* Selected products */}
                 {formData.relatedProducts.length > 0 && (
                   <div className="space-y-2 mb-4">
-                    {formData.relatedProducts.map((product) => (
+                    {formData.relatedProducts.map((product) => {
+                      const thumbSrc = safeImageSrc(product.image);
+                      return (
                       <div key={product.id} className="flex items-center gap-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                        {product.image && (
-                          <img src={product.image} alt={product.name} className="w-10 h-10 object-cover rounded" />
-                        )}
+                        {thumbSrc ? (
+                          <img src={thumbSrc} alt={product.name} className="w-10 h-10 object-cover rounded" />
+                        ) : null}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
                           <p className="text-xs text-blue-700 font-semibold">₹{product.price?.toLocaleString('en-IN')}</p>
@@ -717,7 +770,8 @@ export default function BlogsPage() {
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -738,23 +792,26 @@ export default function BlogsPage() {
                   <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
                     {availableProducts
                       .filter((p) => !formData.relatedProducts.find((r) => r.id === p.id))
-                      .map((product) => (
+                      .map((product) => {
+                        const listThumb = safeImageSrc(product.image);
+                        return (
                         <button
                           key={product.id}
                           type="button"
                           onClick={() => setFormData({ ...formData, relatedProducts: [...formData.relatedProducts, product] })}
                           className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
                         >
-                          {product.image && (
-                            <img src={product.image} alt={product.name} className="w-8 h-8 object-cover rounded shrink-0" />
-                          )}
+                          {listThumb ? (
+                            <img src={listThumb} alt={product.name} className="w-8 h-8 object-cover rounded shrink-0" />
+                          ) : null}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
                             <p className="text-xs text-gray-500">₹{product.price?.toLocaleString('en-IN')}</p>
                           </div>
                           <span className="material-symbols-outlined text-blue-500 text-lg shrink-0">add_circle</span>
                         </button>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
                 {availableProducts.length === 0 && (

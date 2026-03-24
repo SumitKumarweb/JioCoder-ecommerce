@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import Script from "next/script";
@@ -101,10 +101,6 @@ const baseMetadata: Metadata = {
     title: "JioCoder",
     statusBarStyle: "black-translucent",
   },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
   robots: {
     index: true,
     follow: true,
@@ -116,6 +112,13 @@ const baseMetadata: Metadata = {
       "max-snippet": -1,
     },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export async function generateMetadata(): Promise<Metadata> {

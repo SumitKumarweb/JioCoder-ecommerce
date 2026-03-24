@@ -27,6 +27,14 @@ type ReadNextPost = {
   featuredImage: string;
 };
 
+function normalizeBlogSlugParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw).trim().toLowerCase();
+  } catch {
+    return raw.trim().toLowerCase();
+  }
+}
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -34,7 +42,8 @@ export default async function BlogPostPage({
 }) {
   await connectDB();
 
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeBlogSlugParam(rawSlug || "");
 
   const blogPost = await Blog.findOne({
     slug,

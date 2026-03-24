@@ -46,30 +46,33 @@ export async function PUT(req: NextRequest, context: BlogRouteContext) {
     await connectDB();
     const body = await req.json();
 
-    const blog = await Blog.findByIdAndUpdate(
-      id,
-      {
-        title: body.title,
-        slug: body.slug,
-        description: body.description,
-        summary: body.summary,
-        category: body.category,
-        subCategory: body.subCategory,
-        featuredImage: body.featuredImage,
-        images: body.images || [],
-        videos: body.videos || [],
-        content: body.content,
-        author: body.author,
-        date: body.date,
-        readTime: body.readTime,
-        tags: body.tags || [],
-        isFeatured: body.isFeatured ?? false,
-        relatedProducts: body.relatedProducts || [],
-        published: body.published ?? false,
-        publishedAt: body.published ? new Date() : undefined,
-      },
-      { new: true }
-    ).lean();
+    const update: Record<string, unknown> = {
+      title: body.title,
+      slug: body.slug,
+      description: body.description,
+      summary: body.summary,
+      category: body.category,
+      subCategory: body.subCategory,
+      featuredImage: body.featuredImage,
+      images: body.images || [],
+      videos: body.videos || [],
+      content: body.content,
+      author: body.author,
+      date: body.date,
+      readTime: body.readTime,
+      tags: body.tags || [],
+      isFeatured: body.isFeatured ?? false,
+      relatedProducts: body.relatedProducts || [],
+    };
+
+    // Only touch publish state when the client sends it — omitting `published` used to
+    // overwrite with false and unpublish posts on every save from the admin UI.
+    if (Object.prototype.hasOwnProperty.call(body, "published")) {
+      update.published = Boolean(body.published);
+      update.publishedAt = body.published ? new Date() : undefined;
+    }
+
+    const blog = await Blog.findByIdAndUpdate(id, update, { new: true }).lean();
 
     if (!blog) {
       return NextResponse.json({ message: "Blog not found" }, { status: 404 });
