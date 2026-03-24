@@ -20,11 +20,37 @@ export type HeroSlide = {
   enabled?: boolean;
 };
 
-export default function Hero() {
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [loading, setLoading] = useState(true);
+function normalizeHeroRow(row: unknown): HeroSlide | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const id = r.id ?? r._id;
+  if (id == null || typeof r.image !== 'string' || typeof r.title !== 'string') {
+    return null;
+  }
+  return {
+    id: String(id),
+    image: r.image,
+    tag: typeof r.tag === 'string' ? r.tag : undefined,
+    title: r.title,
+    subtitle: typeof r.subtitle === 'string' ? r.subtitle : undefined,
+    url: typeof r.url === 'string' ? r.url : undefined,
+    buttonText: typeof r.buttonText === 'string' ? r.buttonText : undefined,
+    enabled: typeof r.enabled === 'boolean' ? r.enabled : true,
+  };
+}
+
+type HeroProps = {
+  /** When provided from the server, hero paints immediately (better LCP). */
+  initialSlides?: HeroSlide[];
+};
+
+export default function Hero({ initialSlides = [] }: HeroProps) {
+  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
+  const [loading, setLoading] = useState(initialSlides.length === 0);
 
   useEffect(() => {
+    if (initialSlides.length > 0) return;
+
     let cancelled = false;
 
     const loadSlides = async () => {
@@ -33,9 +59,14 @@ export default function Hero() {
         if (!res.ok) {
           throw new Error(`Failed to fetch hero slides: ${res.status}`);
         }
-        const data: HeroSlide[] = await res.json();
+        const data: unknown = await res.json();
+        const list = Array.isArray(data) ? data : [];
         if (!cancelled) {
-          setSlides(data || []);
+          setSlides(
+            list
+              .map(normalizeHeroRow)
+              .filter((s): s is HeroSlide => s !== null)
+          );
         }
       } catch (error) {
         if (cancelled) return;
@@ -51,7 +82,7 @@ export default function Hero() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialSlides.length]);
 
   const visibleSlides = slides.filter((slide) => slide.enabled !== false);
 
@@ -90,8 +121,10 @@ export default function Hero() {
                   alt={slide.title}
                   fill
                   priority={index === 0}
-                  fetchPriority={index === 0 ? 'high' : 'auto'}
-                  sizes="(min-width: 1024px) 1024px, 100vw"
+                  fetchPriority={index === 0 ? 'high' : 'low'}
+                  loading={index === 0 ? undefined : 'lazy'}
+                  quality={index === 0 ? 75 : 70}
+                  sizes="100vw"
                   className="object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
                 />
               </div>

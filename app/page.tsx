@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import CompareNotification from "@/components/CompareNotification";
 import SaleModal from "@/components/SaleModal";
 import { HomepageFetchQueueProvider } from "@/components/home/HomepageFetchQueue";
+import { getHomeHeroSlides } from "@/lib/hero/getHomeHeroSlides";
 import { MetadataManager } from "@/lib/metadata-manager";
 import { BreadcrumbSchema, WebPageSchema } from "@/components/schemas";
 
@@ -50,7 +51,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function Home() {
+export default async function Home() {
+  const heroSlides = await getHomeHeroSlides();
+
   return (
     <>
       <WebPageSchema
@@ -66,7 +69,7 @@ export default function Home() {
       <Navbar />
       <HomepageFetchQueueProvider>
         <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-5 py-4 sm:py-6 space-y-8 sm:space-y-10 md:space-y-12 overflow-x-hidden">
-          <Hero />
+          <Hero initialSlides={heroSlides} />
           <FeaturedCategories />
           <TrendingProducts />
           <BestSellers />
