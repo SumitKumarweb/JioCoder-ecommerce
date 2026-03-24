@@ -103,6 +103,7 @@ export default function OrganizationSchema() {
           `${baseUrl}/studio`,
           `${baseUrl}/blog`,
           `${baseUrl}/support`,
+          `${baseUrl}/llms.txt`,
         ],
         inLanguage: ['en-IN', 'en'],
       },

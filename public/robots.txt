@@ -1,4 +1,5 @@
 # Fallback for static hosts; Next.js also serves /robots from app/robots.ts
+# LLM / AI assistants (ChatGPT, Gemini, Claude, …): https://www.jiocoder.com/llms.txt
 User-agent: *
 Allow: /
 Disallow: /nimda-pro-sumit/

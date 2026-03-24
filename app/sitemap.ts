@@ -95,6 +95,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.68,
     },
+    {
+      url: `${baseUrl}/llms.txt`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.35,
+    },
     ...getAllCodeSlugs().map((slug) => ({
       url: `${baseUrl}/code/${slug}`,
       lastModified: new Date(),
