@@ -1,8 +1,11 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { useHomepageFetchQueue } from '@/components/home/HomepageFetchQueue';
 
 interface Product {
   _id: string;
@@ -34,21 +37,36 @@ interface SpotlightData {
 }
 
 export default function ProductSpotlight() {
+  const { wrapperRef, shouldLoad } = useInViewOnce();
+  const enqueue = useHomepageFetchQueue();
   const [spotlightData, setSpotlightData] = useState<SpotlightData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadSpotlight = async () => {
+    if (!shouldLoad) return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    enqueue(async () => {
       try {
-        const res = await fetch('/api/section-products?sectionType=SPOTLIGHT');
+        setIsLoading(true);
+        const res = await fetch('/api/section-products?sectionType=SPOTLIGHT', {
+          signal: ac.signal,
+        });
         if (!res.ok) {
           throw new Error(`Failed to fetch spotlight product: ${res.status}`);
         }
-        const data: any[] = await res.json();
+        const data: {
+          product?: SpotlightData['product'] & { category?: string };
+          description?: string;
+          features?: SpotlightData['features'];
+          hotspots?: SpotlightData['hotspots'];
+          buttonText?: string;
+        }[] = await res.json();
         const first = data?.[0];
-        
-        // Debug logging
-        console.log('Spotlight API Response:', first);
-        
+
+        if (cancelled || ac.signal.aborted) return;
+
         if (first?.product) {
           const spotlight: SpotlightData = {
             product: {
@@ -63,25 +81,44 @@ export default function ProductSpotlight() {
             hotspots: Array.isArray(first.hotspots) ? first.hotspots : [],
             buttonText: first.buttonText || 'Pre-order Now',
           };
-          
-          console.log('Processed Spotlight Data:', spotlight);
           setSpotlightData(spotlight);
         } else {
           setSpotlightData(null);
         }
       } catch (error) {
+        if (ac.signal.aborted || cancelled) return;
         console.error('Failed to load spotlight product from API', error);
+        setSpotlightData(null);
+      } finally {
+        if (!cancelled && !ac.signal.aborted) {
+          setIsLoading(false);
+        }
       }
+    });
+
+    return () => {
+      cancelled = true;
+      ac.abort();
     };
+  }, [shouldLoad, enqueue]);
 
-    loadSpotlight();
-  }, []);
+  return (
+    <div ref={wrapperRef} className="min-w-0">
+      {(!shouldLoad || isLoading) && (
+        <div
+          className="min-h-[280px] md:min-h-[360px] rounded-3xl bg-[#090F20]/80 border border-white/10 animate-pulse"
+          aria-hidden
+        />
+      )}
+      {shouldLoad && !isLoading && spotlightData ? (
+        <ProductSpotlightContent data={spotlightData} />
+      ) : null}
+    </div>
+  );
+}
 
-  if (!spotlightData) {
-    return null;
-  }
-
-  const { product, description, features = [], hotspots = [], buttonText = 'Pre-order Now' } = spotlightData;
+function ProductSpotlightContent({ data }: { data: SpotlightData }) {
+  const { product, description, features = [], hotspots = [], buttonText = 'Pre-order Now' } = data;
 
   return (
     <section className="bg-[#090F20] border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-around md:flex-row md:px-12 lg:flex-row lg:px-2 gap-24 lg:py-12">
@@ -119,7 +156,7 @@ export default function ProductSpotlight() {
         />
         {/* Dynamic Hotspots */}
         {hotspots.map((hotspot, index) => {
-          const positionStyle: React.CSSProperties = {};
+          const positionStyle: CSSProperties = {};
           if (hotspot.position.top) positionStyle.top = hotspot.position.top;
           if (hotspot.position.bottom) positionStyle.bottom = hotspot.position.bottom;
           if (hotspot.position.left) positionStyle.left = hotspot.position.left;

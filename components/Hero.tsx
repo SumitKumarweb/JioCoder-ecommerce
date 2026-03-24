@@ -25,22 +25,29 @@ export default function Hero() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const ac = new AbortController();
     const loadSlides = async () => {
       try {
-        const res = await fetch('/api/hero');
+        const res = await fetch('/api/hero', { signal: ac.signal });
         if (!res.ok) {
           throw new Error(`Failed to fetch hero slides: ${res.status}`);
         }
         const data: HeroSlide[] = await res.json();
-        setSlides(data || []);
+        if (!ac.signal.aborted) {
+          setSlides(data || []);
+        }
       } catch (error) {
+        if (ac.signal.aborted) return;
         console.error('Failed to load hero slides from API', error);
       } finally {
-        setLoading(false);
+        if (!ac.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadSlides();
+    void loadSlides();
+    return () => ac.abort();
   }, []);
 
   const visibleSlides = slides.filter((slide) => slide.enabled !== false);

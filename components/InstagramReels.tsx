@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import InstagramReelsSkeleton from './skeletons/InstagramReelsSkeleton';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { useHomepageFetchQueue } from '@/components/home/HomepageFetchQueue';
 
 interface InstagramReel {
   _id: string;
@@ -16,40 +18,47 @@ interface InstagramReel {
 }
 
 export default function InstagramReels() {
+  const { wrapperRef, shouldLoad } = useInViewOnce();
+  const enqueue = useHomepageFetchQueue();
   const [reels, setReels] = useState<InstagramReel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadReels = async () => {
+    if (!shouldLoad) return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    enqueue(async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/instagram-reels');
+        const res = await fetch('/api/instagram-reels', { signal: ac.signal });
         if (!res.ok) {
           throw new Error(`Failed to fetch Instagram reels: ${res.status}`);
         }
         const data: InstagramReel[] = await res.json();
-        console.log('Instagram Reels API Response:', data);
-        console.log('Number of reels:', data?.length || 0);
-        setReels(data || []);
+        if (!cancelled && !ac.signal.aborted) {
+          setReels(data || []);
+        }
       } catch (error) {
+        if (ac.signal.aborted || cancelled) return;
         console.error('Failed to load Instagram reels from API', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled && !ac.signal.aborted) {
+          setIsLoading(false);
+        }
       }
+    });
+
+    return () => {
+      cancelled = true;
+      ac.abort();
     };
-
-    loadReels();
-  }, []);
-
-  if (isLoading) {
-    return <InstagramReelsSkeleton />;
-  }
-
-  if (reels.length === 0) {
-    return null;
-  }
+  }, [shouldLoad, enqueue]);
 
   return (
+    <div ref={wrapperRef} className="min-w-0">
+      {(!shouldLoad || isLoading) && <InstagramReelsSkeleton />}
+      {shouldLoad && !isLoading && reels.length > 0 ? (
     <section className="space-y-6">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
@@ -121,6 +130,8 @@ export default function InstagramReels() {
         ))}
       </div>
     </section>
+      ) : null}
+    </div>
   );
 }
 

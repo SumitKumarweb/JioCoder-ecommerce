@@ -8,6 +8,8 @@ import 'swiper/css/navigation';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCart } from '@/contexts/CartContext';
 import BestSellersSkeleton from './skeletons/BestSellersSkeleton';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { useHomepageFetchQueue } from '@/components/home/HomepageFetchQueue';
 
 interface BestSellerProduct {
   id: string;
@@ -45,37 +47,45 @@ const StarRating = ({ rating }: { rating: number }) => {
 };
 
 export default function BestSellers() {
+  const { wrapperRef, shouldLoad } = useInViewOnce();
+  const enqueue = useHomepageFetchQueue();
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const { addToCart } = useCart();
   const [bestSellers, setBestSellers] = useState<Array<Product & { badge?: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
+    if (!shouldLoad) return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    enqueue(async () => {
       try {
         setIsLoading(true);
-        // Fetch BEST_SELLER section products from public API
-        const res = await fetch('/api/section-products?sectionType=BEST_SELLER');
-        
-        // Handle non-OK responses gracefully
+        const res = await fetch('/api/section-products?sectionType=BEST_SELLER', {
+          signal: ac.signal,
+        });
+
         if (!res.ok) {
-          console.warn(`Failed to fetch best sellers: ${res.status}`);
-          setBestSellers([]);
+          if (!ac.signal.aborted && !cancelled) {
+            console.warn(`Failed to fetch best sellers: ${res.status}`);
+            setBestSellers([]);
+          }
           return;
         }
-        
-        const data: any[] = await res.json();
+
+        const data: { product?: { _id: string; name: string; price: number; slug?: string; image?: string; category?: string }; badge?: string }[] =
+          await res.json();
 
         const mapped =
           (data ?? [])
             .map((item) => {
               const p = item?.product;
-              // Validate product has required fields
               if (!p || !p._id || !p.name || p.price === undefined) {
                 return null;
               }
               return {
-                id: p.slug || p._id,  // prefer slug for clean URLs
+                id: p.slug || p._id,
                 name: p.name,
                 image: p.image || '/placeholder-product.jpg',
                 price: p.price,
@@ -91,17 +101,25 @@ export default function BestSellers() {
                 x !== null
             );
 
-        setBestSellers(mapped);
+        if (!cancelled && !ac.signal.aborted) {
+          setBestSellers(mapped);
+        }
       } catch (error) {
+        if (ac.signal.aborted || cancelled) return;
         console.error('Failed to load best sellers', error);
         setBestSellers([]);
       } finally {
-        setIsLoading(false);
+        if (!cancelled && !ac.signal.aborted) {
+          setIsLoading(false);
+        }
       }
-    };
+    });
 
-    void load();
-  }, []);
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [shouldLoad, enqueue]);
 
   const handleCompareChange = (product: Product & { badge?: string }, checked: boolean) => {
     if (checked) {
@@ -116,15 +134,10 @@ export default function BestSellers() {
     }
   };
 
-  if (isLoading) {
-    return <BestSellersSkeleton />;
-  }
-
-  if (bestSellers.length === 0) {
-    return null;
-  }
-
   return (
+    <div ref={wrapperRef} className="min-w-0">
+      {(!shouldLoad || isLoading) && <BestSellersSkeleton />}
+      {shouldLoad && !isLoading && bestSellers.length > 0 ? (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-bold tracking-tight">Best Sellers</h3>
@@ -245,6 +258,8 @@ export default function BestSellers() {
         </button>
       </div>
     </section>
+      ) : null}
+    </div>
   );
 }
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import CommunityReviewsSkeleton from './skeletons/CommunityReviewsSkeleton';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { useHomepageFetchQueue } from '@/components/home/HomepageFetchQueue';
 
 interface CommunityReview {
   _id: string;
@@ -17,6 +19,9 @@ interface CommunityReview {
 }
 
 export default function CommunityReviews() {
+  const { wrapperRef, shouldLoad } = useInViewOnce();
+  const enqueue = useHomepageFetchQueue();
+
 const getYoutubeEmbed = (url: string) => {
   try {
     const parsedUrl = new URL(url);
@@ -41,34 +46,41 @@ const getYoutubeEmbed = (url: string) => {
   const [openVideo, setOpenVideo] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadReviews = async () => {
+    if (!shouldLoad) return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    enqueue(async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/community-reviews');
+        const res = await fetch('/api/community-reviews', { signal: ac.signal });
         if (!res.ok) {
           throw new Error(`Failed to fetch community reviews: ${res.status}`);
         }
         const data: CommunityReview[] = await res.json();
-        setReviews(data || []);
+        if (!cancelled && !ac.signal.aborted) {
+          setReviews(data || []);
+        }
       } catch (error) {
+        if (ac.signal.aborted || cancelled) return;
         console.error('Failed to load community reviews from API', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled && !ac.signal.aborted) {
+          setIsLoading(false);
+        }
       }
+    });
+
+    return () => {
+      cancelled = true;
+      ac.abort();
     };
-
-    loadReviews();
-  }, []);
-
-  if (isLoading) {
-    return <CommunityReviewsSkeleton />;
-  }
-
-  if (reviews.length === 0) {
-    return null;
-  }
+  }, [shouldLoad, enqueue]);
 
   return (
+    <div ref={wrapperRef} className="min-w-0">
+      {(!shouldLoad || isLoading) && <CommunityReviewsSkeleton />}
+      {shouldLoad && !isLoading && reviews.length > 0 ? (
     <section className="space-y-6">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
@@ -163,6 +175,8 @@ const getYoutubeEmbed = (url: string) => {
   </div>
 )}
     </section>
+      ) : null}
+    </div>
   );
 }
 

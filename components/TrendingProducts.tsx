@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCompare } from '@/contexts/CompareContext';
 import TrendingProductsSkeleton from './skeletons/TrendingProductsSkeleton';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { useHomepageFetchQueue } from '@/components/home/HomepageFetchQueue';
 
 interface Product {
   _id: string;
@@ -14,50 +16,68 @@ interface Product {
 }
 
 export default function TrendingProducts() {
+  const { wrapperRef, shouldLoad } = useInViewOnce();
+  const enqueue = useHomepageFetchQueue();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadTrending = async () => {
+    if (!shouldLoad) return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    enqueue(async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/section-products?sectionType=TRENDING');
-        
-        // Handle non-OK responses gracefully
+        const res = await fetch('/api/section-products?sectionType=TRENDING', {
+          signal: ac.signal,
+        });
+
         if (!res.ok) {
-          console.warn(`Failed to fetch trending products: ${res.status}`);
-          setTrendingProducts([]);
+          if (!ac.signal.aborted && !cancelled) {
+            console.warn(`Failed to fetch trending products: ${res.status}`);
+            setTrendingProducts([]);
+          }
           return;
         }
-        
-        const data: any[] = await res.json();
-        
-        // Safely map and filter products
+
+        const data: { product?: { _id: string; name: string; price: number; slug?: string; image?: string } }[] =
+          await res.json();
+
         const mapped: Product[] =
           (data || [])
-            ?.map((item) => item?.product)
-            .filter((p: any) => p && p._id && p.name && p.price !== undefined)
-            .map((p: any) => ({
+            .map((item) => item?.product)
+            .filter((p): p is NonNullable<typeof p> => Boolean(p && p._id && p.name && p.price !== undefined))
+            .map((p) => ({
               _id: p._id,
-              id: p.slug || p._id,  // prefer slug for clean URLs
+              id: p.slug || p._id,
               compareId: `trending-${p._id}`,
               name: p.name,
               price: p.price,
               image: p.image || '/placeholder-product.jpg',
             })) || [];
-        setTrendingProducts(mapped);
+
+        if (!cancelled && !ac.signal.aborted) {
+          setTrendingProducts(mapped);
+        }
       } catch (error) {
+        if (ac.signal.aborted || cancelled) return;
         console.error('Failed to load trending products from API', error);
         setTrendingProducts([]);
       } finally {
-        setIsLoading(false);
+        if (!cancelled && !ac.signal.aborted) {
+          setIsLoading(false);
+        }
       }
-    };
+    });
 
-    loadTrending();
-  }, []);
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [shouldLoad, enqueue]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -90,15 +110,10 @@ export default function TrendingProducts() {
     }
   };
 
-  if (isLoading) {
-    return <TrendingProductsSkeleton />;
-  }
-
-  if (trendingProducts.length === 0) {
-    return null;
-  }
-
   return (
+    <div ref={wrapperRef} className="min-w-0">
+      {(!shouldLoad || isLoading) && <TrendingProductsSkeleton />}
+      {shouldLoad && !isLoading && trendingProducts.length > 0 ? (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -170,6 +185,8 @@ export default function TrendingProducts() {
         ))}
       </div>
     </section>
+      ) : null}
+    </div>
   );
 }
 
