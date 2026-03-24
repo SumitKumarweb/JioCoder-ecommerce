@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import BlogRichTextEditor from '@/components/admin/BlogRichTextEditor';
 
 interface BlogPost {
   id: string;
@@ -82,7 +81,8 @@ export default function BlogsPage() {
   const [apiError, setApiError] = useState('');
   const [availableProducts, setAvailableProducts] = useState<RelatedProduct[]>([]);
   const [productSearch, setProductSearch] = useState('');
-  const [contentTab, setContentTab] = useState<'write' | 'preview'>('write');
+  /** Bumps when opening "Add" so the rich text editor remounts with empty content. */
+  const [newDraftKey, setNewDraftKey] = useState(0);
 
   const fetchProducts = async (search = '') => {
     try {
@@ -122,6 +122,7 @@ export default function BlogsPage() {
 
   const handleAddBlog = () => {
     setEditingBlog(null);
+    setNewDraftKey((k) => k + 1);
     setApiError('');
     setProductSearch('');
     setFormData({
@@ -618,45 +619,12 @@ export default function BlogsPage() {
 
               {/* Content */}
               <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900">Content</h3>
-                  <div className="flex rounded-lg overflow-hidden border border-gray-300">
-                    <button
-                      type="button"
-                      onClick={() => setContentTab('write')}
-                      className={`px-4 py-1.5 text-sm font-medium transition-colors ${contentTab === 'write' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      ✏️ Write
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setContentTab('preview')}
-                      className={`px-4 py-1.5 text-sm font-medium transition-colors ${contentTab === 'preview' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      👁️ Preview
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mb-3">Supports <strong>Markdown</strong>: # Heading, **bold**, *italic*, `code`, - lists, &gt; blockquote, ```codeblock```</p>
-                {contentTab === 'write' ? (
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    rows={14}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                    placeholder={`Write your blog content in Markdown...\n\n# Heading 1\n## Heading 2\n\n**Bold text** and *italic text*\n\n- List item 1\n- List item 2\n\n> Blockquote\n\n\`\`\`javascript\nconst hello = 'world';\n\`\`\``}
-                  />
-                ) : (
-                  <div className="w-full min-h-[280px] px-4 py-3 border border-gray-300 rounded-lg bg-white overflow-auto prose prose-sm max-w-none">
-                    {formData.content ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {formData.content}
-                      </ReactMarkdown>
-                    ) : (
-                      <p className="text-gray-400 italic">Nothing to preview yet. Switch to Write tab and add content.</p>
-                    )}
-                  </div>
-                )}
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Content</h3>
+                <BlogRichTextEditor
+                  key={editingBlog?.id ?? `new-${newDraftKey}`}
+                  value={formData.content}
+                  onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
+                />
               </div>
 
               {/* Author Information */}

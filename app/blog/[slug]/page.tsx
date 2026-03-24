@@ -9,6 +9,8 @@ import Footer from '@/components/Footer';
 import Breadcrumb from '@/components/Breadcrumb';
 import { BreadcrumbSchema, WebPageSchema } from '@/components/schemas';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import { isBlogContentHtml } from '@/lib/blogContent';
+import { sanitizeBlogHtml } from '@/lib/sanitizeBlogHtml';
 
 type RelatedProduct = {
   id: string;
@@ -259,49 +261,60 @@ export default async function BlogPostPage({
               </p>
             )}
 
-            <div className="prose prose-slate max-w-none">
+            <div className="max-w-none">
               {mappedBlogPost.summary && (
-                <p className="text-xl leading-relaxed text-slate-600 italic mb-8 not-prose border-l-4 border-primary pl-5 py-1">
+                <p className="text-xl leading-relaxed text-slate-600 italic mb-8 border-l-4 border-primary pl-5 py-1">
                   {mappedBlogPost.summary}
                 </p>
               )}
 
               {mappedBlogPost.content ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary font-medium underline underline-offset-2 hover:opacity-75 transition-opacity"
-                      >
-                        {children}
-                      </a>
-                    ),
-                    code: ({ inline, className, children }: any) => {
-                      if (inline) {
-                        return (
-                          <code className="bg-slate-100 text-primary font-mono text-sm px-1.5 py-0.5 rounded">
+                isBlogContentHtml(mappedBlogPost.content) ? (
+                  <div
+                    className="blog-post-html-content prose prose-slate max-w-none prose-a:text-primary prose-a:font-medium prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-75 prose-img:w-full prose-img:rounded-xl prose-img:my-6 prose-img:shadow-md prose-img:object-cover prose-pre:rounded-xl prose-pre:bg-slate-900 prose-pre:text-slate-100"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeBlogHtml(mappedBlogPost.content),
+                    }}
+                  />
+                ) : (
+                  <div className="prose prose-slate max-w-none">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary font-medium underline underline-offset-2 hover:opacity-75 transition-opacity"
+                          >
                             {children}
-                          </code>
-                        );
-                      }
-                      return (
-                        <pre className="my-6 rounded-xl overflow-hidden bg-slate-900 text-slate-100 p-5 text-sm leading-relaxed">
-                          <code className={className || 'font-mono'}>{children}</code>
-                        </pre>
-                      );
-                    },
-                    img: ({ src, alt }) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={src} alt={alt || ''} className="w-full rounded-xl my-6 shadow-md object-cover" />
-                    ),
-                  }}
-                >
-                  {mappedBlogPost.content}
-                </ReactMarkdown>
+                          </a>
+                        ),
+                        code: ({ inline, className, children }: any) => {
+                          if (inline) {
+                            return (
+                              <code className="bg-slate-100 text-primary font-mono text-sm px-1.5 py-0.5 rounded">
+                                {children}
+                              </code>
+                            );
+                          }
+                          return (
+                            <pre className="my-6 rounded-xl overflow-hidden bg-slate-900 text-slate-100 p-5 text-sm leading-relaxed">
+                              <code className={className || 'font-mono'}>{children}</code>
+                            </pre>
+                          );
+                        },
+                        img: ({ src, alt }) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={src} alt={alt || ''} className="w-full rounded-xl my-6 shadow-md object-cover" />
+                        ),
+                      }}
+                    >
+                      {mappedBlogPost.content}
+                    </ReactMarkdown>
+                  </div>
+                )
               ) : (
                 <p className="text-slate-500 italic">No content added yet.</p>
               )}
