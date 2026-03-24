@@ -145,7 +145,7 @@ export default async function CodeTrackPage({ params }: Props) {
                     ? 'Write code and use Run. Python runs in your browser with Pyodide (first run may download ~10MB).'
                     : playground?.execution === 'browser-js'
                       ? 'Write code and use Run. JavaScript runs in a sandboxed iframe; output appears in the terminal.'
-                      : playground?.execution === 'server-native'
+                      : playground?.execution === 'local-guide'
                         ? 'Use Run to execute on a remote sandbox (Glot) when configured, or follow the in-terminal links for online compilers / local tools.'
                         : 'Write code and use Run; output appears in the terminal.'}
               </p>
