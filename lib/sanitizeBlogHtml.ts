@@ -1,7 +1,8 @@
 import sanitizeHtml from "sanitize-html";
 
- 
-const BLOG_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+type SanitizeOptions = NonNullable<Parameters<typeof sanitizeHtml>[1]>;
+
+const BLOG_SANITIZE_OPTIONS: SanitizeOptions = {
   allowedTags: [
     "p",
     "br",
