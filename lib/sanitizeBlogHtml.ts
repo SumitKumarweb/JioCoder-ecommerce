@@ -1,9 +1,6 @@
 import sanitizeHtml from "sanitize-html";
 
-/**
- * Server-safe HTML for blog posts (no jsdom — avoids ESM/CJS issues on Vercel/Lambda).
- * Mirrors a typical “full HTML” profile: headings, lists, links, images, code blocks, tables.
- */
+ 
 const BLOG_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
     "p",
