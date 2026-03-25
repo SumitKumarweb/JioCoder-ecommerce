@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import databaseConfig from '@/config/database';
+// Ensure referenced models are registered before any populate() runs.
+import '@/models/Product';
 
 function getMongoUri(): string {
   const uri = process.env.MONGODB_URI || '';
