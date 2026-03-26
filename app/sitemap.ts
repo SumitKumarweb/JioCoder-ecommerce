@@ -6,6 +6,7 @@ import Blog from '@/models/Blog';
 import CareerJob from '@/models/CareerJob';
 import CoderCommunityGroup from '@/models/CoderCommunityGroup';
 import { getAllCodeSlugs } from '@/lib/code/codeTracks';
+import { Types } from 'mongoose';
 
 // Revalidate sitemap every hour (3600 seconds)
 // This ensures new products, collections, and blogs are included within 1 hour
@@ -177,9 +178,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Add collection-product pages (products within collections)
     for (const collection of collections as Array<{ productIds?: unknown[]; slug?: string }>) {
       if (collection?.productIds && collection.productIds.length > 0 && collection.slug) {
+        const productIds = collection.productIds as Array<Types.ObjectId | string>;
+
         // Fetch all products in this collection (including those without slugs)
         const collectionProducts = await Product.find({
-          _id: { $in: collection.productIds },
+          _id: { $in: productIds },
         })
           .select('_id name slug updatedAt')
           .lean();
