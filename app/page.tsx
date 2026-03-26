@@ -69,6 +69,7 @@ export default async function Home() {
       <Navbar />
       <HomepageFetchQueueProvider>
         <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-5 py-4 sm:py-6 space-y-8 sm:space-y-10 md:space-y-12 overflow-x-hidden">
+          <h1 className="sr-only">JioCoder premium mechanical keyboards and gaming peripherals</h1>
           <Hero initialSlides={heroSlides} />
           <FeaturedCategories />
           <TrendingProducts />

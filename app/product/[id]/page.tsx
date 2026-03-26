@@ -120,6 +120,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
       <Navbar />
       <main className="max-w-7xl mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 py-5 sm:py-6 md:py-8 overflow-x-hidden">
+        <h1 className="sr-only">{product ? product.name : "Product details"}</h1>
         <ProductDetail productId={id} />
       </main>
       <Footer />

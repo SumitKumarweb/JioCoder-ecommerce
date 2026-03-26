@@ -39,6 +39,7 @@ export default function PaymentPage() {
       <>
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="sr-only">Checkout payment method</h1>
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-8 p-8 rounded-full bg-slate-100">
               <span className="material-symbols-outlined text-8xl text-slate-300">shopping_cart</span>
@@ -71,6 +72,7 @@ export default function PaymentPage() {
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <h1 className="sr-only">Checkout payment method</h1>
         <Breadcrumb
           items={[
             { label: 'Home', href: '/' },

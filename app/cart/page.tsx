@@ -136,6 +136,7 @@ export default function CartPage() {
       <>
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="sr-only">Your shopping cart</h1>
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
@@ -167,6 +168,10 @@ export default function CartPage() {
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-black text-slate-900 mb-8">
+          Your Shopping Cart
+          <span className="text-slate-400 font-normal text-xl ml-2">({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
+        </h1>
         {/* Breadcrumbs */}
         <Breadcrumb
           items={[
@@ -174,11 +179,6 @@ export default function CartPage() {
             { label: 'Shopping Cart' },
           ]}
         />
-
-        <h2 className="text-3xl font-black text-slate-900 mb-8">
-          Your Shopping Cart
-          <span className="text-slate-400 font-normal text-xl ml-2">({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
-        </h2>
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column: Cart Items (70%) */}

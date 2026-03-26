@@ -195,6 +195,7 @@ export default function OrderSuccessPage() {
     <>
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-12 md:py-20">
+        <h1 className="sr-only">Order confirmation</h1>
         <Breadcrumb
           items={[
             { label: 'Home', href: '/' },

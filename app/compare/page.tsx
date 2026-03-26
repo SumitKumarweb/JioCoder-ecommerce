@@ -38,6 +38,7 @@ export default function ComparePage() {
       <BreadcrumbSchema items={breadcrumbItems} />
       <Navbar />
       <main className="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-20 py-6">
+        <h1 className="sr-only">Compare JioCoder products</h1>
         <CompareHeader
           title="Compare Products"
           description="Compare specifications and features of your selected products."

@@ -30,6 +30,7 @@ export default async function BlogPage() {
 
   return (
     <>
+      <h1 className="sr-only">JioCoder blog articles and guides</h1>
       <WebPageSchema
         path="/blog"
         name="Blog - JioCoder"

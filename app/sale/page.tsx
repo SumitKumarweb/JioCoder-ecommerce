@@ -202,6 +202,7 @@ export default function SalePage() {
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto px-6 md:px-16 pb-20">
+        <h1 className="sr-only">JioCoder flash sale bundles</h1>
         {/* Hero Section with Countdown */}
         <section className="py-12 md:py-16">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 p-8 md:p-16 flex flex-col items-center text-center">

@@ -214,6 +214,7 @@ export default function CouponsPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="sr-only">Admin coupon management</h1>
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[

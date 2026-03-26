@@ -4,6 +4,7 @@ import CheckoutAddressClient from './CheckoutAddressClient';
 export default function CheckoutPage() {
   return (
     <>
+      <h1 className="sr-only">Checkout shipping details</h1>
       <WebPageSchema
         path="/checkout"
         name="Checkout - JioCoder"

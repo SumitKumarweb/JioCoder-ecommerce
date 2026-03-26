@@ -49,6 +49,7 @@ export default async function CareersPage() {
 
   return (
     <>
+      <h1 className="sr-only">Careers at JioCoder</h1>
       <WebPageSchema
         path="/careers"
         name="Careers at JioCoder"

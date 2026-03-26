@@ -94,6 +94,7 @@ export default function StudioCheckoutSuccessPage() {
     <>
       <Navbar />
       <main className="max-w-lg mx-auto px-4 py-16 text-center">
+        <h1 className="sr-only">Studio order status</h1>
         {status === 'loading' && (
           <>
             <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
@@ -105,7 +106,7 @@ export default function StudioCheckoutSuccessPage() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-green-600 text-4xl">check_circle</span>
             </div>
-            <h1 className="text-2xl font-black text-slate-900 mb-2">Order placed</h1>
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Order placed</h2>
             <p className="text-slate-600 mb-2">Your custom print order is confirmed.</p>
             <p className="font-mono font-bold text-primary text-lg mb-8">{orderNumber}</p>
             <p className="text-sm text-slate-500 mb-8">We’ll email you updates. Printing ships in 3–5 business days.</p>
@@ -116,7 +117,7 @@ export default function StudioCheckoutSuccessPage() {
         )}
         {status === 'error' && (
           <>
-            <h1 className="text-2xl font-black text-slate-900 mb-2">Couldn’t complete order</h1>
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Couldn’t complete order</h2>
             <p className="text-rose-600 mb-8">{message}</p>
             <Link href="/studio" className="inline-block px-8 py-3 bg-slate-900 text-white font-bold rounded-xl mr-2">
               Studio

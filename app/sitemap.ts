@@ -18,123 +18,141 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ""
   );
   const sitemapEntries: MetadataRoute.Sitemap = [];
+  const seenUrls = new Set<string>();
+
+  const addEntry = (entry: MetadataRoute.Sitemap[number]) => {
+    if (seenUrls.has(entry.url)) return;
+    seenUrls.add(entry.url);
+    sitemapEntries.push(entry);
+  };
+
+  // Helper function to generate URL-safe slug text
+  function generateSlug(name: string): string {
+    return String(name || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  // Stable fallback slug for items that don't have one in DB.
+  // No DB writes from sitemap generation.
+  function getProductSlug(product: { _id: unknown; name?: string; slug?: string }): string {
+    if (product.slug) return String(product.slug);
+    const base = generateSlug(product.name || "product");
+    const idPart = String(product._id || "").slice(-6).toLowerCase();
+    return idPart ? `${base}-${idPart}` : base;
+  }
 
   // Static URLs first so Google still gets core pages if MongoDB is unavailable.
   // Omit /cart (blocked in robots.txt), /sale (layout sets noindex), /checkout and /studio/checkout
   // (transactional flows — not listed here; see robots.txt).
-  sitemapEntries.push(
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/products`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/collections`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/careers`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/community`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.65,
-    },
-    {
-      url: `${baseUrl}/compare`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.55,
-    },
-    {
-      url: `${baseUrl}/studio`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.78,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/support`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/search`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/code`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.68,
-    },
-    {
-      url: `${baseUrl}/llms.txt`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.35,
-    },
-    ...getAllCodeSlugs().map((slug) => ({
+  addEntry({
+    url: baseUrl,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 1,
+  });
+  addEntry({
+    url: `${baseUrl}/products`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.9,
+  });
+  addEntry({
+    url: `${baseUrl}/collections`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.9,
+  });
+  addEntry({
+    url: `${baseUrl}/blog`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.8,
+  });
+  addEntry({
+    url: `${baseUrl}/careers`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  });
+  addEntry({
+    url: `${baseUrl}/community`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.65,
+  });
+  addEntry({
+    url: `${baseUrl}/compare`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.55,
+  });
+  addEntry({
+    url: `${baseUrl}/studio`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.78,
+  });
+  addEntry({
+    url: `${baseUrl}/about`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  });
+  addEntry({
+    url: `${baseUrl}/support`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  });
+  addEntry({
+    url: `${baseUrl}/search`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  });
+  addEntry({
+    url: `${baseUrl}/code`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.68,
+  });
+  addEntry({
+    url: `${baseUrl}/llms.txt`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.35,
+  });
+  getAllCodeSlugs().forEach((slug) => {
+    addEntry({
       url: `${baseUrl}/code/${slug}`,
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.6,
-    }))
-  );
+    });
+  });
 
   try {
     await connectDB();
 
     // Fetch all collections
-    const collections = await Collection.find({}).select('slug updatedAt').lean();
+    const collections = await Collection.find({})
+      .select('slug updatedAt productIds')
+      .lean();
     
     // Add collection pages
     collections.forEach((collection) => {
-      sitemapEntries.push({
+      addEntry({
         url: `${baseUrl}/collections/${collection.slug}`,
         lastModified: collection.updatedAt ? new Date(collection.updatedAt) : new Date(),
         changeFrequency: 'weekly',
         priority: 0.8,
       });
     });
-
-    // Helper function to generate slug from product name
-    function generateSlug(name: string): string {
-      return name
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-    }
 
     // Fetch ALL products (including those without slugs)
     const allProducts = await Product.find({})
@@ -143,27 +161,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Add standalone product pages - generate slugs for products that don't have them
     for (const product of allProducts) {
-      let productSlug = product.slug;
-      
-      // Auto-generate slug if product doesn't have one
-      if (!productSlug && product.name) {
-        const baseSlug = generateSlug(product.name);
-        
-        // Check for existing slugs with same base
-        const existingCount = await Product.countDocuments({
-          slug: new RegExp(`^${baseSlug}(-\\d+)?$`),
-          _id: { $ne: product._id },
-        });
-        
-        productSlug = existingCount > 0 ? `${baseSlug}-${existingCount + 1}` : baseSlug;
-        
-        // Save slug to DB for future use
-        await Product.findByIdAndUpdate(product._id, { $set: { slug: productSlug } });
-      }
+      const productSlug = getProductSlug(product as { _id: unknown; name?: string; slug?: string });
       
       // Add to sitemap if we have a slug
       if (productSlug) {
-        sitemapEntries.push({
+        addEntry({
           url: `${baseUrl}/product/${productSlug}`,
           lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
           changeFrequency: 'weekly',
@@ -173,43 +175,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // Add collection-product pages (products within collections)
-    for (const collection of collections) {
-      const collectionDoc = await Collection.findById(collection._id)
-        .select('productIds slug')
-        .lean();
-      
-      if (collectionDoc?.productIds && collectionDoc.productIds.length > 0) {
+    for (const collection of collections as Array<{ productIds?: unknown[]; slug?: string }>) {
+      if (collection?.productIds && collection.productIds.length > 0 && collection.slug) {
         // Fetch all products in this collection (including those without slugs)
         const collectionProducts = await Product.find({
-          _id: { $in: collectionDoc.productIds },
+          _id: { $in: collection.productIds },
         })
           .select('_id name slug updatedAt')
           .lean();
 
-        // Generate slugs and add to sitemap
+        // Generate route-safe slugs and add to sitemap
         for (const product of collectionProducts) {
-          let productSlug = product.slug;
-          
-          // Auto-generate slug if product doesn't have one
-          if (!productSlug && product.name) {
-            const baseSlug = generateSlug(product.name);
-            
-            // Check for existing slugs with same base
-            const existingCount = await Product.countDocuments({
-              slug: new RegExp(`^${baseSlug}(-\\d+)?$`),
-              _id: { $ne: product._id },
-            });
-            
-            productSlug = existingCount > 0 ? `${baseSlug}-${existingCount + 1}` : baseSlug;
-            
-            // Save slug to DB for future use
-            await Product.findByIdAndUpdate(product._id, { $set: { slug: productSlug } });
-          }
+          const productSlug = getProductSlug(product as { _id: unknown; name?: string; slug?: string });
           
           // Add to sitemap if we have a slug
           if (productSlug) {
-            sitemapEntries.push({
-              url: `${baseUrl}/collections/${collectionDoc.slug}/${productSlug}`,
+            addEntry({
+              url: `${baseUrl}/collections/${collection.slug}/${productSlug}`,
               lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
               changeFrequency: 'weekly',
               priority: 0.7,
@@ -230,7 +212,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       blogPosts.forEach((post) => {
         const slug = post.slug ? encodeURIComponent(String(post.slug)) : "";
         if (!slug) return;
-        sitemapEntries.push({
+        addEntry({
           url: `${baseUrl}/blog/${slug}`,
           lastModified: post.updatedAt 
             ? new Date(post.updatedAt) 
@@ -271,7 +253,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             );
 
         if (!slug) return;
-        sitemapEntries.push({
+        addEntry({
           url: `${baseUrl}/careers/${slug}`,
           lastModified: job.updatedAt ? new Date(job.updatedAt) : new Date(),
           changeFrequency: 'weekly',
@@ -295,7 +277,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       communityGroups.forEach((g) => {
         const slug = g.slug ? String(g.slug).trim() : '';
         if (!slug) return;
-        sitemapEntries.push({
+        addEntry({
           url: `${baseUrl}/community/groups/${encodeURIComponent(slug)}`,
           lastModified: g.updatedAt ? new Date(g.updatedAt) : new Date(),
           changeFrequency: 'daily',

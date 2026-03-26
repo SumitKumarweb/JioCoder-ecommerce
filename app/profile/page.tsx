@@ -14,6 +14,7 @@ export default function ProfilePage() {
     <>
       <Navbar />
       <main className="flex-1 w-full max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-10 lg:px-20 py-5 sm:py-6 md:py-8 overflow-x-hidden">
+        <h1 className="sr-only">My account dashboard</h1>
         <div className="flex flex-col lg:flex-row gap-5 sm:gap-6 md:gap-8 items-start">
           <AccountSidebar activeKey="dashboard" />
           <section className="flex-1 w-full space-y-8 p-0">

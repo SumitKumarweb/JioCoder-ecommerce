@@ -25,6 +25,7 @@ export default async function CommunityGroupPage({
   const decoded = decodeURIComponent(slug);
   return (
     <>
+      <h1 className="sr-only">{decoded} community group</h1>
       <WebPageSchema
         path={`/community/groups/${slug}`}
         type="ProfilePage"

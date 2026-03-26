@@ -15,6 +15,7 @@ export default function WishlistPage() {
     <>
       <Navbar />
       <main className="max-w-[1440px] mx-auto w-full min-w-0 px-3 sm:px-4 md:px-6 lg:px-20 py-5 sm:py-6 md:py-10 overflow-x-hidden">
+        <h1 className="sr-only">My wishlist</h1>
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-8">
           <Link className="hover:text-primary transition-colors" href="/">

@@ -75,6 +75,7 @@ export default function CodeHubPage() {
       <Navbar />
       <div className="bg-[#030712] ring-1 ring-emerald-950/40">
         <div className="max-w-[1440px] mx-auto w-full min-w-0 px-5 sm:px-6 md:px-10 lg:px-20">
+          <h1 className="sr-only">Learn coding with JioCoder Code Hub</h1>
           <Breadcrumb
             items={[{ label: 'Home', href: '/' }, { label: 'Code' }]}
             className={bcNav}

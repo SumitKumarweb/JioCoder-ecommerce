@@ -163,6 +163,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="sr-only">Admin dashboard overview</h1>
       {/* Loading State */}
       {isLoading && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
