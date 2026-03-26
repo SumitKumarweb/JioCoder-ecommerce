@@ -27,7 +27,33 @@ export async function GET(req: NextRequest) {
       { $sort: { count: -1 } },
     ]);
 
-    return NextResponse.json(stats);
+    const recentPageViewsRaw = await AnalyticsEvent.find({
+      createdAt: { $gte: since },
+      eventType: "page_view",
+    })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .select("eventType source payload createdAt")
+      .lean();
+
+    const recentPageViews = (recentPageViewsRaw || []).map((event: any) => ({
+      id: String(event?._id || ""),
+      createdAt: event?.createdAt || null,
+      source: event?.source || "web",
+      pageUrl: event?.payload?.pageUrl || null,
+      path: event?.payload?.path || null,
+      referrer: event?.payload?.referrer || null,
+      email: event?.payload?.email || null,
+      userId: event?.payload?.userId || null,
+      guestUid: event?.payload?.guestUid || null,
+      sessionUid: event?.payload?.sessionUid || null,
+      userAgent: event?.payload?.userAgent || null,
+    }));
+
+    return NextResponse.json({
+      stats,
+      recentPageViews,
+    });
   } catch (error) {
     console.error("Admin GET /analytics failed:", error);
     return NextResponse.json(

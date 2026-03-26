@@ -23,6 +23,7 @@ import {
 import ProductCarouselSkeleton from '@/components/ProductCarouselSkeleton';
 import { getCachedData, setCachedData, getProductCacheKey } from '@/utils/apiCache';
 import { ProductSchema } from '@/components/schemas';
+import { trackEvent } from '@/lib/analytics/client';
 
 interface ProductDetailProps {
   productId: string;
@@ -264,6 +265,22 @@ const checkDelivery = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, collectionSlug]);
 
+  useEffect(() => {
+    if (!product) return;
+    trackEvent(
+      'product_view',
+      {
+        productId: product.id,
+        productSlug: product.slug || null,
+        productName: product.name,
+        price: product.price,
+        category: product.category || null,
+        collectionSlug: collectionSlug || null,
+      },
+      'product-detail'
+    );
+  }, [product, collectionSlug]);
+
   const switchTypes = ['Tactile Blue', 'Linear Red', 'Silent Brown'];
 
   const increaseQuantity = () => setQuantity((q) => q + 1);
@@ -277,14 +294,26 @@ const checkDelivery = () => {
     
     if (!userId) {
       // Open login modal if not logged in
+      trackEvent('wishlist_login_required', {
+        productId: product.id,
+        productName: product.name,
+      }, 'product-detail');
       setIsLoginModalOpen(true);
       return;
     }
 
     // Toggle wishlist
     if (isInWishlist(product.id)) {
+      trackEvent('product_remove_from_wishlist', {
+        productId: product.id,
+        productName: product.name,
+      }, 'product-detail');
       await removeFromWishlist(product.id);
     } else {
+      trackEvent('product_add_to_wishlist', {
+        productId: product.id,
+        productName: product.name,
+      }, 'product-detail');
       await addToWishlist(product.id);
     }
   };
@@ -508,6 +537,13 @@ const checkDelivery = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => {
+                  trackEvent('product_add_to_cart', {
+                    productId: product.id,
+                    productName: product.name,
+                    quantity,
+                    selectedSwitch,
+                    price: product.price,
+                  }, 'product-detail');
                   addToCart({
                     id: product.id,
                     name: product.name,
@@ -523,6 +559,13 @@ const checkDelivery = () => {
               </button>
               <button
                 onClick={() => {
+                  trackEvent('product_buy_now', {
+                    productId: product.id,
+                    productName: product.name,
+                    quantity,
+                    selectedSwitch,
+                    price: product.price,
+                  }, 'product-detail');
                   buyNow({
                     id: product.id,
                     name: product.name,

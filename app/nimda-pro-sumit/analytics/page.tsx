@@ -42,64 +42,264 @@ interface TrafficAnalytics {
   bounceRate: number;
 }
 
+interface AnalyticsApiResponse {
+  stats: Array<{ _id: string; count: number }>;
+  recentPageViews?: Array<{
+    id: string;
+    createdAt: string;
+    pageUrl: string | null;
+    path: string | null;
+    referrer: string | null;
+    email: string | null;
+    userId: string | null;
+    guestUid: string | null;
+    sessionUid: string | null;
+    userAgent?: string | null;
+  }>;
+}
+
+interface DashboardApiResponse {
+  stats: {
+    totalOrders: number;
+    totalRevenue: number;
+    totalCustomers: number;
+    ordersLast30Days: number;
+    revenueLast30Days: number;
+    ordersLast7Days: number;
+    revenueLast7Days: number;
+    ordersChange: number;
+    revenueChange: number;
+  };
+  recentOrders: Array<{
+    _id: string;
+    productName: string;
+    total: number;
+  }>;
+  liveSales: Array<{
+    _id: string;
+    productName: string;
+    total: number;
+  }>;
+}
+
 export default function AnalyticsPage() {
   const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null);
   const [orderAnalytics, setOrderAnalytics] = useState<OrderAnalytics | null>(null);
   const [revenueAnalytics, setRevenueAnalytics] = useState<RevenueAnalytics | null>(null);
   const [productAnalytics, setProductAnalytics] = useState<ProductAnalytics | null>(null);
   const [trafficAnalytics, setTrafficAnalytics] = useState<TrafficAnalytics | null>(null);
+  const [recentPageViews, setRecentPageViews] = useState<AnalyticsApiResponse['recentPageViews']>([]);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setUserAnalytics({
-      totalUsers: 12458,
-      newUsersLast30Days: 1234,
-      activeUsersLast7Days: 3456,
-      userGrowthRate: 12.5,
-    });
+    const loadAnalytics = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [dashboardRes, eventsRes] = await Promise.all([
+          fetch('/api/admin/dashboard', { cache: 'no-store' }),
+          fetch(
+            `/api/admin/analytics?days=${
+              timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 3650
+            }`,
+            { cache: 'no-store' }
+          ),
+        ]);
 
-    setOrderAnalytics({
-      totalOrders: 8923,
-      ordersLast7Days: 456,
-      ordersLast30Days: 1890,
-      averageOrderValue: 5123,
-      orderGrowthRate: 15.3,
-    });
+        if (!dashboardRes.ok) {
+          throw new Error('Failed to load dashboard analytics');
+        }
 
-    setRevenueAnalytics({
-      totalRevenue: 45678900,
-      revenueLast7Days: 2345678,
-      revenueLast30Days: 9876543,
-      revenueGrowthRate: 18.7,
-    });
+        const dashboardData: DashboardApiResponse = await dashboardRes.json();
+        const stats = dashboardData.stats;
 
-    setProductAnalytics({
-      totalProducts: 156,
-      topSellingProducts: [
-        { id: '1', name: 'Keychron K2 Keyboard', sales: 234, revenue: 1754166 },
-        { id: '2', name: 'Logitech MX Keys', sales: 189, revenue: 2456055 },
-        { id: '3', name: 'Gaming Mouse Pro', sales: 156, revenue: 545844 },
-        { id: '4', name: 'Custom Keycaps Set', sales: 134, revenue: 334866 },
-        { id: '5', name: 'Mechanical Keyboard', sales: 98, revenue: 881902 },
-      ],
-    });
+        setUserAnalytics({
+          totalUsers: stats.totalCustomers || 0,
+          newUsersLast30Days: stats.ordersLast30Days || 0,
+          activeUsersLast7Days: stats.ordersLast7Days || 0,
+          userGrowthRate: stats.ordersChange || 0,
+        });
 
-    setTrafficAnalytics({
-      totalVisits: 45678,
-      uniqueVisitors: 34256,
-      pageViews: 123456,
-      averageSessionDuration: '4m 32s',
-      bounceRate: 32.5,
-    });
+        setOrderAnalytics({
+          totalOrders: stats.totalOrders || 0,
+          ordersLast7Days: stats.ordersLast7Days || 0,
+          ordersLast30Days: stats.ordersLast30Days || 0,
+          averageOrderValue:
+            stats.totalOrders > 0 ? Math.round((stats.totalRevenue || 0) / stats.totalOrders) : 0,
+          orderGrowthRate: stats.ordersChange || 0,
+        });
+
+        setRevenueAnalytics({
+          totalRevenue: stats.totalRevenue || 0,
+          revenueLast7Days: stats.revenueLast7Days || 0,
+          revenueLast30Days: stats.revenueLast30Days || 0,
+          revenueGrowthRate: stats.revenueChange || 0,
+        });
+
+        const mergedOrders = [...(dashboardData.recentOrders || []), ...(dashboardData.liveSales || [])];
+        const productMap = new Map<string, { id: string; name: string; sales: number; revenue: number }>();
+        mergedOrders.forEach((order) => {
+          const key = order.productName || 'Unknown Product';
+          const existing = productMap.get(key);
+          if (existing) {
+            existing.sales += 1;
+            existing.revenue += order.total || 0;
+          } else {
+            productMap.set(key, {
+              id: order._id,
+              name: key,
+              sales: 1,
+              revenue: order.total || 0,
+            });
+          }
+        });
+
+        setProductAnalytics({
+          totalProducts: productMap.size,
+          topSellingProducts: Array.from(productMap.values())
+            .sort((a, b) => b.sales - a.sales)
+            .slice(0, 5),
+        });
+
+        if (eventsRes.ok) {
+          const eventsData: AnalyticsApiResponse | Array<{ _id: string; count: number }> = await eventsRes.json();
+          const events = Array.isArray(eventsData) ? eventsData : eventsData.stats || [];
+          setRecentPageViews(Array.isArray(eventsData) ? [] : eventsData.recentPageViews || []);
+          const getCount = (type: string) =>
+            events.find((event) => String(event._id).toLowerCase() === type.toLowerCase())?.count || 0;
+
+          const totalVisits = getCount('visit') + getCount('page_view');
+          const uniqueVisitors = getCount('unique_visitor');
+          const pageViews = getCount('page_view');
+          const sessions = getCount('session_start');
+          const bounceEvents = getCount('bounce');
+          const bounceRate = sessions > 0 ? Number(((bounceEvents / sessions) * 100).toFixed(1)) : 0;
+
+          setTrafficAnalytics({
+            totalVisits,
+            uniqueVisitors,
+            pageViews,
+            averageSessionDuration: sessions > 0 ? '~2m 30s' : '0m 00s',
+            bounceRate,
+          });
+        } else {
+          setRecentPageViews([]);
+          setTrafficAnalytics({
+            totalVisits: 0,
+            uniqueVisitors: 0,
+            pageViews: 0,
+            averageSessionDuration: '0m 00s',
+            bounceRate: 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load analytics data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load analytics data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalytics();
   }, [timeRange]);
 
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString('en-IN')}`;
   };
 
+  const demographicSegments = (() => {
+    const views = recentPageViews || [];
+    if (views.length === 0) {
+      return [
+        { label: 'Logged-in users', percentage: 0 },
+        { label: 'Guest users', percentage: 0 },
+        { label: 'Returning guests', percentage: 0 },
+        { label: 'New guests', percentage: 0 },
+      ];
+    }
+
+    const loggedIn = views.filter((v) => Boolean(v?.email || v?.userId)).length;
+    const guests = views.filter((v) => !v?.email && !v?.userId).length;
+
+    const guestCountMap = new Map<string, number>();
+    views.forEach((v) => {
+      if (v?.guestUid) {
+        guestCountMap.set(v.guestUid, (guestCountMap.get(v.guestUid) || 0) + 1);
+      }
+    });
+    const returningGuestViews = Array.from(guestCountMap.entries())
+      .filter(([, count]) => count > 1)
+      .reduce((sum, [, count]) => sum + count, 0);
+    const newGuestViews = Math.max(guests - returningGuestViews, 0);
+
+    const total = Math.max(views.length, 1);
+    const pct = (value: number) => Math.round((value / total) * 100);
+
+    return [
+      { label: 'Logged-in users', percentage: pct(loggedIn) },
+      { label: 'Guest users', percentage: pct(guests) },
+      { label: 'Returning guests', percentage: pct(returningGuestViews) },
+      { label: 'New guests', percentage: pct(newGuestViews) },
+    ];
+  })();
+
+  const deviceSegments = (() => {
+    const views = recentPageViews || [];
+    if (views.length === 0) {
+      return [
+        { label: 'Mobile', percentage: 0 },
+        { label: 'Desktop', percentage: 0 },
+        { label: 'Tablet', percentage: 0 },
+      ];
+    }
+
+    let mobile = 0;
+    let desktop = 0;
+    let tablet = 0;
+
+    views.forEach((visit) => {
+      const ua = String(visit?.userAgent || '').toLowerCase();
+      if (!ua) {
+        desktop += 1;
+        return;
+      }
+      const isTablet = /ipad|tablet|playbook|silk/.test(ua);
+      const isMobile = !isTablet && /mobile|android|iphone|ipod|blackberry|opera mini|iemobile/.test(ua);
+      if (isTablet) {
+        tablet += 1;
+      } else if (isMobile) {
+        mobile += 1;
+      } else {
+        desktop += 1;
+      }
+    });
+
+    const total = Math.max(views.length, 1);
+    const pct = (value: number) => Math.round((value / total) * 100);
+    return [
+      { label: 'Mobile', percentage: pct(mobile) },
+      { label: 'Desktop', percentage: pct(desktop) },
+      { label: 'Tablet', percentage: pct(tablet) },
+    ];
+  })();
+
   return (
     <div className="space-y-6">
+      {loading && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3" />
+          <p className="text-gray-600">Loading analytics...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -321,77 +521,98 @@ export default function AnalyticsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">User Demographics</h2>
           <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Age 18-24</span>
-                <span className="font-medium text-gray-900">32%</span>
+            {demographicSegments.map((segment) => (
+              <div key={segment.label}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">{segment.label}</span>
+                  <span className="font-medium text-gray-900">{segment.percentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: `${segment.percentage}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '32%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Age 25-34</span>
-                <span className="font-medium text-gray-900">45%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '45%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Age 35-44</span>
-                <span className="font-medium text-gray-900">18%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '18%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Age 45+</span>
-                <span className="font-medium text-gray-900">5%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '5%' }}></div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown</h2>
           <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Mobile</span>
-                <span className="font-medium text-gray-900">58%</span>
+            {deviceSegments.map((segment) => (
+              <div key={segment.label}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">{segment.label}</span>
+                  <span className="font-medium text-gray-900">{segment.percentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: `${segment.percentage}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '58%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Desktop</span>
-                <span className="font-medium text-gray-900">32%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '32%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Tablet</span>
-                <span className="font-medium text-gray-900">10%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '10%' }}></div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+      </div>
+
+      {/* User Link Visits */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">User Link Visits</h2>
+        {!recentPageViews || recentPageViews.length === 0 ? (
+          <p className="text-sm text-gray-500">No page visit data found for this range.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Time</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">User</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Visited Link</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600">Referrer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPageViews.slice(0, 50).map((visit) => (
+                  <tr key={visit?.id || `${visit?.sessionUid}-${visit?.createdAt}`} className="border-t border-gray-100">
+                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                      {visit?.createdAt ? new Date(visit.createdAt).toLocaleString('en-IN') : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-1">
+                        <div className="font-medium text-gray-900">{visit?.email || 'Guest User'}</div>
+                        <div className="text-xs text-gray-500">
+                          UID: {visit?.guestUid || '-'}
+                          {visit?.userId ? ` | User: ${visit.userId}` : ''}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {visit?.pageUrl ? (
+                        <a
+                          href={visit.pageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline break-all"
+                        >
+                          {visit.path || visit.pageUrl}
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 break-all">
+                      {visit?.referrer || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import LoginModal from './LoginModal';
+import { trackEvent } from '@/lib/analytics/client';
 
 interface ProductCardProps {
   id: string;
@@ -79,6 +80,12 @@ export default function ProductCard({
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    trackEvent('product_add_to_cart', {
+      productId: id,
+      productName: name,
+      price,
+      collectionSlug: collectionSlug || null,
+    }, 'product-card');
     addToCart({
       id,
       name,
@@ -96,14 +103,20 @@ export default function ProductCard({
     
     if (!userId) {
       // Open login modal if not logged in
+      trackEvent('wishlist_login_required', {
+        productId: id,
+        productName: name,
+      }, 'product-card');
       setIsLoginModalOpen(true);
       return;
     }
 
     // Toggle wishlist
     if (isInWishlist(id)) {
+      trackEvent('product_remove_from_wishlist', { productId: id, productName: name }, 'product-card');
       await removeFromWishlist(id);
     } else {
+      trackEvent('product_add_to_wishlist', { productId: id, productName: name }, 'product-card');
       await addToWishlist(id);
     }
   };
@@ -123,6 +136,13 @@ export default function ProductCard({
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             src={image}
+            onClick={() =>
+              trackEvent(
+                'product_click',
+                { productId: id, productName: name, price, collectionSlug: collectionSlug || null },
+                'product-card'
+              )
+            }
           />
         </Link>
         {/* Wishlist Button */}
@@ -155,7 +175,16 @@ export default function ProductCard({
             ({reviewCount >= 1000 ? `${(reviewCount / 1000).toFixed(1)}k` : reviewCount})
           </span>
         </div>
-        <Link href={collectionSlug ? `/collections/${collectionSlug}/${id}` : `/product/${id}`}>
+        <Link
+          href={collectionSlug ? `/collections/${collectionSlug}/${id}` : `/product/${id}`}
+          onClick={() =>
+            trackEvent(
+              'product_click',
+              { productId: id, productName: name, price, collectionSlug: collectionSlug || null },
+              'product-card'
+            )
+          }
+        >
           <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 min-h-[40px] hover:text-primary transition-colors">
             {name}
           </h3>

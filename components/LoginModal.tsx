@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { trackEvent } from '@/lib/analytics/client';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -201,6 +202,12 @@ export default function LoginModal({ isOpen, onClose, onForgotPassword }: LoginM
           
           // Trigger wishlist sync by dispatching custom event
           window.dispatchEvent(new CustomEvent('userLoggedIn'));
+
+          trackEvent('login_success', {
+            userId: data.user.id,
+            email: data.user.email || trimmedEmail,
+            method: 'password',
+          }, 'auth-modal');
         }
         
         // Close modal after 1 second

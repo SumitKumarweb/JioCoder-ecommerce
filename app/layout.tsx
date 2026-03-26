@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import CartDrawer from "@/components/CartDrawer";
 import ResetPasswordHandler from "@/components/ResetPasswordHandler";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { OrganizationSchema, WebSiteSchema } from "@/components/schemas";
 import { buildSiteVerification } from "@/lib/seo/siteVerification";
 
@@ -227,6 +228,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 <Suspense fallback={null}>
                   <ResetPasswordHandler />
                 </Suspense>
+                <AnalyticsTracker />
             </WishlistProvider>
           </CartProvider>
         </CompareProvider>
