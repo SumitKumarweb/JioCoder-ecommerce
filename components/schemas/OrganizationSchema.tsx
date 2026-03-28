@@ -107,6 +107,16 @@ export default function OrganizationSchema() {
         ],
         inLanguage: ['en-IN', 'en'],
       },
+      {
+        '@type': 'MerchantReturnPolicy',
+        '@id': `${baseUrl}/#merchant-return-policy`,
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 14,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+        merchantReturnLink: `${baseUrl}/support`,
+      },
     ],
   };
 

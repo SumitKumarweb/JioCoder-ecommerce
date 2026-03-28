@@ -26,7 +26,7 @@ export default function ProductListSchema({
   pageTitle = "Products",
   pageDescription 
 }: ProductListSchemaProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jiocoder.com';
+  const baseUrl = getSiteUrl();
   const fullUrl = pageUrl.startsWith('http') ? pageUrl : `${baseUrl}${pageUrl}`;
 
   // Create ItemList schema for product listings
@@ -52,7 +52,10 @@ export default function ProductListSchema({
           "price": product.price.toString(),
           "availability": product.inStock 
             ? "https://schema.org/InStock" 
-            : "https://schema.org/OutOfStock"
+            : "https://schema.org/OutOfStock",
+          "hasMerchantReturnPolicy": {
+            "@id": `${baseUrl}/#merchant-return-policy`
+          }
         },
         "url": `${baseUrl}/product/${product.id}`,
         ...(product.brand ? {

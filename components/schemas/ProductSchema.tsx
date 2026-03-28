@@ -52,6 +52,9 @@ export default function ProductSchema({ product, url }: ProductSchemaProps) {
       "seller": {
         "@id": `${baseUrl}/#organization`
       },
+      "hasMerchantReturnPolicy": {
+        "@id": `${baseUrl}/#merchant-return-policy`
+      },
       "shippingDetails": {
         "@type": "OfferShippingDetails",
         "shippingRate": {
