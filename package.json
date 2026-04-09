@@ -10,7 +10,9 @@
     "start": "tsx server.ts",
     "start:next-only": "next start -H 0.0.0.0",
     "start:local": "tsx server.ts",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:hidden-jobs": "node scripts/seed-hidden-jobs-slim.mjs",
+    "import:hidden-jobs": "node scripts/import-hidden-jobs.mjs"
   },
   "dependencies": {
     "@tiptap/extension-link": "^3.20.5",
